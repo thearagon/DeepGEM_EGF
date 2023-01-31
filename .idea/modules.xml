@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/DeepGEM.iml" filepath="$PROJECT_DIR$/.idea/DeepGEM.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../synth_wf/.idea/synth_wf.iml" filepath="$PROJECT_DIR$/../synth_wf/.idea/synth_wf.iml" />
+    </modules>
+  </component>
+</project>

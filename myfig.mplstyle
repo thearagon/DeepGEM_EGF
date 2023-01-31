@@ -1,0 +1,38 @@
+font.family         : Open sans
+font.weight         : light
+font.size           : 8
+text.color           : dimgrey
+axes.edgecolor      : dimgrey   ## axes edge color
+axes.linewidth      : 0.4     ## edge linewidth
+axes.titlesize      : medium   ## fontsize of the axes title
+axes.titleweight    : bold  ## font weight of title
+axes.titlepad       : 3.0     ## pad between axes and title in points
+axes.labelcolor     : dimgrey
+axes.labelweight    : regular  ## weight of the x and y labels
+axes.labelsize      : small
+axes.spines.top    : False
+axes.spines.right  : False
+xtick.major.size     : 2.    ## major tick size in points
+xtick.minor.size     : 1.      ## minor tick size in points
+xtick.major.width    : 0.4    ## major tick width in points
+xtick.minor.width    : 0.3    ## minor tick width in points
+xtick.color          : dimgrey  ## color of the tick labels
+xtick.labelsize      : small ## fontsize of the tick labels
+xtick.direction      : in    ## direction: in, out, or inout
+ytick.major.size     : 2.    ## major tick size in points
+ytick.minor.size     : 1.      ## minor tick size in points
+ytick.major.width    : 0.4    ## major tick width in points
+ytick.minor.width    : 0.3    ## minor tick width in points
+ytick.color          : dimgrey  ## color of the tick labels
+ytick.labelsize      : small ## fontsize of the tick labels
+ytick.direction      : in    ## direction: in, out, or inout
+legend.edgecolor     : 0.95      ## background patch boundary color
+figure.titlesize : large      ## size of the figure title (Figure.suptitle())
+figure.titleweight : bold   ## weight of the figure title
+figure.figsize   : 9.0, 4.5   ## figure size in inches (18 cm large, 10cm haut)
+figure.subplot.wspace  : 0.15    ## the amount of width reserved for space between subplots,
+                                 ## expressed as a fraction of the average axis width
+figure.subplot.hspace  : 0.3    ## the amount of height reserved for space between subplots,
+                                 ## expressed as a fraction of the average axis height
+savefig.bbox        : tight
+savefig.pad_inches  : 0.1

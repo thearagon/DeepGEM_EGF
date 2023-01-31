@@ -1,0 +1,58 @@
+bootstrap: docker
+from: jupyter/scipy-notebook
+
+%post
+  apt-get update
+  apt-get -y upgrade
+  apt-get clean
+
+  # Install anaconda if it is not installed yet
+  if [ ! -d /opt/conda ]; then
+    wget https://repo.continuum.io/archive/Anaconda3-2018.12-Linux-x86_64.sh \
+    -O ~/conda.sh && \
+    bash ~/conda.sh -b -p /opt/conda && \
+    rm ~/conda.sh
+  fi
+
+  # Set anaconda path
+  export PATH=/opt/conda/bin:$PATH
+
+  # Update conda; NOTE: for some reason this doesnt actually update conda at the moment...
+  conda update -y -n base conda
+
+  # Download alternative version of python if needed (default is 3.7)
+  # conda install -y python=3.6
+
+  # Install conda packages; -y is used to silently install
+  conda config --add channels conda-forge
+  conda install -y obspy
+
+  conda install -y numpy
+  conda install -y vim
+  # conda install -y -c conda-forge nvidia-apex
+  conda install -y -c conda-forge scikit-fmm
+  conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
+  conda install -c anaconda xarray
+  conda install -c travis fpdf
+
+
+  # install EikoNet dependencies 
+  # conda install -y pandas
+  # conda install -y -c conda-forge nvidia-apex
+  # conda install -y -c conda-forge scikit-fmm 
+
+  conda clean --tarballs
+
+#  python setup.py install  
+
+  # Install git and pip
+  apt-get -y install git-all
+  apt-get -y install python3-pip
+
+  pip install eikonalfm
+  pip install torch-dct  
+
+%environment
+  export PYTHONPATH=/opt/conda/lib/python3.7/site-packages:$PYTHONPATH
+
+  export LC_ALL=C
