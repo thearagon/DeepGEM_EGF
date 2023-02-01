@@ -2,36 +2,27 @@
 # coding: utf-8
 
 import torch
-import matplotlib.pyplot as plt
-import numpy as np
 import torch.nn as nn
-import os
 import torch.nn.functional as F
-
-from torch.nn import Linear
 from torch import Tensor
-from torch.nn import MSELoss
-from torch.optim import SGD, Adam, RMSprop
-from torch.autograd import Variable, grad
-import scipy
-import random
-import json
-import torch
-import torch.nn as nn
-import math
-import itertools
-import torch.nn.functional as F
-from torch.utils.data.sampler import SubsetRandomSampler,WeightedRandomSampler
+# from torch.nn import MSELoss
 
-from scipy import signal
-from scipy.fftpack import dct, idct
-from generative_model import realnvpfc_model
-import argparse
-import obspy
-
+import os
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
+import random
+import json
+# import math
+import itertools
+import scipy
+from scipy import signal
+# import argparse
+
+from generative_model import realnvpfc_model
+import obspy
+
 
 sns.set_style("white", {'axes.edgecolor': 'darkgray',
                         'axes.spines.right': False,
@@ -50,7 +41,7 @@ class KNetwork(torch.nn.Module):
         self.num_egf = num_egf
 
         ## initialize kernel
-        init = Tensor(makeInit(ini, num_layers)[np.newaxis, :]).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
+        init = Tensor(makeInit(ini, self.num_egf, self.num_layers)[np.newaxis, :]).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
 
         self.layers = torch.nn.Parameter(init, requires_grad = True)
 
@@ -81,7 +72,7 @@ def trueForward(k, x, num_egf):
     return out
 
 
-def makeInit(ini, num_layers, noise_amp=1.):
+def makeInit(ini, num_egf, num_layers, noise_amp=1.):
     """
     """
     init = ini
@@ -96,29 +87,22 @@ def makeInit(ini, num_layers, noise_amp=1.):
     return np.array(out).copy()
 
 
-# def makeInit(ini, size, num_egf, num_layers, noise_amp=1.):
+# def makeInit(ini, num_egf, num_layers, noise_amp=1.):
 #     """
 #     """
-#     factor = int(ini.shape[-1]/size)
-#     if factor != 1:
-#         init = signal.decimate(ini, factor)
-#     else:
-#         init = ini
-#
-#     l0 = np.zeros(init.shape)
+#     l0 = np.zeros(ini.shape)
 #     for e in range(num_egf):
 #         for c in [0,1,2]:
-#             # idx_snr = np.where(np.abs(init[e, c]) >= 0.01 * np.amax(np.abs(init[e, c])))[0]
-#             S = scipy.fft.rfft(init[e,c])
-#             S2 = S**(1./(num_layers-1) )
-#             s = scipy.fft.irfft(S2, n=size)
-#             # s_pad = np.pad(s[idx_snr], (s.shape[0]-len(idx_snr))//2, 'constant')
-#             # l0[e, c, :len(s_pad)] =
+#             S = scipy.fft.rfft(ini[e,c])
+#             S2 = S**(1./(num_layers+1) )
+#             s = scipy.fft.irfft(S2, n = ini.shape[-1])
 #             l0[e, c, :] = s
 #
 #     out = []
 #     for i in range(num_layers):
-#         out.append(l0 + (np.random.rand()*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
+#         out.append( l0/ np.amax(np.abs(l0)) )
+#         # out.append(np.random.rand()*l0 / np.amax(np.abs(l0)))
+#
 #     return np.array(out).copy()
 
 ######################################################################################################################

@@ -10,7 +10,7 @@ print(scipy.__version__)
 def main_function(args):
 
     ################################################ SET UP WEIGHTS ####################################################
-    n_flow = 16
+    n_flow = 32
     affine = True
     data_weight = 1 / args.data_sigma ** 2
 
