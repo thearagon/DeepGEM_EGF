@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="63691c1e-a091-469a-b2d3-348c163d54f3" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GEMDeconvEgf.py" beforeDir="false" afterPath="$PROJECT_DIR$/GEMDeconvEgf.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/deconvEgf_helpers.py" beforeDir="false" afterPath="$PROJECT_DIR$/deconvEgf_helpers.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

@@ -50,7 +50,7 @@ class KNetwork(torch.nn.Module):
         self.num_egf = num_egf
 
         ## initialize kernel
-        init = Tensor(makeInit(ini, num_egf, num_layers)[np.newaxis, :]).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
+        init = Tensor(makeInit(ini, num_layers)[np.newaxis, :]).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
 
         self.layers = torch.nn.Parameter(init, requires_grad = True)
 
@@ -72,18 +72,16 @@ class KNetwork(torch.nn.Module):
         out = F.conv1d(k.view(3*self.num_egf,1,k.shape[-1]),x.flip(2), padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.view(out.shape[0], self.num_egf, 3, out.shape[-1])
-        # return out / torch.amax(torch.abs(out))
         return out
 
 def trueForward(k, x, num_egf):
     out = F.conv1d(k.view(3*num_egf,1, k.shape[-1]), x.flip(2), padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
     out = out.view(out.shape[0], num_egf, 3, out.shape[-1])
-    # return out / torch.amax(torch.abs(out))
     return out
 
 
-def makeInit(ini, num_egf, num_layers, noise_amp=1.):
+def makeInit(ini, num_layers, noise_amp=1.):
     """
     """
     init = ini
@@ -92,14 +90,13 @@ def makeInit(ini, num_egf, num_layers, noise_amp=1.):
 
     out = []
     for i in range(num_layers-1):
-        out.append(l0 + (noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
-    out.append(init + (noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
+        out.append(l0 + (np.random.rand()*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
+    out.append(init + (3*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
 
     return np.array(out).copy()
 
 
-
-# def makeInit(ini, size, num_egf, num_layers, noise_amp=0.):
+# def makeInit(ini, size, num_egf, num_layers, noise_amp=1.):
 #     """
 #     """
 #     factor = int(ini.shape[-1]/size)
@@ -119,14 +116,9 @@ def makeInit(ini, num_egf, num_layers, noise_amp=1.):
 #             # l0[e, c, :len(s_pad)] =
 #             l0[e, c, :] = s
 #
-#     # l0 = np.zeros((num_layers, len(init)))
-#     # out[:, len(init) // 2] = 1
-#     # out[-1, :] = init
-#
-#
 #     out = []
 #     for i in range(num_layers):
-#         out.append(l0 + noise_amp * np.amax(np.abs(l0)) * np.random.normal(-1, 1, l0.shape[-1]))
+#         out.append(l0 + (np.random.rand()*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
 #     return np.array(out).copy()
 
 ######################################################################################################################
