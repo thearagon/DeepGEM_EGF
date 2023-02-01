@@ -49,7 +49,6 @@ def main_function(args):
     except TypeError:
         st_trc = None
         trc = np.load("{}".format(args.trc))
-    args.layer_size = trc.shape[-1]
 
     try:
         st_gf = obspy.read("{}".format(args.egf))
@@ -107,12 +106,10 @@ def main_function(args):
 
     # kernel init
     init = gf.detach().cpu().numpy()
-    kernel_network = KNetwork(init, num_layers=args.num_layers,
-                              num_egf=args.num_egf,
-                              layer_size=args.layer_size,
-                              padding_mode=args.padding_mode
+    kernel_network = KNetwork(init,
+                              num_layers=args.num_layers,
+                              num_egf=args.num_egf
                               ).to(args.device)
-    print("Kernel Network Size ".format(args.layer_size), kernel_network, " with init")
 
     if args.reverse == True:
         print("Generating Reverse RealNVP Network")
@@ -483,8 +480,6 @@ if __name__ == "__main__":
                         help='random x or from a certain sample')
     parser.add_argument('--reverse', action='store_true', default=False,
                         help='permute parameter, if False, random, if True, reverse')
-    parser.add_argument('--padding_mode', type=str, default="zeros",
-                        help='kernel padding (default:zeros)')
     parser.add_argument('--seqfrac', type=int, default=2,
                         help='seqfrac (default:2), should be < to stf length')
 

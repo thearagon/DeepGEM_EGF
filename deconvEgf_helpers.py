@@ -43,17 +43,14 @@ myred = '#c3553aff'
 myorange = '#f07101'
     
 class KNetwork(torch.nn.Module):
-    def __init__(self, ini, num_layers = 3, num_egf = 1, layer_size = 5, padding_mode = "zeros"):
+    def __init__(self, ini, num_layers = 3, num_egf = 1):
+
         super(KNetwork, self).__init__()
-        layers = []
         self.num_layers = num_layers
-        self.padding = layer_size-1
-        self.padding_mode = padding_mode
-        self.layer_size = layer_size
         self.num_egf = num_egf
 
         ## initialize kernel
-        init = Tensor(makeInit(ini, layer_size, num_egf, num_layers)[np.newaxis, :]).view(self.num_layers, 1, 3*self.num_egf, self.layer_size)
+        init = Tensor(makeInit(ini, num_egf, num_layers)[np.newaxis, :]).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
 
         self.layers = torch.nn.Parameter(init, requires_grad = True)
 
@@ -65,9 +62,9 @@ class KNetwork(torch.nn.Module):
         ker = self.layers[0]
         if self.num_layers >= 2:
             for i in range(1, self.num_layers):
-                # ker = F.conv1d(ker, self.layers[i].view(self.num_egf* 3, 1, self.layer_size).flip(2), padding=self.padding, groups=3*self.num_egf)
-                ker = F.conv1d(ker, self.layers[i].view(self.num_egf* 3, 1, self.layer_size).flip(2), padding='same', groups=3*self.num_egf)
-        out = ker[:, :, :self.layer_size] / torch.max(torch.abs(ker))
+                ker = F.conv1d(ker, self.layers[i].view(self.num_egf* 3, 1, self.layers[0].shape[-1]).flip(2),
+                               padding='same', groups=3*self.num_egf)
+        out = ker / torch.max(torch.abs(ker))
         return out.view(out.shape[0], self.num_egf, 3, out.shape[-1])
 
     def forward(self, x):
@@ -85,29 +82,52 @@ def trueForward(k, x, num_egf):
     # return out / torch.amax(torch.abs(out))
     return out
 
-def makeInit(ini, size, num_egf, num_layers, noise_amp=0.):
+
+def makeInit(ini, num_egf, num_layers, noise_amp=1.):
     """
     """
-    factor = int(ini.shape[-1]/size)
-    if factor != 1:
-        init = signal.decimate(ini, factor)
-    else:
-        init = ini
+    init = ini
     l0 = np.zeros(init.shape)
-    for e in range(num_egf):
-        for c in [0,1,2]:
-            # idx_snr = np.where(np.abs(init[e, c]) >= 0.01 * np.amax(np.abs(init[e, c])))[0]
-            S = scipy.fft.rfft(init[e,c])
-            S2 = S**(1./(num_layers-1) )
-            s = scipy.fft.irfft(S2, n=size)
-            # s_pad = np.pad(s[idx_snr], (s.shape[0]-len(idx_snr))//2, 'constant')
-            # l0[e, c, :len(s_pad)] =
-            l0[e, c, :] = s
+    l0[:, :, init.shape[-1]//2] = 1.
 
     out = []
-    for i in range(num_layers):
-        out.append(l0 + noise_amp * np.amax(np.abs(l0)) * np.random.normal(-1, 1, l0.shape[-1]))
+    for i in range(num_layers-1):
+        out.append(l0 + (noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
+    out.append(init + (noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
+
     return np.array(out).copy()
+
+
+
+# def makeInit(ini, size, num_egf, num_layers, noise_amp=0.):
+#     """
+#     """
+#     factor = int(ini.shape[-1]/size)
+#     if factor != 1:
+#         init = signal.decimate(ini, factor)
+#     else:
+#         init = ini
+#
+#     l0 = np.zeros(init.shape)
+#     for e in range(num_egf):
+#         for c in [0,1,2]:
+#             # idx_snr = np.where(np.abs(init[e, c]) >= 0.01 * np.amax(np.abs(init[e, c])))[0]
+#             S = scipy.fft.rfft(init[e,c])
+#             S2 = S**(1./(num_layers-1) )
+#             s = scipy.fft.irfft(S2, n=size)
+#             # s_pad = np.pad(s[idx_snr], (s.shape[0]-len(idx_snr))//2, 'constant')
+#             # l0[e, c, :len(s_pad)] =
+#             l0[e, c, :] = s
+#
+#     # l0 = np.zeros((num_layers, len(init)))
+#     # out[:, len(init) // 2] = 1
+#     # out[-1, :] = init
+#
+#
+#     out = []
+#     for i in range(num_layers):
+#         out.append(l0 + noise_amp * np.amax(np.abs(l0)) * np.random.normal(-1, 1, l0.shape[-1]))
+#     return np.array(out).copy()
 
 ######################################################################################################################
 
