@@ -33,6 +33,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+import dtw
+
 sns.set_style("white", {'axes.edgecolor': 'darkgray',
                         'axes.spines.right': False,
                         'axes.spines.top': False})
@@ -84,6 +86,27 @@ def trueForward(k, x, num_egf):
     out = out.view(out.shape[0], num_egf, 3, out.shape[-1])
     # return out / torch.amax(torch.abs(out))
     return out
+
+def makeInit(ini, size, num_egf, num_layers, noise_amp=0.):
+    """
+    """
+    factor = int(ini.shape[-1]/size)
+    if factor != 1:
+        init = signal.decimate(ini, factor)
+    else:
+        init = ini
+    l0 = np.empty(init.shape)
+    for e in range(num_egf):
+        for c in [0,1,2]:
+            S = scipy.fft.rfft(init[e,c])
+            S2 = S**(1/num_layers)
+            s = scipy.fft.irfft(S2, n=size)
+            l0[e,c,:] = s
+
+    out = []
+    for i in range(num_layers):
+        out.append(l0 + noise_amp * np.amax(np.abs(l0)) * np.random.normal(-1, 1, l0.shape[-1]))
+    return np.array(out).copy()
 
 ######################################################################################################################
 
@@ -231,6 +254,69 @@ class stf_generator(nn.Module):
             out = img
         return out, logdet
 
+
+######################################################################################################################
+
+
+#                            Losses
+
+
+######################################################################################################################
+
+def dtw_classic(x, y, dist='square'):
+    """Classic Dynamic Time Warping (DTW) distance between two time series.
+
+    References
+    ----------
+    .. [1] H. Sakoe and S. Chiba, "Dynamic programming algorithm optimization
+           for spoken word recognition". IEEE Transactions on Acoustics,
+           Speech, and Signal Processing, 26(1), 43-49 (1978).
+
+    Modified from:
+    Author: Johann Faouzi <johann.faouzi@gmail.com>
+    License: BSD-3-Clause
+    Pyts, A Python Package for Time Series Classification
+    """
+    def _square(x, y):
+        return (x - y) ** 2
+
+    def _absolute(x, y):
+        return torch.abs(x - y)
+
+    def _accumulated_cost_matrix(cost_matrix):
+        n_timestamps_1, n_timestamps_2 = cost_matrix.shape
+        acc_cost_mat = torch.empty((n_timestamps_1, n_timestamps_2))
+        acc_cost_mat[0] = cost_matrix[0].cumsum(dim=0)
+        acc_cost_mat[:, 0] = cost_matrix[:, 0].cumsum(dim=0)
+        for j in range(1, n_timestamps_2):
+            for i in range(1, n_timestamps_1):
+                acc_cost_mat[i, j] = cost_matrix[i, j] + min(
+                    acc_cost_mat[i - 1][j - 1],
+                    acc_cost_mat[i - 1][j],
+                    acc_cost_mat[i][j - 1]
+                )
+        return acc_cost_mat
+
+    if dist == 'square':
+        dist_ = _square
+    elif dist == 'absolute':
+        dist_ = _absolute
+
+    x_mean = torch.mean(x, axis=(0,1))
+    n_timestamps_1, n_timestamps_2 = x.shape[-1], y.shape[-1]
+    cost_mat = torch.empty((n_timestamps_1, n_timestamps_2))
+    for j in range(n_timestamps_2):
+        for i in range(n_timestamps_1):
+            cost_mat[i, j] = dist_(x_mean[i], y[j])
+
+    acc_cost_mat = _accumulated_cost_matrix(cost_mat)
+
+    dtw_dist = acc_cost_mat[-1, -1]
+    if dist == 'square':
+        dtw_dist = torch.sqrt(dtw_dist)
+
+    return dtw_dist
+
 def Loss_TSV(z, z0):
     return torch.mean( (z - z0)**2 )
 
@@ -243,6 +329,11 @@ def Loss_TV(z):
     # total variation loss
     # return torch.mean( torch.abs(z[:, 1::] - z[:, 0:-1]), (-1))
     return torch.mean( torch.abs(z[:,:, 1::] - z[:,:, 0:-1]))
+
+def Loss_DTW(z, z0):
+    # Dynamic Time Warping loss with initial STF
+    # Time shift insensitive
+    return dtw_classic(z, z0)
 
 def Loss_multicorr(z):
     # calculates Pearson coeff/TV for every channel of every couple of EGF
@@ -264,45 +355,10 @@ def Loss_multicorr(z):
 ######################################################################################################################
 
         
-#                            ADDITIONAL STUFF
+#                            PLOT
     
 
 ######################################################################################################################
-
-def makeInit(ini, size, num_egf, num_layers, noise_amp=0.):
-    """
-    """
-    factor = int(ini.shape[-1]/size)
-    if factor != 1:
-        init = signal.decimate(ini, factor)
-    else:
-        init = ini
-    l0 = np.empty(init.shape)
-    for e in range(num_egf):
-        for c in [0,1,2]:
-            S = scipy.fft.rfft(init[e,c])
-            S2 = S**(1/num_layers)
-            s = scipy.fft.irfft(S2, n=size)
-            l0[e,c,:] = s
-
-    out = []
-    for i in range(num_layers):
-        out.append(l0 + noise_amp * np.amax(np.abs(l0)) * np.random.normal(-1, 1, l0.shape[-1]))
-    return np.array(out).copy()
-
-def create_kernel_torch(kernel_network, device, num_layers):
-    delta = torch.zeros([1, 1, num_layers*2+1, num_layers*2+1])
-    delta[0, 0, num_layers, num_layers] = 1
-    learned_kernel=kernel_network(delta.to(device))
-    return learned_kernel
-
-def create_kernel_np(kernel_network):
-    learned_kernel = np.squeeze(np.squeeze(kernel_network.net[0].weight.data.detach().cpu().numpy(), axis=0), axis=0)
-    for i in range(kernel_network.net.__len__()-1):
-        arr = np.squeeze(np.squeeze(kernel_network.net[i+1].weight.data.detach().cpu().numpy(), axis=0), axis=0)
-        learned_kernel = signal.convolve(learned_kernel, arr, mode='full')#, boundary='fill', fillvalue=0)
-    return learned_kernel
-
 
 def plot_res(k, k_sub, image, learned_k, stf0, gf, args, true_stf=None, true_gf=None):
     mean_img = np.mean(image, axis=0)
@@ -621,13 +677,3 @@ def plot_trace_diff(trc, image_blur, args):
                 bbox_inches="tight")
     plt.close()
     return
-
-
-# def calc_corr_wtrue(image_blur, image, learned_kernel, trc, true_stf, true_gf):
-#     mean_img = np.mean(image, axis=0)
-#     stdev_img = np.std(image, axis=0)
-#     mean_img_blur = np.mean(image_blur, axis=0)
-#     stdev_img_blur = np.std(image_blur, axis=0)
-#     truetrc = trc.detach().cpu().numpy()
-#     c_trc = signal.correlate(mean_img_blur[0],truetrc[0], method='fft')
-#     return corr_coeff

@@ -10,7 +10,7 @@ print(scipy.__version__)
 def main_function(args):
 
     ################################################ SET UP WEIGHTS ####################################################
-    n_flow = 16
+    n_flow = 32
     affine = True
     data_weight = 1 / args.data_sigma ** 2
 
@@ -19,26 +19,25 @@ def main_function(args):
     npiy = 1
 
     if args.px_weight == None:
-        # weight for priors on E step: list, [boundaries = (1/sigma)/2, area=0., TV = (1/sigma)/2e1]
+        # weight for priors on E step: list, [boundaries, TV]
         args.px_weight = [(1/args.data_sigma)/4e-1,
-                          0.,
-                          (1/args.data_sigma)/4e0]  # or  4e-1, 0, 4e0, 2 0 2e1
+                          (1/args.data_sigma)/4e0]
     if args.logdet_weight == None:
-        # weight on q_theta, the larger the larger the p. unc. on STF, = (1/sigma)/2e1
-        args.logdet_weight = (1/args.data_sigma)/4e0  # or 4e0, 2e1
+        # weight on q_theta
+        args.logdet_weight = (1/args.data_sigma)/1e1
     if args.prior_phi_weight == None:
-        # weight on init GF, = (1/sigma)/2e3
-        args.prior_phi_weight = (1/args.data_sigma)/8e1 # or 4e1, 1e2
+        # weight on init GF
+        args.prior_phi_weight = (1/args.data_sigma)/1e2
     if args.kernel_norm_weight == None:
-        # + weight on TV, has to be <= prior_phi_weight, = (1/sigma)/1e3
-        args.kernel_norm_weight = (1/args.data_sigma)/1e4 # or 4e3, 4e1, 1e3
+        # + weight on TV
+        args.kernel_norm_weight = (1/args.data_sigma)/1e4
     if args.num_egf > 1:
         args.prior_phi_weight *= 0.5
         kernel_corrcoef_weight = args.prior_phi_weight
         # kernel_corrcoef_weight = 0
         # args.prior_phi_weight /= 2e0
     else:
-        kernel_corrcoef_weight = 0
+        kernel_corrcoef_weight = 0.
 
         ################################################ SET UP DATA ####################################################
     try:
@@ -65,7 +64,6 @@ def main_function(args):
         except TypeError:
             st_stf0 = None
             stf0 = np.load("{}".format(args.stf0))
-        stf0 = signal.resample(stf0, npix)
     else:
         stf0 = 0.5*np.ones((npix,))
 
@@ -154,19 +152,16 @@ def main_function(args):
         pk_weight = 0
 
     ## Priors on E step (weight determined by px_weight)
-    prior_xtrue = lambda x, weight: weight * torch.sqrt(torch.sum((stf0 - x) ** 2))  ## L2
+    prior_xtrue_L2 = lambda x, weight: weight * torch.sqrt(torch.sum((stf0 - x) ** 2))  ## L2
     prior_boundary = lambda x, weight: weight * torch.sum(torch.abs(x[:, :, 0]) * torch.abs(x[:, :, -1]))
-    # prior_centroid = lambda x, weight: weight * torch.sqrt((x[torch.argmax(x)] - npix // 2) ** 2)
-    prior_area = lambda x, weight: weight * torch.sqrt(torch.sum((torch.trapz(stf0) - torch.trapz(x)) ** 2))  ## L2 on area under curve
+    prior_dtw = lambda x, weight: weight * Loss_DTW(x, stf0) if weight > 0 else 0
     prior_TV_stf = lambda x, weight: weight * Loss_TV(x) ## Total Variation
 
     flux = np.abs(np.sum(stf0.cpu().numpy()))
     logscale_factor = img_logscale(scale=flux / (0.8 * np.shape(stf0)[0])).to(args.device)
     logdet_weight = args.logdet_weight #flux/(npix*args.data_sigma)
-    prior_x = prior_xtrue  # prior on TRC
-    px_weight = args.px_init_weight
-    prior_img = [prior_boundary, prior_area, prior_TV_stf]  # prior on IMG, can be a list
-    pimg_weight = args.px_weight # should be a list
+    prior_x = prior_dtw
+    prior_img = [prior_boundary, prior_TV_stf]  # prior on STF, can be a list
 
     ### DEFINE OPTIMIZERS
     Eoptimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, list(stf_gen.parameters())
@@ -218,7 +213,7 @@ def main_function(args):
 
             Eloss, qloss, priorloss, mseloss = EStep(z_sample, args.device, trc_ext, stf_gen, kernel_network,
                                                      prior_x, prior_img, logdet_weight,
-                                                     px_weight, pimg_weight, args.data_sigma, npix, npiy,
+                                                     args.px_init_weight, args.px_weight, args.data_sigma, npix, npiy,
                                                      logscale_factor, data_weight,
                                                      args.device_ids if len(args.device_ids)>1 else None)
             #             print(qloss, priorloss, mseloss)
@@ -513,6 +508,18 @@ if __name__ == "__main__":
                         help='weight on MSE loss with random STF and init GF, M step, (default: 1e-1)')
 
     args = parser.parse_args()
+
+    if os.uname().nodename == 'wouf':
+        matplotlib.use('TkAgg')
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/a3_dtw/'
+        args.trc = "/home/thea/projet/EGF/synth_wf/data/a3_m1_rec0_trace.npy"
+        args.egf = "/home/thea/projet/EGF/synth_wf/data/a3_m0_rec0_gf.npy"
+        args.stf0 ="/home/thea/projet/EGF/synth_wf/data/a3_m1_rec0_stf.npy"
+        args.gf_true = "/home/thea/projet/EGF/synth_wf/data/a3_m1_rec0_gf.npy"
+        args.stf_true = "/home/thea/projet/EGF/synth_wf/data/a3_m1_rec0_stf.npy"
+        args.output = True
+        args.synthetics = True
+        args.px_init_weight = 5e5
 
     if args.dir is not None:
         args.PATH = args.dir
