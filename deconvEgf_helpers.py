@@ -93,13 +93,16 @@ def makeInit(ini, size, num_egf, num_layers, noise_amp=0.):
         init = signal.decimate(ini, factor)
     else:
         init = ini
-    l0 = np.empty(init.shape)
+    l0 = np.zeros(init.shape)
     for e in range(num_egf):
         for c in [0,1,2]:
+            # idx_snr = np.where(np.abs(init[e, c]) >= 0.01 * np.amax(np.abs(init[e, c])))[0]
             S = scipy.fft.rfft(init[e,c])
-            S2 = S**(1/num_layers)
+            S2 = S**(1./(num_layers-1) )
             s = scipy.fft.irfft(S2, n=size)
-            l0[e,c,:] = s
+            # s_pad = np.pad(s[idx_snr], (s.shape[0]-len(idx_snr))//2, 'constant')
+            # l0[e, c, :len(s_pad)] =
+            l0[e, c, :] = s
 
     out = []
     for i in range(num_layers):

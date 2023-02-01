@@ -10,7 +10,7 @@ print(scipy.__version__)
 def main_function(args):
 
     ################################################ SET UP WEIGHTS ####################################################
-    n_flow = 32
+    n_flow = 16
     affine = True
     data_weight = 1 / args.data_sigma ** 2
 
@@ -65,7 +65,8 @@ def main_function(args):
             st_stf0 = None
             stf0 = np.load("{}".format(args.stf0))
     else:
-        stf0 = 0.5*np.ones((npix,))
+        ## STF init is a gaussian
+        stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix//30., 2.)))
 
     ## Normalize everything
     trc = trc/ np.amax(np.abs(trc))
