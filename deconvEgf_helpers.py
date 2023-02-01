@@ -33,8 +33,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import dtw
-
 sns.set_style("white", {'axes.edgecolor': 'darkgray',
                         'axes.spines.right': False,
                         'axes.spines.top': False})
