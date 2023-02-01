@@ -18,10 +18,13 @@ def main_function(args):
     npix = args.stf_size
     npiy = 1
 
+    if args.px_init_weight == None:
+        # weight on init STF
+        args.px_init_weight = (1/args.data_sigma)/6e-1
     if args.px_weight == None:
         # weight for priors on E step: list, [boundaries, TV]
-        args.px_weight = [(1/args.data_sigma)/4e-1,
-                          (1/args.data_sigma)/4e0]
+        args.px_weight = [(1/args.data_sigma)/1e0,
+                          (1/args.data_sigma)/2e0]
     if args.logdet_weight == None:
         # weight on q_theta
         args.logdet_weight = (1/args.data_sigma)/1e1
@@ -503,7 +506,7 @@ if __name__ == "__main__":
                         help='kernel norm weight + weight on TV, M step (default None = function of data_sigma)')
     parser.add_argument('--prior_phi_weight', type=float, default=None,
                         help='weight on init GF on M step (default None = function of data_sigma)')
-    parser.add_argument('--px_init_weight', type=float, default=0,
+    parser.add_argument('--px_init_weight', type=float, default=None,
                         help='weight on init STF on E step prior, default 0')
     parser.add_argument('--phi_weight', type=float, default=1e-1,
                         help='weight on MSE loss with random STF and init GF, M step, (default: 1e-1)')
