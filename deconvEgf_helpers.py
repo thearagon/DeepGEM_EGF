@@ -82,7 +82,7 @@ def makeInit(ini, num_egf, num_layers, noise_amp=1.):
     out = []
     for i in range(num_layers-1):
         out.append(l0 + (np.random.rand()*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
-    out.append(init + (3*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
+    out.append(init + (2*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
 
     return np.array(out).copy()
 
@@ -144,7 +144,7 @@ def FForward(x, kernel_network, sigma, device):
 
 
 def EStep(z_sample, device, ytrue, img_generator, kernel_network, prior_x, prior_img, logdet_weight,
-          prior_x_weight, img_prior_weight, sigma, npix, npiy,logscale_factor, data_weight, device_ids=None):
+          prior_x_weight, img_prior_weight, sigma, npix, npiy,logscale_factor, data_weight, device_ids=None, num_egf=1):
 
     img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=device, device_ids=device_ids)
     y = FForward(img, kernel_network, sigma, device)
@@ -152,7 +152,7 @@ def EStep(z_sample, device, ytrue, img_generator, kernel_network, prior_x, prior
     ## log likelihood
     logqtheta = -logdet_weight*torch.mean(logdet)
     ## prior on trace
-    meas_err = data_weight*nn.MSELoss()(y, ytrue)
+    meas_err = data_weight*nn.MSELoss()(y, ytrue) / 10**(num_egf-1)
 
     ## prior on STF
     priorx = torch.mean(prior_x(img, prior_x_weight))
@@ -168,7 +168,7 @@ def EStep(z_sample, device, ytrue, img_generator, kernel_network, prior_x, prior
 
 
 def MStep(z_sample, x_sample, npix, npiy, device, ytrue, img_generator, kernel_network, phi_weight,
-          fwd_network, sigma, logscale_factor, prior_phi, prior_phi_weight, ker_softl1, kernel_norm_weight, k_weight, prior_k, device_ids=None):
+          fwd_network, sigma, logscale_factor, prior_phi, prior_phi_weight, ker_softl1, kernel_norm_weight, k_weight, prior_k, device_ids=None, num_egf=1):
 
     # inferred IMG
     img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=device, device_ids=device_ids)
@@ -198,7 +198,7 @@ def MStep(z_sample, x_sample, npix, npiy, device, ytrue, img_generator, kernel_n
 
     # loss = nn.MSELoss(reduction='none')(y, ytrue)
     # meas_err = (phi_weight/sigma)*torch.mean(torch.Tensor([torch.mean(loss[:,i,:])/torch.max(loss[:,i,:]) for i in range(loss.shape[1]) ]))
-    meas_err = (1e-1/sigma)*nn.MSELoss()(y, ytrue)
+    meas_err = (1e-1/sigma)*nn.MSELoss()(y, ytrue) / 10**(num_egf-1)
     loss =  pphi + meas_err + norm_k + prior
 
     return loss, pphi, meas_err, norm_k, prior

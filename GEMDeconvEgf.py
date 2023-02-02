@@ -27,7 +27,7 @@ def main_function(args):
                           (1/args.data_sigma)/2e0]
     if args.logdet_weight == None:
         # weight on q_theta
-        args.logdet_weight = (1/args.data_sigma)/1e1
+        args.logdet_weight = (1/args.data_sigma)/5e2
     if args.prior_phi_weight == None:
         # weight on init GF
         args.prior_phi_weight = (1/args.data_sigma)/1e2
@@ -216,7 +216,8 @@ def main_function(args):
                                                      prior_x, prior_img, logdet_weight,
                                                      args.px_init_weight, args.px_weight, args.data_sigma, npix, npiy,
                                                      logscale_factor, data_weight,
-                                                     args.device_ids if len(args.device_ids)>1 else None)
+                                                     args.device_ids if len(args.device_ids)>1 else None,
+                                                     args.num_egf)
             #             print(qloss, priorloss, mseloss)
             Eloss_list.append(Eloss.detach().cpu().numpy())
             Eloss_prior_list.append(priorloss.detach().cpu().numpy())
@@ -261,7 +262,8 @@ def main_function(args):
                                                            phi_priors, args.prior_phi_weight,
                                                            ker_softl1, args.kernel_norm_weight,
                                                            pk_weight, prior_k,
-                                                           args.device_ids if len(args.device_ids)>1 else None)
+                                                           args.device_ids if len(args.device_ids)>1 else None,
+                                                           args.num_egf)
 
             Mloss_list.append(Mloss.detach().cpu().numpy())
             Mloss_mse_list.append(mse.detach().cpu().numpy())
@@ -433,7 +435,7 @@ if __name__ == "__main__":
     # Configurations
     parser.add_argument('--btsize', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 1024)')
-    parser.add_argument('--num_epochs', type=int, default=20, metavar='N',
+    parser.add_argument('--num_epochs', type=int, default=30, metavar='N',
                         help='number of epochs to train (default: 3500)')
     parser.add_argument('--num_subepochsE', type=int, default=400, metavar='N',
                         help='number of epochs to train (default: 400)')
@@ -510,15 +512,20 @@ if __name__ == "__main__":
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/a3_dtw/'
-        args.trc = "/home/thea/projet/EGF/synth_wf/data/a3_m1_rec0_trace.npy"
-        args.egf = "/home/thea/projet/EGF/synth_wf/data/a3_m0_rec0_gf.npy"
-        args.stf0 ="/home/thea/projet/EGF/synth_wf/data/a3_m1_rec0_stf.npy"
-        args.gf_true = "/home/thea/projet/EGF/synth_wf/data/a3_m1_rec0_gf.npy"
-        args.stf_true = "/home/thea/projet/EGF/synth_wf/data/a3_m1_rec0_stf.npy"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/pala_test/'
+        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy2_PALA_trace.npy"
+        args.egf = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_multi_m2_trc.mseed"
+        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy2_PALA_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy2_PALA_gf.npy"
+        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy2_PALA_stf_true.npy"
         args.output = True
         args.synthetics = True
-        args.px_init_weight = 5e5
+        args.num_egf = 3
+        args.px_init_weight = 3e4
+        args.btsize = 15
+        args.num_subepochsE = 2
+        args.num_subepochsM = 2
+
 
     if args.dir is not None:
         args.PATH = args.dir
