@@ -198,7 +198,7 @@ def MStep(z_sample, x_sample, npix, npiy, device, ytrue, img_generator, kernel_n
 
     # loss = nn.MSELoss(reduction='none')(y, ytrue)
     # meas_err = (phi_weight/sigma)*torch.mean(torch.Tensor([torch.mean(loss[:,i,:])/torch.max(loss[:,i,:]) for i in range(loss.shape[1]) ]))
-    meas_err = (1e-1/sigma)*nn.MSELoss()(y, ytrue) / 10**(num_egf-2)
+    meas_err = (1e-1/sigma)*nn.MSELoss()(y, ytrue)
     loss =  pphi + meas_err + norm_k + prior
 
     return loss, pphi, meas_err, norm_k, prior
