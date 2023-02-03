@@ -152,7 +152,7 @@ def EStep(z_sample, device, ytrue, img_generator, kernel_network, prior_x, prior
     ## log likelihood
     logqtheta = -logdet_weight*torch.mean(logdet)
     ## prior on trace
-    meas_err = data_weight*nn.MSELoss()(y, ytrue) / 10**(num_egf-1)
+    meas_err = data_weight*nn.MSELoss()(y, ytrue)
 
     ## prior on STF
     priorx = torch.mean(prior_x(img, prior_x_weight))
