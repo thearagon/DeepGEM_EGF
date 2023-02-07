@@ -36,7 +36,7 @@ def main_function(args):
         args.kernel_norm_weight = (1/args.data_sigma)/1e4
     if args.num_egf > 1:
         args.prior_phi_weight *= 0.5
-        kernel_corrcoef_weight = args.prior_phi_weight
+        kernel_corrcoef_weight = args.prior_phi_weight/4
         # kernel_corrcoef_weight = 0
         # args.prior_phi_weight /= 2e0
     else:
