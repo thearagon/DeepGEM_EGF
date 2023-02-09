@@ -186,7 +186,7 @@ def MStep(z_sample, x_sample, npix, npiy, device, ytrue, img_generator, kernel_n
         kernel = kernel_network.generatekernel()
 
     ## Priors on init GF
-    prior = prior_phi_weight * prior_phi[0](kernel.squeeze(0))
+    prior = 3*prior_phi_weight * prior_phi[0](kernel.squeeze(0))
     prior += prior_phi[1](kernel.squeeze(0), prior_phi_weight )
 
     ## Soft L1

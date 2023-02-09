@@ -152,7 +152,7 @@ def main_function(args):
         prior_k = 0
         pk_weight = 0
 
-    ## Priors on E step (weight determined by px_weight)
+    ## Priors on E step
     prior_xtrue_L2 = lambda x, weight: weight * torch.sqrt(torch.sum((stf0 - x) ** 2))  ## L2
     prior_boundary = lambda x, weight: weight * torch.sum(torch.abs(x[:, :, 0]) * torch.abs(x[:, :, -1]))
     prior_dtw = lambda x, weight: weight * Loss_DTW(x, stf0) if weight > 0 else 0
