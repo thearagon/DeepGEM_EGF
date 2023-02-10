@@ -72,7 +72,7 @@ def trueForward(k, x, num_egf):
     return out
 
 
-def makeInit(ini, num_egf, num_layers, noise_amp=1.):
+def makeInit(ini, num_egf, num_layers, noise_amp=.1):
     """
     """
     init = ini
