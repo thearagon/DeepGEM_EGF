@@ -72,7 +72,7 @@ def trueForward(k, x, num_egf):
     return out
 
 
-def makeInit(init, num_egf, num_layers, device, noise_amp=.5):
+def makeInit(init, num_layers, device, noise_amp=.5):
     """
     """
     l0 = torch.zeros(init.shape).to(device=device)

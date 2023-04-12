@@ -109,7 +109,8 @@ def main_function(args):
     # kernel init
     kernel_network = KNetwork(gf,
                               num_layers=args.num_layers,
-                              num_egf=args.num_egf
+                              num_egf=args.num_egf,
+                              device=args.device
                               ).to(args.device)
 
     if args.reverse == True:
