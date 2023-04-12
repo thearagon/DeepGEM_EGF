@@ -198,9 +198,9 @@ def MStep(z_sample, x_sample, npix, npiy, device, ytrue, img_generator, kernel_n
 
 class img_logscale(nn.Module):
     """ Custom Linear layer but mimics a standard linear layer """
-    def __init__(self, device,scale=1):
+    def __init__(self, scale=1):
         super().__init__()
-        log_scale = torch.Tensor(torch.log(scale)*torch.ones(1, device=device))
+        log_scale = torch.Tensor(torch.log(scale)*torch.ones(1))
         self.log_scale = nn.Parameter(log_scale)
 
     def forward(self):
@@ -326,7 +326,7 @@ def Loss_multicorr(z):
 
     n = len(z)
     nbr_combi = np.math.factorial(n) / 2 / np.math.factorial(n-2)
-    coef = np.zeros(( int(nbr_combi) ,3))
+    coef = torch.zeros(( int(nbr_combi) ,3))
 
     for i,co in enumerate(itertools.combinations(range(n), 2)):
         for k in range(3):
@@ -340,7 +340,7 @@ def Loss_multicorr(z):
             coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
 
     # return 1 - torch.mean(torch.abs( coef ))
-    return np.mean(coef) / 10**(np.floor(np.log10(np.mean(coef))))
+    return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
 
 
 ######################################################################################################################
