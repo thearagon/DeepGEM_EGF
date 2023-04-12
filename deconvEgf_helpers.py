@@ -34,7 +34,7 @@ myred = '#c3553aff'
 myorange = '#f07101'
     
 class KNetwork(torch.nn.Module):
-    def __init__(self, ini, num_layers = 3, num_egf = 1):
+    def __init__(self, ini, device, num_layers = 3, num_egf = 1):
 
         super(KNetwork, self).__init__()
         self.num_layers = num_layers
@@ -72,13 +72,13 @@ def trueForward(k, x, num_egf):
     return out
 
 
-def makeInit(init, num_egf, num_layers, noise_amp=.5):
+def makeInit(init, num_egf, num_layers, device, noise_amp=.5):
     """
     """
-    l0 = torch.zeros(init.shape)
+    l0 = torch.zeros(init.shape).to(device=device)
     l0[:, :, init.shape[-1]//2] = 1.
 
-    out = torch.zeros(num_layers, init.shape[0], init.shape[1], init.shape[-1])
+    out = torch.zeros(num_layers, init.shape[0], init.shape[1], init.shape[-1]).to(device=device)
     for i in range(num_layers - 1):
         out[i] = l0 + (np.random.rand() * noise_amp / 100.) * torch.randn(l0.shape)
     out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape)
