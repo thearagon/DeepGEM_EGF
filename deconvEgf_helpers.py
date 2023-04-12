@@ -41,7 +41,7 @@ class KNetwork(torch.nn.Module):
         self.num_egf = num_egf
 
         ## initialize kernel
-        init = Tensor(makeInit(ini, self.num_egf, self.num_layers)[np.newaxis, :]).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
+        init = makeInit(ini, self.num_egf, self.num_layers).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
 
         self.layers = torch.nn.Parameter(init, requires_grad = True)
 
@@ -72,38 +72,19 @@ def trueForward(k, x, num_egf):
     return out
 
 
-def makeInit(ini, num_egf, num_layers, noise_amp=.1):
+def makeInit(init, num_egf, num_layers, noise_amp=.5):
     """
     """
-    init = ini
-    l0 = np.zeros(init.shape)
+    l0 = torch.zeros(init.shape)
     l0[:, :, init.shape[-1]//2] = 1.
 
-    out = []
-    for i in range(num_layers-1):
-        out.append(l0 + (np.random.rand()*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
-    out.append(init + (2*noise_amp /100.)* np.random.normal(-1, 1, l0.shape[-1]))
+    out = torch.zeros(num_layers, init.shape[0], init.shape[1], init.shape[-1])
+    for i in range(num_layers - 1):
+        out[i] = l0 + (np.random.rand() * noise_amp / 100.) * torch.randn(l0.shape)
+    out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape)
 
-    return np.array(out).copy()
+    return out
 
-
-# def makeInit(ini, num_egf, num_layers, noise_amp=1.):
-#     """
-#     """
-#     l0 = np.zeros(ini.shape)
-#     for e in range(num_egf):
-#         for c in [0,1,2]:
-#             S = scipy.fft.rfft(ini[e,c])
-#             S2 = S**(1./(num_layers+1) )
-#             s = scipy.fft.irfft(S2, n = ini.shape[-1])
-#             l0[e, c, :] = s
-#
-#     out = []
-#     for i in range(num_layers):
-#         out.append( l0/ np.amax(np.abs(l0)) )
-#         # out.append(np.random.rand()*l0 / np.amax(np.abs(l0)))
-#
-#     return np.array(out).copy()
 
 ######################################################################################################################
 
@@ -122,7 +103,7 @@ def GForward(z_sample, img_generator, npix, npiy, logscale_factor, device=None, 
         img_samp = img_samp.reshape((-1, npiy, npix))
     else:
         ini = 0.05*torch.randn(imginit.shape) + 0.9*imginit
-        img_samp = np.repeat(ini, [len(z_sample)], axis=0)
+        img_samp = torch.repeat(ini, [len(z_sample)], axis=0)
         img_samp = img_samp.reshape((-1, npiy, npix))
         img_samp = torch.Tensor(img_samp).to(device=device)
         logdet = 0
@@ -218,7 +199,7 @@ class img_logscale(nn.Module):
     """ Custom Linear layer but mimics a standard linear layer """
     def __init__(self, scale=1):
         super().__init__()
-        log_scale = torch.Tensor(np.log(scale)*np.ones(1))
+        log_scale = torch.Tensor(torch.log(scale)*torch.ones(1))
         self.log_scale = nn.Parameter(log_scale)
 
     def forward(self):
@@ -299,12 +280,19 @@ def dtw_classic(x, y, dist='square'):
     elif dist == 'absolute':
         dist_ = _absolute
 
-    x_mean = torch.mean(x, axis=(0,1))
-    n_timestamps_1, n_timestamps_2 = x.shape[-1], y.shape[-1]
-    cost_mat = torch.empty((n_timestamps_1, n_timestamps_2))
-    for j in range(n_timestamps_2):
-        for i in range(n_timestamps_1):
-            cost_mat[i, j] = dist_(x_mean[i], y[j])
+    if x.dim() > 1:
+        x_mean = torch.mean(x, axis=(0,1))
+        n_timestamps_1, n_timestamps_2 = x.shape[-1], y.shape[-1]
+        cost_mat = torch.empty((n_timestamps_1, n_timestamps_2))
+        for j in range(n_timestamps_2):
+            for i in range(n_timestamps_1):
+                cost_mat[i, j] = dist_(x_mean[i], y[j])
+    else:
+        n_timestamps_1, n_timestamps_2 = x.shape[-1], y.shape[-1]
+        cost_mat = torch.empty((n_timestamps_1, n_timestamps_2))
+        for j in range(n_timestamps_2):
+            for i in range(n_timestamps_1):
+                cost_mat[i, j] = dist_(x[i], y[j])
 
     acc_cost_mat = _accumulated_cost_matrix(cost_mat)
 
@@ -335,19 +323,24 @@ def Loss_DTW(z, z0):
 def Loss_multicorr(z):
     # calculates Pearson coeff/TV for every channel of every couple of EGF
 
-    # remove first and last peaks
-    z = z[:,:,20:-20]
     n = len(z)
     nbr_combi = np.math.factorial(n) / 2 / np.math.factorial(n-2)
     coef = torch.zeros(( int(nbr_combi) ,3))
 
     for i,co in enumerate(itertools.combinations(range(n), 2)):
         for k in range(3):
+            # Pearson coeff
             # coef[i,k] = torch.corrcoef(z[co, k, :])[0,1]
-            coef[i,k] = torch.mean(torch.abs(z[co[0], k, :] - z[co[1], k, :]) )
+
+            # TV
+            # coef[i,k] = torch.mean(torch.abs(z[co[0], k, :] - z[co[1], k, :]) )
+
+            # DTW
+            coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
 
     # return 1 - torch.mean(torch.abs( coef ))
-    return torch.mean(coef)
+    return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
+
 
 ######################################################################################################################
 

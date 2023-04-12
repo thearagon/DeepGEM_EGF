@@ -34,13 +34,15 @@ def main_function(args):
     if args.kernel_norm_weight == None:
         # + weight on TV
         args.kernel_norm_weight = (1/args.data_sigma)/1e4
-    if args.num_egf > 1:
+    if args.num_egf > 1 and args.kernel_corrcoef_weight == None:
         args.prior_phi_weight *= 0.5
-        kernel_corrcoef_weight = 0.
+        args.kernel_corrcoef_weight = (1/args.data_sigma)/1e3
         # kernel_corrcoef_weight = 0
         # args.prior_phi_weight /= 2e0
+    elif args.num_egf > 1 and args.kernel_corrcoef_weight != None:
+        args.prior_phi_weight *= 0.5
     else:
-        kernel_corrcoef_weight = 0.
+        args.kernel_corrcoef_weight = 0.
 
         ################################################ SET UP DATA ####################################################
     try:
@@ -105,8 +107,7 @@ def main_function(args):
     # ---- INITIALIZATION
 
     # kernel init
-    init = gf.detach().cpu().numpy()
-    kernel_network = KNetwork(init,
+    kernel_network = KNetwork(gf,
                               num_layers=args.num_layers,
                               num_egf=args.num_egf
                               ).to(args.device)
@@ -147,7 +148,7 @@ def main_function(args):
     prior_correl_multiEGF = lambda kernel, weight: weight * Loss_multicorr(kernel) if weight > 0 else 0
     if args.num_egf > 1 :
         prior_k = prior_correl_multiEGF
-        pk_weight = kernel_corrcoef_weight
+        pk_weight = args.kernel_corrcoef_weight
     else:
         prior_k = 0
         pk_weight = 0
@@ -158,8 +159,8 @@ def main_function(args):
     prior_dtw = lambda x, weight: weight * Loss_DTW(x, stf0) if weight > 0 else 0
     prior_TV_stf = lambda x, weight: weight * Loss_TV(x) ## Total Variation
 
-    flux = np.abs(np.sum(stf0.cpu().numpy()))
-    logscale_factor = img_logscale(scale=flux / (0.8 * np.shape(stf0)[0])).to(args.device)
+    flux = torch.abs(torch.sum(stf0))
+    logscale_factor = img_logscale(scale=flux / (0.8 * stf0.shape[0])).to(args.device)
     logdet_weight = args.logdet_weight #flux/(npix*args.data_sigma)
     prior_x = prior_dtw
     prior_img = [prior_boundary, prior_TV_stf]  # prior on STF, can be a list
@@ -448,7 +449,7 @@ if __name__ == "__main__":
     parser.add_argument('--EMFull', action='store_true', default=True,
                         help='True: E to convergence, M to convergence False: alternate E, M every epoch (default: False)')
     parser.add_argument('--num_layers', type=int, default=7, metavar='N',
-                        help='number of layers for kernel (default: 3)')
+                        help='number of layers for kernel (default: 7)')
     parser.add_argument('--stf_size', type=int, default=40, metavar='N',
                         help='length of STF (default: 40)')
     parser.add_argument('--num_egf', type=int, default=1, metavar='N',
@@ -501,6 +502,8 @@ if __name__ == "__main__":
                         help='weight on q_theta, E step prior (default None = function of data_sigma)')
     parser.add_argument('--kernel_norm_weight', type=float, default=None,
                         help='kernel norm weight + weight on TV, M step (default None = function of data_sigma)')
+    parser.add_argument('--kernel_corrcoef_weight', type=float, default=None,
+                        help='kernel correlation coef weight if multiple EGF, M step (default None = function of data_sigma)')
     parser.add_argument('--prior_phi_weight', type=float, default=None,
                         help='weight on init GF on M step (default None = function of data_sigma)')
     parser.add_argument('--px_init_weight', type=float, default=None,
@@ -521,8 +524,8 @@ if __name__ == "__main__":
         args.output = True
         args.synthetics = True
         args.num_egf = 3
-        args.px_init_weight = 3e4
-        args.btsize = 15
+        # args.px_init_weight = 3e4
+        args.btsize = 2
         args.num_subepochsE = 2
         args.num_subepochsM = 2
 
