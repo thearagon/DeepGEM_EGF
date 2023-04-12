@@ -39,9 +39,11 @@ class KNetwork(torch.nn.Module):
         super(KNetwork, self).__init__()
         self.num_layers = num_layers
         self.num_egf = num_egf
+        self.device = device
 
         ## initialize kernel
-        init = makeInit(ini, self.num_egf, self.num_layers).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
+        init = makeInit(ini, self.num_layers).reshape((self.num_layers, 1, 3*self.num_egf, ini.shape[-1]))
+        init = torch.Tensor(init).to(device=self.device)
 
         self.layers = torch.nn.Parameter(init, requires_grad = True)
 
@@ -55,14 +57,14 @@ class KNetwork(torch.nn.Module):
             for i in range(1, self.num_layers):
                 ker = F.conv1d(ker, self.layers[i].view(self.num_egf* 3, 1, self.layers[0].shape[-1]).flip(2),
                                padding='same', groups=3*self.num_egf)
-        out = ker / torch.max(torch.abs(ker))
+        out = ker / torch.max(torch.abs(ker)).to(device=self.device)
         return out.view(out.shape[0], self.num_egf, 3, out.shape[-1])
 
     def forward(self, x):
         k = self.generatekernel()
         out = F.conv1d(k.view(3*self.num_egf,1,k.shape[-1]),x.flip(2), padding='same' )
         out = torch.transpose(out, 0, 1)
-        out = out.view(out.shape[0], self.num_egf, 3, out.shape[-1])
+        out = out.view(out.shape[0], self.num_egf, 3, out.shape[-1]).to(device=self.device)
         return out
 
 def trueForward(k, x, num_egf):
@@ -72,16 +74,16 @@ def trueForward(k, x, num_egf):
     return out
 
 
-def makeInit(init, num_layers, device, noise_amp=.5):
+def makeInit(init, num_layers, noise_amp=.5):
     """
     """
-    l0 = torch.zeros(init.shape).to(device=device)
+    l0 = np.zeros(init.shape)
     l0[:, :, init.shape[-1]//2] = 1.
 
-    out = torch.zeros(num_layers, init.shape[0], init.shape[1], init.shape[-1]).to(device=device)
+    out = np.zeros((num_layers, init.shape[0], init.shape[1], init.shape[-1]))
     for i in range(num_layers - 1):
-        out[i] = l0 + (np.random.rand() * noise_amp / 100.) * torch.randn(l0.shape)
-    out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape)
+        out[i] = l0 + (np.random.rand() * noise_amp / 100.) * np.random.rand(*l0.shape)
+    out[-1] = init + (2 * noise_amp / 100.) * np.random.rand(*l0.shape)
 
     return out
 
