@@ -200,7 +200,7 @@ class img_logscale(nn.Module):
     """ Custom Linear layer but mimics a standard linear layer """
     def __init__(self, scale=1):
         super().__init__()
-        log_scale = torch.Tensor(torch.log(scale)*torch.ones(1))
+        log_scale = np.log(scale)*np.ones(1))
         self.log_scale = nn.Parameter(log_scale)
 
     def forward(self):
