@@ -198,9 +198,9 @@ def MStep(z_sample, x_sample, npix, npiy, device, ytrue, img_generator, kernel_n
 
 class img_logscale(nn.Module):
     """ Custom Linear layer but mimics a standard linear layer """
-    def __init__(self, scale=1):
+    def __init__(self, device, scale=1):
         super().__init__()
-        log_scale = torch.Tensor(torch.log(scale)*np.ones(1))
+        log_scale = torch.Tensor(torch.log(scale)*torch.ones(1, device=device))
         self.log_scale = nn.Parameter(log_scale)
 
     def forward(self):
