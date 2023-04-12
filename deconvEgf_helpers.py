@@ -76,18 +76,13 @@ def trueForward(k, x, num_egf):
 def makeInit(init, num_layers, device, noise_amp=.5):
     """
     """
-    l0 = torch.zeros(init.shape)
+    l0 = torch.zeros(init.shape, device=device)
     l0[:, :, init.shape[-1]//2] = 1.
-    l0 = l0.to(device=device)
 
-    out = torch.zeros(num_layers, init.shape[0], init.shape[1], init.shape[-1])
-    out = out.to(device=device)
+    out = torch.zeros(num_layers, init.shape[0], init.shape[1], init.shape[-1], device=device)
     for i in range(num_layers - 1):
-        out[i] = l0 + (torch.randn(1)[0] * noise_amp / 100.) * torch.randn(l0.shape)
-    print(l0.get_device())
-    print(out.get_device())
-    print(init.get_device())
-    out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape)
+        out[i] = l0 + (torch.randn(1, device=device)[0] * noise_amp / 100.) * torch.randn(l0.shape, device=device)
+    out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
 
     return out
 
@@ -331,7 +326,7 @@ def Loss_multicorr(z):
 
     n = len(z)
     nbr_combi = np.math.factorial(n) / 2 / np.math.factorial(n-2)
-    coef = torch.zeros(( int(nbr_combi) ,3))
+    coef = np.zeros(( int(nbr_combi) ,3))
 
     for i,co in enumerate(itertools.combinations(range(n), 2)):
         for k in range(3):
@@ -345,7 +340,7 @@ def Loss_multicorr(z):
             coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
 
     # return 1 - torch.mean(torch.abs( coef ))
-    return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
+    return np.mean(coef) / 10**(np.floor(np.log10(np.mean(coef))))
 
 
 ######################################################################################################################
