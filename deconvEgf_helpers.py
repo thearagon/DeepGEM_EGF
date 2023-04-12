@@ -282,15 +282,15 @@ def dtw_classic(x, y, dist='square'):
         dist_ = _absolute
 
     if x.dim() > 1:
-        x_mean = torch.mean(x, axis=(0,1))
+        x_mean = np.mean(x, axis=(0,1))
         n_timestamps_1, n_timestamps_2 = x.shape[-1], y.shape[-1]
-        cost_mat = torch.empty((n_timestamps_1, n_timestamps_2))
+        cost_mat = np.empty((n_timestamps_1, n_timestamps_2))
         for j in range(n_timestamps_2):
             for i in range(n_timestamps_1):
                 cost_mat[i, j] = dist_(x_mean[i], y[j])
     else:
         n_timestamps_1, n_timestamps_2 = x.shape[-1], y.shape[-1]
-        cost_mat = torch.empty((n_timestamps_1, n_timestamps_2))
+        cost_mat = np.empty((n_timestamps_1, n_timestamps_2))
         for j in range(n_timestamps_2):
             for i in range(n_timestamps_1):
                 cost_mat[i, j] = dist_(x[i], y[j])
@@ -299,22 +299,22 @@ def dtw_classic(x, y, dist='square'):
 
     dtw_dist = acc_cost_mat[-1, -1]
     if dist == 'square':
-        dtw_dist = torch.sqrt(dtw_dist)
+        dtw_dist = np.sqrt(dtw_dist)
 
     return dtw_dist
 
 def Loss_TSV(z, z0):
-    return torch.mean( (z - z0)**2 )
+    return np.mean( (z - z0)**2 )
 
 def Loss_TV_3c(z):
-    loss =  torch.abs(z[:, 1::] - z[:, 0:-1])
-    TV = torch.mean( torch.Tensor( [torch.mean( loss[i,:])/torch.max(loss[i,:]) for i in range(loss.shape[0]) ]))
+    loss =  np.abs(z[:, 1::] - z[:, 0:-1])
+    TV = np.mean( np.Tensor( [np.mean( loss[i,:])/np.max(loss[i,:]) for i in range(loss.shape[0]) ]))
     return TV
 
 def Loss_TV(z):
     # total variation loss
-    # return torch.mean( torch.abs(z[:, 1::] - z[:, 0:-1]), (-1))
-    return torch.mean( torch.abs(z[:,:, 1::] - z[:,:, 0:-1]))
+    # return np.mean( np.abs(z[:, 1::] - z[:, 0:-1]), (-1))
+    return np.mean( np.abs(z[:,:, 1::] - z[:,:, 0:-1]))
 
 def Loss_DTW(z, z0):
     # Dynamic Time Warping loss with initial STF
@@ -331,15 +331,15 @@ def Loss_multicorr(z):
     for i,co in enumerate(itertools.combinations(range(n), 2)):
         for k in range(3):
             # Pearson coeff
-            # coef[i,k] = torch.corrcoef(z[co, k, :])[0,1]
+            # coef[i,k] = np.corrcoef(z[co, k, :])[0,1]
 
             # TV
-            # coef[i,k] = torch.mean(torch.abs(z[co[0], k, :] - z[co[1], k, :]) )
+            # coef[i,k] = np.mean(np.abs(z[co[0], k, :] - z[co[1], k, :]) )
 
             # DTW
             coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
 
-    # return 1 - torch.mean(torch.abs( coef ))
+    # return 1 - np.mean(np.abs( coef ))
     return np.mean(coef) / 10**(np.floor(np.log10(np.mean(coef))))
 
 
