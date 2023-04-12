@@ -81,6 +81,9 @@ def makeInit(init, num_layers, noise_amp=.5):
     out = torch.zeros(num_layers, init.shape[0], init.shape[1], init.shape[-1])
     for i in range(num_layers - 1):
         out[i] = l0 + (torch.randn(1)[0] * noise_amp / 100.) * torch.randn(l0.shape)
+    print(l0.get_device)
+    print(out.get_device)
+    print(init.get_device)
     out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape)
 
     return out
