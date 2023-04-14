@@ -4,8 +4,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
-# from torch.nn import MSELoss
 
 import os
 import numpy as np
@@ -14,11 +12,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 import json
-# import math
 import itertools
 import scipy
 from scipy import signal
-# import argparse
+from pytorch_softdtw_cuda import soft_dtw_cuda as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
 
 from generative_model import realnvpfc_model
 import obspy
@@ -321,30 +318,33 @@ def Loss_DTW(z, z0):
     # Time shift insensitive
     return dtw_classic(z, z0)
 
-def Loss_multicorr(z):
+
+def Loss_multicorr(z, args):
     # calculates Pearson coeff/TV for every channel of every couple of EGF
 
     n = len(z)
     nbr_combi = np.math.factorial(n) / 2 / np.math.factorial(n-2)
     coef = torch.zeros(( int(nbr_combi) ,3))
 
+    sdtw = soft_dtw_cuda.SoftDTW(use_cuda=True if 'cuda' in args.device else False, gamma=0.1)
+
     for i,co in enumerate(itertools.combinations(range(n), 2)):
-        for k in range(3):
+        # for k in range(3):
             # Pearson coeff
-            # coef[i,k] = torch.corrcoef(z[co, k, :])[0,1]
+            # coef[i,k] = 1 - torch.corrcoef(z[co, k, :])[0,1]
 
             # TV
             # coef[i,k] = torch.mean(torch.abs(z[co[0], k, :] - z[co[1], k, :]) )
 
             # DTW
-            from fastdtw import fastdtw
             # coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
-            coef[i,k], p = fastdtw(z[co[0], k, :].cpu().numpy(),
-                                   z[co[1], k, :].cpu().numpy())
+            # coef[i,k] = Loss_DTW(z[co[0], k, :],
+            #                      z[co[1], k, :],
+            #                      args)
+        coef[i] = sdtw(z[None,co[0], :, :],
+                       z[None,co[1], :, :])
 
-
-    # return 1 - torch.mean(torch.abs( coef ))
-    return torch.mean(torch.Tensor(coef)) / 10**(torch.floor(torch.log10(torch.mean(coef))))
+    return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
 
 
 ######################################################################################################################

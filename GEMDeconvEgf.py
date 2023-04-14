@@ -146,7 +146,7 @@ def main_function(args):
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)  ## L1
     prior_TSV = lambda kernel, weight: weight * Loss_TSV(kernel, gf) if weight > 0 else 0 ## Total Variation
     phi_priors = [f_phi_prior, prior_TSV]  ## norms on init GF
-    prior_correl_multiEGF = lambda kernel, weight: weight * Loss_multicorr(kernel) if weight > 0 else 0
+    prior_correl_multiEGF = lambda kernel, weight: weight * Loss_multicorr(kernel, args) if weight > 0 else 0
     if args.num_egf > 1 :
         prior_k = prior_correl_multiEGF
         pk_weight = args.kernel_corrcoef_weight
