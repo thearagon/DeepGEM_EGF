@@ -242,7 +242,7 @@ class stf_generator(nn.Module):
 
 ######################################################################################################################
 
-def dtw_classic(x, y, dist='square'):
+def dtw_classic(x, y, dist='absolute'):
     """Classic Dynamic Time Warping (DTW) distance between two time series.
 
     References
@@ -257,7 +257,7 @@ def dtw_classic(x, y, dist='square'):
     Pyts, A Python Package for Time Series Classification
     """
     def _square(x, y):
-        return (x - y) ** 2
+        return torch.square(x - y)
 
     def _absolute(x, y):
         return torch.abs(x - y)
@@ -337,7 +337,11 @@ def Loss_multicorr(z):
             # coef[i,k] = torch.mean(torch.abs(z[co[0], k, :] - z[co[1], k, :]) )
 
             # DTW
-            coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
+            from fastdtw import fastdtw
+            # coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
+            coef[i,k], p = fastdtw(z[co[0], k, :].detach().numpy(),
+                                   z[co[1], k, :].detach().numpy())
+
 
     # return 1 - torch.mean(torch.abs( coef ))
     return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
