@@ -339,12 +339,12 @@ def Loss_multicorr(z):
             # DTW
             from fastdtw import fastdtw
             # coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
-            coef[i,k], p = fastdtw(z[co[0], k, :].detach().numpy(),
-                                   z[co[1], k, :].detach().numpy())
+            coef[i,k], p = fastdtw(z[co[0], k, :].cpu().numpy(),
+                                   z[co[1], k, :].cpu().numpy())
 
 
     # return 1 - torch.mean(torch.abs( coef ))
-    return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
+    return torch.mean(torch.Tensor(coef)) / 10**(torch.floor(torch.log10(torch.mean(coef))))
 
 
 ######################################################################################################################
