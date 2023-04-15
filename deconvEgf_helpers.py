@@ -327,7 +327,7 @@ def Loss_multicorr(z, args):
     nbr_combi = np.math.factorial(n) / 2 / np.math.factorial(n-2)
     coef = torch.zeros(( int(nbr_combi) ,3))
 
-    sdtw = soft_dtw_cuda.SoftDTW(use_cuda=True if 'cuda' in args.device else False, gamma=0.1)
+    sdtw = soft_dtw_cuda.SoftDTW(use_cuda= False, gamma=0.1)
 
     for i,co in enumerate(itertools.combinations(range(n), 2)):
         # for k in range(3):
