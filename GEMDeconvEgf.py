@@ -207,6 +207,20 @@ def main_function(args):
             plot_res(0, 0, image, learned_kernel, stf0, gf, args)
 
     for k in range(args.num_epochs):
+        # to remove
+        z_sample = torch.randn(args.btsize, npix).to(device=args.device)
+        x_sample = torch.randn(args.btsize, npix).to(device=args.device).reshape((-1, npiy, npix))
+
+        Mloss, philoss, mse, kernorm, priorphi = MStep(z_sample, x_sample, npix, npiy, args.device, trc_ext,
+                                                       stf_gen, kernel_network, args.phi_weight,
+                                                       FTrue, args.data_sigma, logscale_factor,
+                                                       phi_priors, args.prior_phi_weight,
+                                                       ker_softl1, args.kernel_norm_weight,
+                                                       pk_weight, prior_k,
+                                                       args.device_ids if len(args.device_ids) > 1 else None,
+                                                       args.num_egf)
+        print('OK')
+        # / to remove
 
         ############################ E STEP Update Generator Network #######################
         # Solve for the STF

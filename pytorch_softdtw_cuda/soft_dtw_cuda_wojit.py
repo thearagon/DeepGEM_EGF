@@ -188,7 +188,7 @@ def compute_softdtw(D, gamma, bandwidth):
     M = D.shape[2]
     R = np.ones((B, N + 2, M + 2)) * np.inf
     R[:, 0, 0] = 0
-    for b in prange(B):
+    for b in range(B):
         for j in range(1, M + 1):
             for i in range(1, N + 1):
 
@@ -218,7 +218,7 @@ def compute_softdtw_backward(D_, R, gamma, bandwidth):
     R[:, :, -1] = -np.inf
     R[:, -1, :] = -np.inf
     R[:, -1, -1] = R[:, -2, -2]
-    for k in prange(B):
+    for k in range(B):
         for j in range(M, 0, -1):
             for i in range(N, 0, -1):
 

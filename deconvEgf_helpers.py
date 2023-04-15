@@ -15,10 +15,11 @@ import json
 import itertools
 import scipy
 from scipy import signal
-from pytorch_softdtw_cuda import soft_dtw_cuda as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
-
-from generative_model import realnvpfc_model
 import obspy
+
+from pytorch_softdtw_cuda import soft_dtw_cuda as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
+from generative_model import realnvpfc_model
+
 
 
 sns.set_style("white", {'axes.edgecolor': 'darkgray',
