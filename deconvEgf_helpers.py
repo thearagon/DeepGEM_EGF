@@ -324,12 +324,15 @@ def Loss_multicorr(z, args):
     # calculates Pearson coeff/TV for every channel of every couple of EGF
 
     n = len(z)
-    nbr_combi = np.math.factorial(n) / 2 / np.math.factorial(n-2)
-    coef = torch.zeros(( int(nbr_combi) ,3))
+    comb = torch.combinations(torch.arange(0, n), 2)
 
     sdtw = soft_dtw_cuda.SoftDTW(use_cuda= False, gamma=0.1)
+    coef = sdtw(z[comb[:,0], :, :], z[comb[:,1], :, :])
 
-    for i,co in enumerate(itertools.combinations(range(n), 2)):
+    # nbr_combi = np.math.factorial(n) / 2 / np.math.factorial(n-2)
+    # coef = torch.zeros(( int(nbr_combi) ,3))
+
+    # for i,co in enumerate(itertools.combinations(range(n), 2)):
         # for k in range(3):
             # Pearson coeff
             # coef[i,k] = 1 - torch.corrcoef(z[co, k, :])[0,1]
@@ -342,9 +345,6 @@ def Loss_multicorr(z, args):
             # coef[i,k] = Loss_DTW(z[co[0], k, :],
             #                      z[co[1], k, :],
             #                      args)
-        coef[i] = sdtw(z[None,co[0], :, :],
-                       z[None,co[1], :, :])
-
     return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
 
 
