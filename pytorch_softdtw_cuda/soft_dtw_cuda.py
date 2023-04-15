@@ -121,6 +121,8 @@ class _SoftDTWCUDA(Function):
     def forward(ctx, D, gamma, bandwidth):
         
         print(D.device)
+        print(cuda.as_cuda_array(D.detach()) )
+        
         dev = D.device
         dtype = D.dtype
         gamma = torch.cuda.FloatTensor([gamma])
