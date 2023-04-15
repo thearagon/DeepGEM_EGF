@@ -121,6 +121,7 @@ class _SoftDTWCUDA(Function):
     def forward(ctx, D, gamma, bandwidth):
         
         print(D.device)
+        print(D.detach())
         print(cuda.as_cuda_array(D.detach()) )
         
         dev = D.device
