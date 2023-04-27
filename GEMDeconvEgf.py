@@ -481,7 +481,7 @@ if __name__ == "__main__":
     # parameters
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--Elr', type=float, default=5e-2,
+    parser.add_argument('--Elr', type=float, default=1e-3,
                         help='learning rate(default: 1e-4)')
     parser.add_argument('--Mlr', type=float, default=1e-3,
                         help='learning rate(default: 1e-4)')
@@ -509,7 +509,7 @@ if __name__ == "__main__":
         matplotlib.use('TkAgg')
         args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy5_CSH_10/'
         args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_trc_detrend.mseed"
-        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth//multi_semisy5_CSH_m2_gf.mseed"
+        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_m2_gf.mseed"
         args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_stf_true.npy"
         args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_gf_true.npy"
         args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_stf_true.npy"

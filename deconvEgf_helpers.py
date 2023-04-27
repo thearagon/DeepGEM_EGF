@@ -365,6 +365,7 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
     stdev_img = np.std(image, axis=0)
     gf_np = gf.detach().cpu().numpy()
     stf0 = stf0.detach().cpu().numpy()
+    trc = trc.detach().cpu().numpy()
     mean_trc = np.mean(learned_trc, axis=0)
     stdev_trc = np.std(learned_trc, axis=0)
 
