@@ -20,7 +20,7 @@ def main_function(args):
 
     if args.px_init_weight == None:
         # weight on init STF
-        args.px_init_weight = (1/args.data_sigma)/6e-1
+        args.px_init_weight = (1/args.data_sigma)/1e-1 #6e-1
     if args.px_weight == None:
         # weight for priors on E step: list, [boundaries, TV]
         args.px_weight = [(1/args.data_sigma)/1e0,
@@ -30,14 +30,14 @@ def main_function(args):
         args.logdet_weight = (1/args.data_sigma)/5e2
     if args.prior_phi_weight == None:
         # weight on init GF
-        args.prior_phi_weight = (1/args.data_sigma)/1e2
+        args.prior_phi_weight = (1/args.data_sigma)/1e2 #1e2
     if args.kernel_norm_weight == None:
         # + weight on TV
-        args.kernel_norm_weight = (1/args.data_sigma)/1e4
+        args.kernel_norm_weight = (1/args.data_sigma)/1e6 #1e4
     if args.num_egf > 1 and args.kernel_corrcoef_weight == None:
-        args.prior_phi_weight *= 0.5
-        args.kernel_corrcoef_weight = (1/args.data_sigma)/2e3
-        # kernel_corrcoef_weight = 0
+        # args.prior_phi_weight *= 0.1
+        args.kernel_corrcoef_weight = (1/args.data_sigma)/8e5
+        # args.kernel_corrcoef_weight = 0
         # args.prior_phi_weight /= 2e0
     elif args.num_egf > 1 and args.kernel_corrcoef_weight != None:
         args.prior_phi_weight *= 0.5
@@ -55,7 +55,8 @@ def main_function(args):
     try:
         st_gf = obspy.read("{}".format(args.egf))
         gf = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
-        gf = gf.reshape(gf.shape[0]//3, 3, gf.shape[1])
+        ## Order in stream is all traces E, all traces N, all traces Z
+        gf = gf.reshape(gf.shape[0]//3, 3, gf.shape[1], order='F')
     except TypeError:
         st_gf = None
         gf = np.load("{}".format(args.egf))
@@ -74,9 +75,9 @@ def main_function(args):
 
     ## Normalize everything
     trc = trc/ np.amax(np.abs(trc))
-    # gf = gf / np.amax(np.abs(gf))   # TO TEST
-    for i in range(gf.shape[0]):
-        gf[i] = gf[i]/ np.amax(np.abs(gf[i]))
+    gf = gf / np.amax(np.abs(gf))   # TO TEST
+    # for i in range(gf.shape[0]):
+    #     gf[i] = gf[i]/ np.amax(np.abs(gf[i]))
     stf0 = stf0 / np.amax(stf0)
 
     ## If we know the truth
@@ -90,7 +91,7 @@ def main_function(args):
             gf_true = np.load("{}".format(args.gf_true))
             gf_true = gf_true.reshape(3, gf_true.shape[1])
         stf_true = np.load("{}".format(args.stf_true))
-        gf_true = gf_true/ np.amax(np.abs(gf_true))
+        gf_true = gf_true / np.amax(np.abs(gf_true))
         stf_true = stf_true / np.amax(stf_true)
 
     #
@@ -190,9 +191,9 @@ def main_function(args):
                            device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
     image = img.detach().cpu().numpy()
     y = FForward(img, kernel_network, args.data_sigma, args.device)
-    image_blur = y.detach().cpu().numpy()
+    inferred_trace = y.detach().cpu().numpy()
 
-    # print("Check Initialization", image.max(), image.min(), image_blur.max(), image_blur.min())
+    # print("Check Initialization", image.max(), image.min(), inferred_trace.max(), inferred_trace.min())
 
     if len(args.device_ids) > 1:
         learned_kernel = kernel_network.module.generatekernel().detach().cpu().numpy()[0]
@@ -200,11 +201,11 @@ def main_function(args):
         learned_kernel = kernel_network.generatekernel().detach().cpu().numpy()[0]
 
     if args.output == True:
-    # Plot init
+        # Plot init
         if args.synthetics == True:
-            plot_res(0, 0, image, learned_kernel, stf0, gf, args, true_gf = gf_true, true_stf = stf_true)
+            plot_res(0, 0, image, learned_kernel, inferred_trace, stf0, gf, trc, args, true_gf=gf_true, true_stf=stf_true)
         else:
-            plot_res(0, 0, image, learned_kernel, stf0, gf, args)
+            plot_res(0, 0, image, learned_kernel, inferred_trace, stf0, gf, trc, args)
 
     for k in range(args.num_epochs):
 
@@ -327,16 +328,14 @@ def main_function(args):
                 print(''.join(f"{x:.2f}, " for x in [Mloss_list[-1], Mloss_phiprior_list[-1], Mloss_kernorm_list[-1], Mloss_mse_list[-1]]))
 
         if args.output == True:
+            y = FForward(img, kernel_network, args.data_sigma, args.device)
+            inferred_trace = y.detach().cpu().numpy()
             # Plot results
             if args.synthetics == True:
-                plot_res(k, k_sub,
-                         image, learned_kernel,
-                         stf0, gf, args,
-                         true_gf = gf_true, true_stf = stf_true)
+                plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
+                         true_stf=stf_true)
             else:
-                plot_res(k, k_sub,
-                         image, learned_kernel,
-                         stf0, gf, args)
+                plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args)
 
     if args.output == True:
         fig, ax = plt.subplots()
@@ -380,7 +379,7 @@ def main_function(args):
                            device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
     image = img.detach().cpu().numpy()
     y = FForward(img, kernel_network, args.data_sigma, args.device)
-    image_blur = y.detach().cpu().numpy()
+    inferred_trace = y.detach().cpu().numpy()
 
     # if args.output == True:
     np.save("{}/Data/reconSTF.npy".format(args.PATH), image)
@@ -389,11 +388,11 @@ def main_function(args):
         st_trc_sd = st_trc.copy()
         st_trc_mn = st_trc.copy()
         for i in range(3):
-            st_trc_mn[i].data = np.mean(image_blur, axis=(0,1))[i]
-            st_trc_sd[i].data = np.std(image_blur, axis=(0,1))[i]
+            st_trc_mn[i].data = np.mean(inferred_trace, axis=(0,1))[i]
+            st_trc_sd[i].data = np.std(inferred_trace, axis=(0,1))[i]
         st_trc_mn.write("{}/{}_out_mean.mseed".format(args.PATH, args.trc.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
         st_trc_sd.write("{}/{}_out_std.mseed".format(args.PATH, args.trc.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
-    np.save("{}/Data/outTRC.npy".format(args.PATH), image_blur)
+    np.save("{}/Data/outTRC.npy".format(args.PATH), inferred_trace)
 
     if st_gf is not None:
         st_gf_out = st_gf.copy()
@@ -405,28 +404,20 @@ def main_function(args):
 
     # Plot results
     if args.synthetics == True and st_trc is None:
-        plot_res(k, k_sub,
-                 image, learned_kernel,
-                 stf0, gf, args,
-                 true_gf=gf_true, true_stf=stf_true)
-        plot_trace(trc, image_blur, args)
+        plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
+                     true_stf=stf_true)
+        plot_trace(trc, inferred_trace, args)
     elif args.synthetics == True and st_gf is not None and st_trc is not None:
-        plot_res(k, k_sub,
-                 image, learned_kernel,
-                 stf0, gf, args,
-                 true_gf=gf_true, true_stf=stf_true)
-        plot_st(st_trc, st_gf, image_blur, learned_kernel, image, args)
+        plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
+                 true_stf=stf_true)
+        plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args)
     elif st_gf is not None and st_trc is not None:
-        plot_st(st_trc, st_gf, image_blur, learned_kernel, image, args)
+        plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args)
     else:
-        plot_res(k, k_sub,
-                 image, learned_kernel,
-                 stf0, gf, args)
+        plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args)
+        plot_trace(trc, inferred_trace, args)
 
-        plot_trace(trc, image_blur, args)
-        # plot_trace_diff(trc, image_blur, args)
-
-    # calc_corr_wtrue(image_blur, image, learned_kernel, trc, stf0, gf)
+    # calc_corr_wtrue(inferred_trace, image, learned_kernel, trc, stf0, gf)
 
     return
 
@@ -437,7 +428,7 @@ if __name__ == "__main__":
     # Configurations
     parser.add_argument('--btsize', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 1024)')
-    parser.add_argument('--num_epochs', type=int, default=30, metavar='N',
+    parser.add_argument('--num_epochs', type=int, default=20, metavar='N',
                         help='number of epochs to train (default: 3500)')
     parser.add_argument('--num_subepochsE', type=int, default=400, metavar='N',
                         help='number of epochs to train (default: 400)')
@@ -451,7 +442,7 @@ if __name__ == "__main__":
                         help='True: E to convergence, M to convergence False: alternate E, M every epoch (default: False)')
     parser.add_argument('--num_layers', type=int, default=7, metavar='N',
                         help='number of layers for kernel (default: 7)')
-    parser.add_argument('--stf_size', type=int, default=40, metavar='N',
+    parser.add_argument('--stf_size', type=int, default=100, metavar='N',
                         help='length of STF (default: 40)')
     parser.add_argument('--num_egf', type=int, default=1, metavar='N',
                         help='number of EGF (default: 1)')
@@ -490,7 +481,7 @@ if __name__ == "__main__":
     # parameters
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--Elr', type=float, default=1e-3,
+    parser.add_argument('--Elr', type=float, default=5e-2,
                         help='learning rate(default: 1e-4)')
     parser.add_argument('--Mlr', type=float, default=1e-3,
                         help='learning rate(default: 1e-4)')
@@ -516,19 +507,19 @@ if __name__ == "__main__":
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/pala_test/'
-        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy2_PALA_trace.npy"
-        args.egf = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_multi_m2_trc.mseed"
-        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy2_PALA_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy2_PALA_gf.npy"
-        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy2_PALA_stf_true.npy"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy5_CSH_10/'
+        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_trc_detrend.mseed"
+        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth//multi_semisy5_CSH_m2_gf.mseed"
+        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_gf_true.npy"
+        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_stf_true.npy"
         args.output = True
         args.synthetics = True
-        args.num_egf = 3
+        args.num_egf = 2
         # args.px_init_weight = 3e4
-        args.btsize = 2
-        args.num_subepochsE = 2
-        args.num_subepochsM = 2
+        args.btsize = 1024
+        args.num_subepochsE = 40
+        args.num_subepochsM = 40
 
 
     if args.dir is not None:

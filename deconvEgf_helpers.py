@@ -17,7 +17,7 @@ import scipy
 from scipy import signal
 import obspy
 
-from pytorch_softdtw_cuda import soft_dtw_cuda as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
+from pytorch_softdtw_cuda import soft_dtw_cuda_wojit as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
 from generative_model import realnvpfc_model
 
 
@@ -49,25 +49,29 @@ class KNetwork(torch.nn.Module):
         self.load_state_dict(checkpoint['model_state_dict'], strict=True)
         
     def generatekernel(self):
-        ker = self.layers[0]
         if self.num_layers >= 2:
+            ker = self.layers[0]
             for i in range(1, self.num_layers):
                 ker = F.conv1d(ker, self.layers[i].view(self.num_egf* 3, 1, self.layers[0].shape[-1]).flip(2),
                                padding='same', groups=3*self.num_egf)
-        out = ker / torch.max(torch.abs(ker))
-        return out.view(out.shape[0], self.num_egf, 3, out.shape[-1])
+        else:
+            ker = self.layers[0]
+
+        # out = ker / torch.max(torch.abs(ker))
+        out = ker
+        return out.reshape(out.shape[0], self.num_egf, 3, out.shape[-1])
 
     def forward(self, x):
         k = self.generatekernel()
-        out = F.conv1d(k.view(3*self.num_egf,1,k.shape[-1]),x.flip(2), padding='same' )
+        out = F.conv1d(k.reshape(3*self.num_egf,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
-        out = out.view(out.shape[0], self.num_egf, 3, out.shape[-1])
+        out = out.reshape(x.shape[0], self.num_egf, 3, out.shape[-1])
         return out
 
 def trueForward(k, x, num_egf):
-    out = F.conv1d(k.view(3*num_egf,1, k.shape[-1]), x.flip(2), padding='same', groups=1)
+    out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
-    out = out.view(out.shape[0], num_egf, 3, out.shape[-1])
+    out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
     return out
 
 
@@ -101,7 +105,7 @@ def GForward(z_sample, img_generator, npix, npiy, logscale_factor, device=None, 
             img_samp, logdet = img_generator.reverse(z_sample)
         img_samp = img_samp.reshape((-1, npiy, npix))
     else:
-        ini = 0.05*torch.randn(imginit.shape) + 0.9*imginit
+        ini = 0.05*torch.randn(imginit.shape) + 0.95*imginit
         img_samp = torch.repeat(ini, [len(z_sample)], axis=0)
         img_samp = img_samp.reshape((-1, npiy, npix))
         img_samp = torch.Tensor(img_samp).to(device=device)
@@ -316,7 +320,7 @@ def Loss_TV(z):
 
 def Loss_DTW(z, z0):
     # Dynamic Time Warping loss with initial STF
-    # Time shift insensitive
+    # not using fastDTW because does not allow different sizes for z and z0
     return dtw_classic(z, z0)
 
 
@@ -356,20 +360,25 @@ def Loss_multicorr(z, args):
 
 ######################################################################################################################
 
-def plot_res(k, k_sub, image, learned_k, stf0, gf, args, true_stf=None, true_gf=None):
+def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_stf=None, true_gf=None):
     mean_img = np.mean(image, axis=0)
     stdev_img = np.std(image, axis=0)
     gf_np = gf.detach().cpu().numpy()
     stf0 = stf0.detach().cpu().numpy()
+    mean_trc = np.mean(learned_trc, axis=0)
+    stdev_trc = np.std(learned_trc, axis=0)
 
     for e in range(args.num_egf):
         learned_kernel = learned_k[e]
         gf = gf_np[e]
-        fig = plt.figure(figsize=(8, 3))
-        ax1 = plt.subplot2grid((6, 4), (0, 0), colspan=3, rowspan=2)
-        ax2 = plt.subplot2grid((6, 4), (2, 0), colspan=3, rowspan=2)
-        ax3 = plt.subplot2grid((6, 4), (4, 0), colspan=3, rowspan=2)
-        ax4 = plt.subplot2grid((6, 4), (2, 3), colspan=1, rowspan=4)
+        fig = plt.figure(figsize=(8, 5))
+        ax1 = plt.subplot2grid((12,4), (0, 0), colspan=3, rowspan=2)
+        ax2 = plt.subplot2grid((12,4), (2, 0), colspan=3, rowspan=2)
+        ax3 = plt.subplot2grid((12,4), (4, 0), colspan=3, rowspan=2)
+        ax4 = plt.subplot2grid((12,4), (2, 3), colspan=1, rowspan=4)
+        ax5 = plt.subplot2grid((12,4), (6, 0), colspan=3, rowspan=2)
+        ax6 = plt.subplot2grid((12,4), (8, 0), colspan=3, rowspan=2)
+        ax7 = plt.subplot2grid((12,4), (10, 0), colspan=3, rowspan=2)
         x = np.arange(0, gf.shape[1])
 
         if true_gf is not None:
@@ -401,6 +410,31 @@ def plot_res(k, k_sub, image, learned_k, stf0, gf, args, true_stf=None, true_gf=
         ax1.get_xaxis().set_visible(False)
         ax2.get_xaxis().set_visible(False)
 
+        # trace
+        learned_trace = mean_trc[e]
+
+        ax5.plot(trc[0], lw=0.5, color=myred)
+        ax5.plot(learned_trace[0], lw=0.5, color=myorange, zorder=2)
+        ax5.text(0.03, 0.9, 'E',
+                 horizontalalignment='right',
+                 verticalalignment='top',
+                 transform=ax5.transAxes)
+        ax6.plot(trc[1], lw=0.5, color=myred)
+        ax6.plot(learned_trace[1], lw=0.5, color=myorange, zorder=2)
+        ax6.text(0.03, 0.9, 'N',
+                 horizontalalignment='right',
+                 verticalalignment='top',
+                 transform=ax6.transAxes)
+        ax7.plot(trc[2], lw=0.5, color=myred)
+        ax7.plot(learned_trace[2], lw=0.5, color=myorange, zorder=2)
+        ax7.text(0.03, 0.9, 'Z',
+                 horizontalalignment='right',
+                 verticalalignment='top',
+                 transform=ax7.transAxes)
+        ax5.get_xaxis().set_visible(False)
+        ax6.get_xaxis().set_visible(False)
+
+        # STF
         # x0 = np.linspace(0, len(stf0), len(stf0))
         xinf = np.linspace(0, mean_img.shape[1], mean_img.shape[1])
         if args.px_init_weight > 0:
@@ -419,19 +453,20 @@ def plot_res(k, k_sub, image, learned_k, stf0, gf, args, true_stf=None, true_gf=
         ax4.fill_between(xinf, mean_img[0] - stdev_img[0], mean_img[0] + stdev_img[0],
                          facecolor=myorange, alpha=0.35, zorder=0, label='Standard deviation')
 
+
         fig.savefig("{}/out_egf{}_{}_{}.png".format(args.PATH, str(e), str(k).zfill(5), str(k_sub).zfill(5)), format='png', dpi=300,
                 bbox_inches="tight")
         plt.close()
     return
 
 
-def plot_st(st_trc, st_gf, image_blur, learned_kernel, image, args):
+def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
     mean_img = np.mean(image, axis=0)
     stdev_img = np.std(image, axis=0)
-    mean_trc = np.mean(image_blur, axis=0)
-    stdev_trc = np.std(image_blur, axis=0)
+    mean_trc = np.mean(inferred_trace, axis=0)
+    stdev_trc = np.std(inferred_trace, axis=0)
     gf = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
-    gf = gf.reshape(gf.shape[0] // 3, 3, gf.shape[1])
+    gf = gf.reshape(gf.shape[0] // 3, 3, gf.shape[1], order='F')
     trc = np.concatenate([st_trc[k].data[:, None] for k in range(len(st_trc))], axis=1).T
     gf = gf/np.amax(np.abs(gf))
     trc = trc/np.amax(np.abs(trc))
@@ -579,10 +614,10 @@ def plot_st(st_trc, st_gf, image_blur, learned_kernel, image, args):
     return
 
 
-def plot_trace(trc, image_blur, args):
+def plot_trace(trc, inferred_trace, args):
 
-    mean_blur_img = np.mean(image_blur, axis=(0,1))
-    stdev_blur_img = np.std(image_blur, axis=(0,1))
+    mean_blur_img = np.mean(inferred_trace, axis=(0,1))
+    stdev_blur_img = np.std(inferred_trace, axis=(0,1))
     std_max = stdev_blur_img.max()
     truetrc = trc.detach().cpu().numpy()
 
@@ -621,55 +656,6 @@ def plot_trace(trc, image_blur, args):
     ax2.get_xaxis().set_visible(False)
     plt.tight_layout()
     plt.savefig("{}/outTRC.pdf".format(args.PATH), format='pdf',
-                bbox_inches="tight")
-    plt.close()
-    return
-
-def plot_trace_diff(trc, image_blur, args):
-
-    mean_blur_img = np.mean(image_blur, axis=0)
-    stdev_blur_img = np.std(image_blur, axis=0)
-    std_max = stdev_blur_img.max()
-    truetrc = trc.detach().cpu().numpy()
-
-    fig = plt.figure(figsize=(8, 3))
-    ax1 = plt.subplot2grid((6, 4), (0, 0), colspan=3, rowspan=2)
-    ax2 = plt.subplot2grid((6, 4), (2, 0), colspan=3, rowspan=2)
-    ax3 = plt.subplot2grid((6, 4), (4, 0), colspan=3, rowspan=2)
-    ax1.plot(truetrc[0], lw=0.5, color=myblue)
-    for e in range(args.num_egf):
-        ax1.plot(mean_blur_img[e,0], lw=0.5, color=myorange, zorder=50)
-        ax1.fill_between(np.arange(len(mean_blur_img[e,0])), mean_blur_img[e,0] - stdev_blur_img[e,0],
-                         mean_blur_img[e,0] + stdev_blur_img[e,0],
-                         facecolor=myorange, alpha=0.25, zorder=0)
-    ax1.text(0.03, 0.9, 'E',
-             horizontalalignment='right',
-             verticalalignment='top',
-             transform=ax1.transAxes)
-    ax2.plot(truetrc[1], lw=0.5, color=myblue)
-    for e in range(args.num_egf):
-        ax2.plot(mean_blur_img[e,1], lw=0.5, color=myorange, zorder=50)
-        ax2.fill_between(np.arange(len(mean_blur_img[e,1])), mean_blur_img[e,1] - stdev_blur_img[e,1],
-                         mean_blur_img[e,1] + stdev_blur_img[e,1],
-                         facecolor=myorange, alpha=0.25, zorder=0)
-    ax2.text(0.03, 0.9, 'N',
-             horizontalalignment='right',
-             verticalalignment='top',
-             transform=ax2.transAxes)
-    ax3.plot(truetrc[2], lw=0.5, color=myblue)
-    for e in range(args.num_egf):
-        ax3.plot(mean_blur_img[e,2], lw=0.5, color=myorange, zorder=50)
-        ax3.fill_between(np.arange(len(mean_blur_img[e,2])), mean_blur_img[e,2] - stdev_blur_img[e,2],
-                         mean_blur_img[e,2] + stdev_blur_img[e,2],
-                         facecolor=myorange, alpha=0.25, zorder=0)
-    ax3.text(0.03, 0.9, 'Z',
-             horizontalalignment='right',
-             verticalalignment='top',
-             transform=ax3.transAxes)
-    ax1.get_xaxis().set_visible(False)
-    ax2.get_xaxis().set_visible(False)
-    plt.tight_layout()
-    plt.savefig("{}/outTRC_multi.pdf".format(args.PATH), format='pdf',
                 bbox_inches="tight")
     plt.close()
     return
