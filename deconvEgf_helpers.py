@@ -63,9 +63,9 @@ class KNetwork(torch.nn.Module):
 
     def forward(self, x):
         k = self.generatekernel()
-        out = F.conv1d(k.reshape(3*self.num_egf,1,k.shape[-1]),x, padding='same' )
+        out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
-        out = out.reshape(x.shape[0], self.num_egf, 3, out.shape[-1])
+        out = out.reshape(x.shape[0], 3, out.shape[-1])
         return out
 
 def trueForward(k, x, num_egf):
@@ -79,9 +79,9 @@ def makeInit(init, num_layers, device, noise_amp=.5):
     """
     """
     l0 = torch.zeros(init.shape, device=device)
-    l0[:, :, init.shape[-1]//2] = 1.
+    l0[ :, init.shape[1]//2] = 1.
 
-    out = torch.zeros(num_layers, init.shape[0], init.shape[1], init.shape[-1], device=device)
+    out = torch.zeros(num_layers, init.shape[0], init.shape[1], device=device)
     for i in range(num_layers - 1):
         out[i] = l0 + (torch.randn(1, device=device)[0] * noise_amp / 100.) * torch.randn(l0.shape, device=device)
     out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
@@ -127,65 +127,79 @@ def FForward(x, kernel_network, sigma, device):
     return y
 
 
-def EStep(z_sample, device, ytrue, img_generator, kernel_network, prior_x, prior_img, logdet_weight,
-          prior_x_weight, img_prior_weight, sigma, npix, npiy,logscale_factor, data_weight, device_ids=None, num_egf=1):
+def EStep(z_sample, ytrue, img_generator, kernel_network, prior_x, prior_img, logdet_weight,
+          npix, npiy, logscale_factor, args):
 
-    img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=device, device_ids=device_ids)
-    y = FForward(img, kernel_network, sigma, device)
+    device_ids = args.device_ids if len(args.device_ids) > 1 else None
+    data_weight = 1 / args.data_sigma ** 2
+
+    img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=args.device, device_ids=device_ids)
+    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(len(kernel_network))]
 
     ## log likelihood
     logqtheta = -logdet_weight*torch.mean(logdet)
+
     ## prior on trace
-    meas_err = data_weight*nn.MSELoss()(y, ytrue)
+    meas_err = torch.stack([data_weight*nn.MSELoss()(y[i], ytrue) for i in range(len(kernel_network))])
+    smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
-    priorx = torch.mean(prior_x(img, prior_x_weight))
+    priorx = torch.mean(prior_x(img, args.px_init_weight))
+
     if isinstance(prior_img, list):
-        if isinstance(img_prior_weight, list):
-            priorimg = torch.mean( torch.Tensor( [torch.mean(prior_img[i](img, img_prior_weight[i])) for i in range(len(prior_img))] ))
+        if isinstance(args.px_weight, list):
+            priorimg = torch.mean( torch.Tensor( [torch.mean(prior_img[i](img, args.px_weight[i])) for i in range(len(prior_img))] ))
         else:
-            priorimg = torch.mean( torch.Tensor( [torch.mean(prior_img[i](img, img_prior_weight)) for i in range(len(prior_img))] ))
+            priorimg = torch.mean( torch.Tensor( [torch.mean(prior_img[i](img, args.px_weight)) for i in range(len(prior_img))] ))
     else:
-        priorimg = torch.mean(prior_img(img, img_prior_weight))
-    loss = logqtheta + priorx + meas_err + priorimg
-    return loss, logqtheta, priorx+priorimg, meas_err
+        priorimg = torch.mean(prior_img(img, args.px_weight))
+
+    loss = logqtheta + priorx + smoothmin_meas_err + priorimg
+    return loss, logqtheta, priorx+priorimg, smoothmin_meas_err
 
 
-def MStep(z_sample, x_sample, npix, npiy, device, ytrue, img_generator, kernel_network, phi_weight,
-          fwd_network, sigma, logscale_factor, prior_phi, prior_phi_weight, ker_softl1, kernel_norm_weight, k_weight, prior_k, device_ids=None, num_egf=1):
+def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, fwd_network,
+          logscale_factor, prior_phi, ker_softl1, L1_prior,
+          mEGF_kernel_list, mEGF_MSE_list, args):
+
+    device_ids = args.device_ids if len(args.device_ids) > 1 else None
 
     # inferred IMG
-    img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=device, device_ids=device_ids)
+    img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=args.device, device_ids=device_ids)
     # TRC from inferred IMG
-    y = FForward(img, kernel_network, sigma, device)
+    y = FForward(img, kernel_network, args.data_sigma, args.device)
     # TRC from random IMG
-    y_x = FForward(x_sample, kernel_network, sigma, device)
+    y_x = FForward(x_sample, kernel_network, args.data_sigma, args.device)
     # TRC from random IMG but init GF
-    fwd = FForward(x_sample, fwd_network, sigma, device)
-    pphi = phi_weight*nn.MSELoss()(y_x, fwd)
+    fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
+    pphi = args.phi_weight * nn.MSELoss()(y_x, fwd[:,k_egf,:,:])
 
-    if device_ids is not None:
-        kernel = kernel_network.module.generatekernel()
-    else:
-        kernel = kernel_network.generatekernel()
+    kernel = kernel_network.module.generatekernel() if device_ids is not None else kernel_network.generatekernel()
 
     ## Priors on init GF
-    prior = 3*prior_phi_weight * prior_phi[0](kernel.squeeze(0))
-    prior += prior_phi[1](kernel.squeeze(0), prior_phi_weight )
+    prior = args.prior_phi_weight * prior_phi[0](kernel.squeeze(0))
+    prior += prior_phi[1](kernel.squeeze(0), args.prior_phi_weight )
 
     ## Soft L1
-    norm_k = kernel_norm_weight * ker_softl1(kernel_network)
+    norm_k = args.kernel_norm_weight * ker_softl1(kernel_network)
 
-    #+ correlation if multiple EGFs
-    if k_weight > 0:
-        norm_k += torch.mean(prior_k(kernel.squeeze(0), k_weight ))
+    meas_err = (1e-1/args.data_sigma)* args.egf_qual_weight[k_egf] * nn.MSELoss()(y, ytrue)
 
-    # loss = nn.MSELoss(reduction='none')(y, ytrue)
-    # meas_err = (phi_weight/sigma)*torch.mean(torch.Tensor([torch.mean(loss[:,i,:])/torch.max(loss[:,i,:]) for i in range(loss.shape[1]) ]))
-    meas_err = (1e-1/sigma)*nn.MSELoss()(y, ytrue)
-    loss =  pphi + meas_err + norm_k + prior
+    # Multi M-steps for multiple EGFs
+    if args.num_egf > 1:
+        idx_best = torch.argmin(torch.stack(mEGF_MSE_list) )
+        if k_egf == idx_best:
+            multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
+        else:
+            sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
+            multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
+                                               + 0.35*sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] )
+    else:
+        multi_loss = torch.tensor(0.)
 
-    return loss, pphi, meas_err, norm_k, prior
+    loss = meas_err + norm_k + prior + multi_loss + pphi
+
+    return loss, meas_err, norm_k, prior, multi_loss
 
 
 ######################################################################################################################
@@ -207,13 +221,6 @@ class img_logscale(nn.Module):
 
     def forward(self):
         return self.log_scale
-    
-    
-def priorPhi(k, k0):
-    ker = k - k0
-    # out = ker[0]/torch.max(torch.abs(ker[0])) + ker[1]/torch.max(torch.abs(ker[1])) + ker[2]/torch.max(torch.abs(ker[2]))
-    out = ker
-    return torch.mean(torch.abs(out))
 
 class stf_generator(nn.Module):
     '''Softplus and norm for realnvp for STF'''
@@ -244,7 +251,7 @@ class stf_generator(nn.Module):
 
 ######################################################################################################################
 
-def dtw_classic(x, y, dist='absolute'):
+def dtw_classic(x, y, dist='square'):
     """Classic Dynamic Time Warping (DTW) distance between two time series.
 
     References
@@ -305,17 +312,18 @@ def dtw_classic(x, y, dist='absolute'):
 
     return dtw_dist
 
-def Loss_TSV(z, z0):
-    return torch.mean( (z - z0)**2 )
+def priorPhi(k, k0):
+    ker = k - k0
+    out = ker
+    return torch.mean(torch.abs(out))
 
-def Loss_TV_3c(z):
-    loss =  torch.abs(z[:, 1::] - z[:, 0:-1])
-    TV = torch.mean( torch.Tensor( [torch.mean( loss[i,:])/torch.max(loss[i,:]) for i in range(loss.shape[0]) ]))
-    return TV
+def Loss_L2(z, z0):
+    return torch.sqrt(torch.sum( (z - z0)**2 ))
+
+def Loss_L1(z, z0):
+    return torch.sum( torch.abs(z - z0) )
 
 def Loss_TV(z):
-    # total variation loss
-    # return torch.mean( torch.abs(z[:, 1::] - z[:, 0:-1]), (-1))
     return torch.mean( torch.abs(z[:,:, 1::] - z[:,:, 0:-1]))
 
 def Loss_DTW(z, z0):
@@ -325,7 +333,6 @@ def Loss_DTW(z, z0):
 
 
 def Loss_multicorr(z, args):
-    # calculates Pearson coeff/TV for every channel of every couple of EGF
 
     n = len(z)
     comb = torch.combinations(torch.arange(0, n), 2)
@@ -366,11 +373,11 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
     gf_np = gf.detach().cpu().numpy()
     stf0 = stf0.detach().cpu().numpy()
     trc = trc.detach().cpu().numpy()
-    mean_trc = np.mean(learned_trc, axis=0)
-    stdev_trc = np.std(learned_trc, axis=0)
+    mean_trc = [np.mean(learned_trc[i], axis=0) for i in range(len(learned_trc))]
+    stdev_trc = [np.std(learned_trc[i], axis=0) for i in range(len(learned_trc))]
 
     for e in range(args.num_egf):
-        learned_kernel = learned_k[e]
+        learned_kernel = learned_k[e][0]
         gf = gf_np[e]
         fig = plt.figure(figsize=(8, 5))
         ax1 = plt.subplot2grid((12,4), (0, 0), colspan=3, rowspan=2)
@@ -447,9 +454,12 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
                 ax4.plot(xinf, stf0, lw=0.8, color=myblue)
         if true_stf is not None:
             # xtrue = np.linspace(0, len(stf0), len(true_stf))
-            true_stf_rs = np.zeros(mean_img[0].shape)
-            true_stf_rs[:len(true_stf)] = true_stf
-            ax4.plot(xinf, true_stf_rs, lw=0.8, color=myred)
+            if len(true_stf) < mean_img[0].shape[0]:
+                true_stf_rs = np.zeros(mean_img[0].shape)
+                true_stf_rs[:len(true_stf)] = true_stf
+                ax4.plot(xinf, true_stf_rs, lw=0.8, color=myred)
+            else:
+                ax4.plot(xinf, true_stf[:mean_img[0].shape[0]], lw=0.8, color=myred)
         ax4.plot(xinf, mean_img[0], lw=1, color=myorange)
         ax4.fill_between(xinf, mean_img[0] - stdev_img[0], mean_img[0] + stdev_img[0],
                          facecolor=myorange, alpha=0.35, zorder=0, label='Standard deviation')
@@ -519,7 +529,7 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
         for i in range(3):
             tmax = np.amax(st_gf[0].times())
             ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, gf[0,i] + (2 - i) * 0.6, color='k', lw=0.8, clip_on=False)
-            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, learned_kernel[0,i] + (2 - i) * 0.6, lw=0.7, color=myorange,
+            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, learned_kernel[0,0,i] + (2 - i) * 0.6, lw=0.7, color=myorange,
                     clip_on=False)
         plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
         ax.text(1, .8, 'data', horizontalalignment='right', verticalalignment='top', color='k', transform=ax.transAxes)
@@ -606,7 +616,7 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
             for i in range(3):
                 tmax = np.amax(st_gf[0].times())
                 ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf[k,i]+(2-i)*0.6, color='k', lw=0.8,clip_on=False)
-                ax.plot(st_gf[0].times()-(2-i)*tmax//5, learned_kernel[k,i]+(2-i)*0.6, lw=0.7, color=myorange,clip_on=False)
+                ax.plot(st_gf[0].times()-(2-i)*tmax//5, learned_kernel[k,0,i]+(2-i)*0.6, lw=0.7, color=myorange,clip_on=False)
             plt.xlim(np.amin(st_gf[0].times()-(2)*tmax//5)+10, tmax-5)
 
     fig.savefig("{}/out_{}.pdf".format(args.PATH, 'res'),

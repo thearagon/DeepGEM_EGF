@@ -2,7 +2,7 @@
 # coding: utf-8
 
 
-from deconvEgf_helpers import *
+from deconvEgf_helpers_multiM import *
 import argparse
 print(torch.__version__)
 print(scipy.__version__)
@@ -12,37 +12,37 @@ def main_function(args):
     ################################################ SET UP WEIGHTS ####################################################
     n_flow = 32
     affine = True
-    data_weight = 1 / args.data_sigma ** 2
 
     seqfrac = args.seqfrac
     npix = args.stf_size
     npiy = 1
+    args.phi_weight = 1e-1
 
     if args.px_init_weight == None:
         # weight on init STF
-        args.px_init_weight = (1/args.data_sigma)/1e-1 #6e-1
+        args.px_init_weight = (1/args.data_sigma)/2e-1 #2e-1 #6e-1
     if args.px_weight == None:
         # weight for priors on E step: list, [boundaries, TV]
         args.px_weight = [(1/args.data_sigma)/1e0,
-                          (1/args.data_sigma)/2e0]
+                          (1/args.data_sigma)/7e-1]
     if args.logdet_weight == None:
         # weight on q_theta
         args.logdet_weight = (1/args.data_sigma)/5e2
     if args.prior_phi_weight == None:
         # weight on init GF
-        args.prior_phi_weight = (1/args.data_sigma)/1e2 #1e2
+        args.prior_phi_weight = (1/args.data_sigma)/2e3 #3e2
     if args.kernel_norm_weight == None:
         # + weight on TV
         args.kernel_norm_weight = (1/args.data_sigma)/1e6 #1e4
-    if args.num_egf > 1 and args.kernel_corrcoef_weight == None:
-        # args.prior_phi_weight *= 0.1
-        args.kernel_corrcoef_weight = (1/args.data_sigma)/8e5
-        # args.kernel_corrcoef_weight = 0
-        # args.prior_phi_weight /= 2e0
-    elif args.num_egf > 1 and args.kernel_corrcoef_weight != None:
-        args.prior_phi_weight *= 0.5
+    if args.num_egf > 1:
+        if args.egf_multi_weight == None:
+            args.egf_multi_weight = 5e-1
+        if args.egf_qual_weight == None:
+            args.egf_qual_weight = np.ones(args.num_egf).tolist()
     else:
-        args.kernel_corrcoef_weight = 0.
+        args.egf_multi_weight = 0.
+        args.egf_qual_weight = [1]
+        args.prior_phi_weight *= 5e0
 
         ################################################ SET UP DATA ####################################################
     try:
@@ -69,15 +69,23 @@ def main_function(args):
         except TypeError:
             st_stf0 = None
             stf0 = np.load("{}".format(args.stf0))
+        if npix > len(stf0):
+            stf_rs = np.zeros(npix)
+            stf_rs[:len(stf0)] = stf0
+            stf0 = stf_rs
+        elif npix < len(stf0):
+            args.stf_size = len(stf0)
+            npix = len(stf0)
+            print('STF size set to length of STF0')
+
     else:
         ## STF init is a gaussian
-        stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix//30., 2.)))
+        stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix//10., 2.)))
+        args.px_init_weight /= 2.
 
     ## Normalize everything
     trc = trc/ np.amax(np.abs(trc))
-    gf = gf / np.amax(np.abs(gf))   # TO TEST
-    # for i in range(gf.shape[0]):
-    #     gf[i] = gf[i]/ np.amax(np.abs(gf[i]))
+    gf = gf / np.amax(np.abs(gf))
     stf0 = stf0 / np.amax(stf0)
 
     ## If we know the truth
@@ -97,22 +105,20 @@ def main_function(args):
     #
     # ############################################## MODEL SETUP #####################################################
     #
-    trc_ext = np.concatenate(args.num_egf*[trc[None, :, :]], axis=0)
     trc = torch.Tensor(trc).to(device=args.device)
-    trc_ext = torch.Tensor(trc_ext).to(device=args.device)
+    trc_ext = torch.Tensor(trc).to(device=args.device)
     gf = torch.Tensor(gf).to(device=args.device)
     stf0 = torch.Tensor(stf0).to(device=args.device)
-
 
     ##------------------------------------------------------------------------------
     # ---- INITIALIZATION
 
     # kernel init
-    kernel_network = KNetwork(gf,
+    kernel_network = [KNetwork(gf[i],
                               num_layers=args.num_layers,
-                              num_egf=args.num_egf,
+                              num_egf=1,
                               device=args.device
-                              ).to(args.device)
+                              ).to(args.device) for i in range(args.num_egf)]
 
     if args.reverse == True:
         print("Generating Reverse RealNVP Network")
@@ -127,14 +133,14 @@ def main_function(args):
     FTrue = lambda x: trueForward(torch.unsqueeze(gf, dim=0), x, args.num_egf)
 
     print("Models Initialized")
-    trc_ext = torch.cat(args.btsize * [trc_ext.unsqueeze(0)])
 
     # MULTIPLE GPUS
     if len(args.device_ids) > 1:
         stf_gen = nn.DataParallel(stf_gen, device_ids=args.device_ids)
         stf_gen.to(args.device)
-        kernel_network = nn.DataParallel(kernel_network, device_ids=args.device_ids)
-        kernel_network.to(args.device)
+        for i in range(args.num_egf):
+            kernel_network[i] = nn.DataParallel(kernel_network[i], device_ids=args.device_ids)
+            kernel_network[i].to(args.device)
 
     ##------------------------------------------------------------------------------
     # ---- PRIORS
@@ -144,22 +150,16 @@ def main_function(args):
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.module.generatekernel()))
     else:
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.generatekernel()))
-    f_phi_prior = lambda kernel: priorPhi(kernel, gf)  ## L1
-    prior_TSV = lambda kernel, weight: weight * Loss_TSV(kernel, gf) if weight > 0 else 0 ## Total Variation
-    phi_priors = [f_phi_prior, prior_TSV]  ## norms on init GF
-    prior_correl_multiEGF = lambda kernel, weight: weight * Loss_multicorr(kernel, args) if weight > 0 else 0
-    if args.num_egf > 1 :
-        prior_k = prior_correl_multiEGF
-        pk_weight = args.kernel_corrcoef_weight
-    else:
-        prior_k = 0
-        pk_weight = 0
+    f_phi_prior = lambda kernel: priorPhi(kernel, gf)
+    L1_prior = lambda kernel: Loss_L1(kernel, gf)
+    prior_L2 = lambda kernel, weight: weight * 1e-2 * Loss_L2(kernel, gf) if weight > 0 else 0
+    phi_priors = [f_phi_prior, prior_L2]  ## norms on init GF
 
     ## Priors on E step
-    prior_xtrue_L2 = lambda x, weight: weight * torch.sqrt(torch.sum((stf0 - x) ** 2))  ## L2
+    x_softl1 = lambda x: torch.abs(1 - torch.sum(x))
     prior_boundary = lambda x, weight: weight * torch.sum(torch.abs(x[:, :, 0]) * torch.abs(x[:, :, -1]))
-    prior_dtw = lambda x, weight: weight * Loss_DTW(x, stf0) if weight > 0 else 0
-    prior_TV_stf = lambda x, weight: weight * Loss_TV(x) ## Total Variation
+    prior_dtw = lambda x, weight: weight * (0.5*Loss_L2(x, stf0) + Loss_DTW(x, stf0)) if weight > 0 else 0
+    prior_TV_stf = lambda x, weight: weight * Loss_TV(x)
 
     flux = torch.abs(torch.sum(stf0))
     logscale_factor = img_logscale(scale=flux / (0.8 * stf0.shape[0]), device=args.device).to(args.device)
@@ -170,7 +170,8 @@ def main_function(args):
     ### DEFINE OPTIMIZERS
     Eoptimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, list(stf_gen.parameters())
                                          + list(logscale_factor.parameters())), lr=args.Elr)
-    Moptimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, list(kernel_network.parameters())), lr=args.Mlr)
+    Moptimizer = [torch.optim.Adam(filter(lambda p: p.requires_grad, list(kernel_network[i].parameters())),
+                                   lr=args.Mlr) for i in range(args.num_egf) ]
 
     #################################### TRAINING #########################################################
 
@@ -179,49 +180,63 @@ def main_function(args):
     Eloss_mse_list = []
     Eloss_q_list = []
 
-    Mloss_list = []
-    Mloss_mse_list = []
-    Mloss_phi_list = []
-    Mloss_kernorm_list = []
-    Mloss_phiprior_list = []
+    Mloss_list = {}
+    Mloss_mse_list = {}
+    Mloss_multi_list = {}
+    Mloss_kernorm_list = {}
+    Mloss_phiprior_list = {}
+    Mloss = {}
 
+    for k_egf in range(args.num_egf):
+        Mloss_list[k_egf] = []
+        Mloss_mse_list[k_egf] = []
+        Mloss_multi_list[k_egf] = []
+        Mloss_kernorm_list[k_egf] = []
+        Mloss_phiprior_list[k_egf] = []
+
+    ## Initialize
     z_sample = torch.randn(2, npiy * npix).to(device=args.device)
 
     img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
                            device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
     image = img.detach().cpu().numpy()
-    y = FForward(img, kernel_network, args.data_sigma, args.device)
-    inferred_trace = y.detach().cpu().numpy()
+    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    inferred_trace = [ y0.detach().cpu().numpy() for y0 in y ]
 
-    # print("Check Initialization", image.max(), image.min(), inferred_trace.max(), inferred_trace.min())
 
-    if len(args.device_ids) > 1:
-        learned_kernel = kernel_network.module.generatekernel().detach().cpu().numpy()[0]
-    else:
-        learned_kernel = kernel_network.generatekernel().detach().cpu().numpy()[0]
+    learned_kernel = [kernel_network[i].module.generatekernel() for i in range(args.num_egf)] \
+        if len(args.device_ids) > 1 else [kernel_network[i].generatekernel() for i in range(args.num_egf)]
 
+    learned_kernel_np = [learned_kernel[i].detach().cpu().numpy()[0] for i in range(args.num_egf)]
     if args.output == True:
         # Plot init
         if args.synthetics == True:
-            plot_res(0, 0, image, learned_kernel, inferred_trace, stf0, gf, trc, args, true_gf=gf_true, true_stf=stf_true)
+            plot_res(0, 0, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args, true_gf=gf_true, true_stf=stf_true)
         else:
-            plot_res(0, 0, image, learned_kernel, inferred_trace, stf0, gf, trc, args)
+            plot_res(0, 0, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args)
+
+    # for multi M EGF steps
+    trc_ext0 = torch.cat(2 * [trc_ext.unsqueeze(0)])
+    mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext0).detach() for i in range(args.num_egf)]
+    mEGF_kernel_list = [learned_kernel[i].detach() for i in range(args.num_egf)]
+
+    trc_ext = torch.cat(args.btsize * [trc_ext.unsqueeze(0)])
+
+    # Save args
+    with open("{}/args.json".format(args.PATH), 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
 
     for k in range(args.num_epochs):
 
-        ############################ E STEP Update Generator Network #######################
-        # Solve for the STF
+        ############################ E STEP Update STF Network #######################
 
         for k_sub in range(args.num_subepochsE):
             z_sample = torch.randn(args.btsize, npix).to(device=args.device)
 
-            Eloss, qloss, priorloss, mseloss = EStep(z_sample, args.device, trc_ext, stf_gen, kernel_network,
+            Eloss, qloss, priorloss, mseloss = EStep(z_sample, trc_ext, stf_gen, kernel_network,
                                                      prior_x, prior_img, logdet_weight,
-                                                     args.px_init_weight, args.px_weight, args.data_sigma, npix, npiy,
-                                                     logscale_factor, data_weight,
-                                                     args.device_ids if len(args.device_ids)>1 else None,
-                                                     args.num_egf)
-            #             print(qloss, priorloss, mseloss)
+                                                     npix, npiy, logscale_factor, args)
+
             Eloss_list.append(Eloss.detach().cpu().numpy())
             Eloss_prior_list.append(priorloss.detach().cpu().numpy())
             Eloss_q_list.append(qloss.detach().cpu().numpy())
@@ -248,140 +263,117 @@ def main_function(args):
                             }, '{}/{}{}_{}.pt'.format(args.PATH, "GeneratorNetwork", str(k).zfill(5), str(k_sub).zfill(5)))
 
             if ((k_sub % args.print_every == 0) and args.EMFull) or ((k % args.print_every == 0) and not args.EMFull):
-                # print(f"epoch: {k:} {k_sub:}, E step losses: {Eloss_list[-1]:.5f}")
                 print(f"epoch: {k:} {k_sub:}, E step losses (tot, prior, q, mse): ")
                 print(''.join(f"{x:.2f}, " for x in [Eloss_list[-1], Eloss_prior_list[-1], Eloss_q_list[-1], Eloss_mse_list[-1]]) )
 
         ############################ M STEP Update Kernel Network #######################
-        # update the kernel = EGF -> update the TRACE
 
-        for k_sub in range(args.num_subepochsM):
-            z_sample = torch.randn(args.btsize, npix).to(device=args.device)
-            x_sample = torch.randn(args.btsize, npix).to(device=args.device).reshape((-1, npiy, npix))
+        for k_egf in range(args.num_egf):
 
-            Mloss, philoss, mse, kernorm, priorphi = MStep(z_sample, x_sample, npix, npiy, args.device, trc_ext,
-                                                           stf_gen, kernel_network, args.phi_weight,
-                                                           FTrue, args.data_sigma, logscale_factor,
-                                                           phi_priors, args.prior_phi_weight,
-                                                           ker_softl1, args.kernel_norm_weight,
-                                                           pk_weight, prior_k,
-                                                           args.device_ids if len(args.device_ids)>1 else None,
-                                                           args.num_egf)
+            for k_sub in range(args.num_subepochsM):
 
-            Mloss_list.append(Mloss.detach().cpu().numpy())
-            Mloss_mse_list.append(mse.detach().cpu().numpy())
-            Mloss_phi_list.append(philoss.detach().cpu().numpy())
-            Mloss_phiprior_list.append(priorphi.detach().cpu().numpy())
-            Mloss_kernorm_list.append(kernorm.detach().cpu().numpy())
-            Moptimizer.zero_grad()
-            Mloss.backward()
-            nn.utils.clip_grad_norm_(list(kernel_network.parameters()), 1)
-            Moptimizer.step()
+                z_sample = torch.randn(args.btsize, npix).to(device=args.device)
+                x_sample = torch.randn(args.btsize, npix).to(device=args.device).reshape((-1, npiy, npix))
 
-            if ((k_sub % args.save_every == 0) and args.EMFull) or ((k % args.save_every == 0) and not args.EMFull):
-                if len(args.device_ids) > 1:
-                    learned_kernel = kernel_network.module.generatekernel().detach().cpu().numpy()[0]
-                else:
-                    learned_kernel = kernel_network.generatekernel().detach().cpu().numpy()[0]
+                Mloss[k_egf], mse, kernorm, priorphi, multiloss = MStep(k_egf, z_sample, x_sample, npix, npiy,
+                                                                        trc_ext,
+                                                                        stf_gen, kernel_network[k_egf],
+                                                                        FTrue, logscale_factor,
+                                                                        phi_priors, ker_softl1, L1_prior,
+                                                                        mEGF_kernel_list, mEGF_MSE_list,
+                                                                        args)
 
-                if args.output == True:
-                    with torch.no_grad():
-                        torch.save({
-                            'epoch': k,
-                            'model_state_dict': kernel_network.state_dict(),
-                            'optimizer_state_dict': Moptimizer.state_dict(),
-                        }, '{}/{}{}_{}.pt'.format(args.PATH, "KernelNetwork", str(k).zfill(5), str(k_sub).zfill(5)))
-                    np.save("{}/Data/learned_kernel.npy".format(args.PATH), learned_kernel)
+                Mloss_list[k_egf].append(Mloss[k_egf].detach().cpu().numpy())
+                Mloss_mse_list[k_egf].append(mse.detach().cpu().numpy())
+                Mloss_multi_list[k_egf].append(multiloss.detach().cpu().numpy())
+                Mloss_phiprior_list[k_egf].append(priorphi.detach().cpu().numpy())
+                Mloss_kernorm_list[k_egf].append(kernorm.detach().cpu().numpy())
+                Moptimizer[k_egf].zero_grad()
+                Mloss[k_egf].backward()
+                nn.utils.clip_grad_norm_(list(kernel_network[k_egf].parameters()), 1)
+                Moptimizer[k_egf].step()
 
-                    fig, ax = plt.subplots()
-                    plt.plot(np.log10(Eloss_list), label="Estep")
-                    plt.plot(np.log10(Eloss_prior_list), ":", label="p(x), E step priors")
-                    plt.plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-                    plt.plot(np.log10(Eloss_q_list), ":", label='q')
-                    plt.plot(np.log10(Mloss_list), label="Mstep")
-                    # plt.plot(np.log10(Mloss_phi_list), ":", label="p(phi), MSE w. random STF")
-                    plt.plot(np.log10(Mloss_mse_list), ":", label="Mstep MSE")
-                    plt.plot(np.log10(Mloss_kernorm_list), ":", label="Mstep Kernel Norm")
-                    plt.plot(np.log10(Mloss_phiprior_list), ":", label="Mstep Priors")
-                    plt.legend()
-                    plt.savefig("{}/loss.png".format(args.PATH))
-                    plt.close()
+                if ((k_sub % args.print_every == 0) and args.EMFull) or (
+                        (k % args.print_every == 0) and not args.EMFull):
+                    print(f"epoch: {k:} {k_sub:}, M step EGF {k_egf:} losses (tot, phi_prior, norm, mse, multi) : ")
+                    print(''.join(f"{x:.2f}, " for x in
+                                  [Mloss_list[k_egf][-1], Mloss_phiprior_list[k_egf][-1],
+                                   Mloss_kernorm_list[k_egf][-1], Mloss_mse_list[k_egf][-1],
+                                   Mloss_multi_list[k_egf][-1]]))
 
-                    fig, ax = plt.subplots(1, 2, figsize=(15, 4))
-                    ax[0].plot(np.log10(Eloss_list), label="Estep")
-                    ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-                    ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
-                    ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
-                    ax[0].legend()
-                    ax[1].plot(np.log10(Mloss_list), label="Mstep")
-                    # ax[1].plot(np.log10(Mloss_phi_list), ":", label="p(phi), MSE w. random STF")
-                    ax[1].plot(np.log10(Mloss_mse_list), ":", label="Mstep MSE")
-                    ax[1].plot(np.log10(Mloss_kernorm_list), ":", label="Mstep Kernel Norm")
-                    ax[1].plot(np.log10(Mloss_phiprior_list), ":", label="Mstep Priors")
-                    ax[1].legend()
-                    plt.savefig("{}/SeparatedLoss.png".format(args.PATH))
-                    plt.close()
+            if args.output == True:
+                with torch.no_grad():
+                    torch.save({
+                        'epoch': k,
+                        'model_state_dict': kernel_network[k_egf].state_dict(),
+                        'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
+                    }, '{}/{}{}_{}.pt'.format(args.PATH, "KernelNetwork_egf", str(k).zfill(5), str(k_egf).zfill(5)))
+                np.save("{}/Data/learned_kernel.npy".format(args.PATH), learned_kernel_np)
 
-            if ((k_sub % args.print_every == 0) and args.EMFull) or ((k % args.print_every == 0) and not args.EMFull):
-                # print(f"epoch: {k:} {k_sub:}, M step losses: {Mloss_list[-1]:.5f}")
-                print(f"epoch: {k:} {k_sub:}, M step losses (tot, phi_prior, norm, mse) : ")
-                print(''.join(f"{x:.2f}, " for x in [Mloss_list[-1], Mloss_phiprior_list[-1], Mloss_kernorm_list[-1], Mloss_mse_list[-1]]))
+                fig, ax = plt.subplots()
+                plt.plot(np.log10(Eloss_list), label="Estep")
+                plt.plot(np.log10(Eloss_prior_list), ":", label="p(x), E step priors")
+                plt.plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
+                plt.plot(np.log10(Eloss_q_list), ":", label='q')
+                plt.plot(np.log10(Mloss_list[k_egf]), label="Mstep")
+                if args.num_egf > 1:
+                    plt.plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
+                plt.plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
+                plt.plot(np.log10(Mloss_kernorm_list[k_egf]), ":", label="Mstep Kernel Norm")
+                plt.plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
+                plt.legend()
+                plt.savefig("{}/loss_{}.png".format(args.PATH,k_egf))
+                plt.close()
+
+                fig, ax = plt.subplots(1, 2, figsize=(15, 4))
+                ax[0].plot(np.log10(Eloss_list), label="Estep")
+                ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
+                ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
+                ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
+                ax[0].legend()
+                ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
+                if args.num_egf > 1:
+                    ax[1].plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
+                ax[1].plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
+                ax[1].plot(np.log10(Mloss_kernorm_list[k_egf]), ":", label="Mstep Kernel Norm")
+                ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
+                ax[1].legend()
+                plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf))
+                plt.close()
+
+        ## Update mEGF lists
+        learned_kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
+            if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
+        mEGF_kernel_list = learned_kernel
+
+        z_sample = torch.randn(args.btsize, npix).to(device=args.device)
+        img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
+                               device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
+        y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+        mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
+
+        inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
+        learned_kernel_np = [learned_kernel[i].cpu().numpy()[0] for i in range(args.num_egf)]
 
         if args.output == True:
-            y = FForward(img, kernel_network, args.data_sigma, args.device)
-            inferred_trace = y.detach().cpu().numpy()
-            # Plot results
             if args.synthetics == True:
-                plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
+                plot_res(k, k_sub, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
                          true_stf=stf_true)
             else:
-                plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args)
-
-    if args.output == True:
-        fig, ax = plt.subplots()
-        plt.plot(np.log10(Eloss_list), label="Estep")
-        plt.plot(np.log10(Eloss_prior_list), ":", label="p(x), E step priors")
-        plt.plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-        plt.plot(np.log10(Eloss_q_list), ":", label='q')
-        plt.plot(np.log10(Mloss_list), label="Mstep")
-        # plt.plot(np.log10(Mloss_phi_list), ":", label="p(phi), MSE w. random STF")
-        plt.plot(np.log10(Mloss_mse_list), ":", label="Mstep MSE")
-        plt.plot(np.log10(Mloss_kernorm_list), ":", label="Mstep Kernel Norm")
-        plt.plot(np.log10(Mloss_phiprior_list), ":", label="Mstep Priors")
-        plt.legend()
-        plt.savefig("{}/loss.png".format(args.PATH))
-        plt.close()
-
-        fig, ax = plt.subplots(1, 2, figsize=(15, 4))
-        ax[0].plot(np.log10(Eloss_list), label="Estep")
-        ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-        ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
-        ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
-        ax[0].legend()
-        ax[1].plot(np.log10(Mloss_list), label="Mstep")
-        # ax[1].plot(np.log10(Mloss_phi_list), ":", label="p(phi), MSE w. random STF")
-        ax[1].plot(np.log10(Mloss_mse_list), ":", label="Mstep MSE")
-        ax[1].plot(np.log10(Mloss_kernorm_list), ":", label="Mstep Kernel Norm")
-        ax[1].plot(np.log10(Mloss_phiprior_list), ":", label="Mstep Priors")
-        ax[1].legend()
-        plt.savefig("{}/SeparatedLoss.png".format(args.PATH))
-        plt.close()
+                plot_res(k, k_sub, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args)
 
     ############################################# GENERATE FIGURES ###########################################################
 
-    if len(args.device_ids) > 1:
-        learned_kernel = kernel_network.module.generatekernel().detach().cpu().numpy()[0]
-    else:
-        learned_kernel = kernel_network.generatekernel().detach().cpu().numpy()[0]
-
+    learned_kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
+            if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
     z_sample = torch.randn(args.btsize, npix).to(device=args.device)
     img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
-                           device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
+                           device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
     image = img.detach().cpu().numpy()
-    y = FForward(img, kernel_network, args.data_sigma, args.device)
-    inferred_trace = y.detach().cpu().numpy()
+    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
+    learned_kernel_np = np.array([learned_kernel[i].cpu().numpy()[0] for i in range(args.num_egf)])
 
-    # if args.output == True:
     np.save("{}/Data/reconSTF.npy".format(args.PATH), image)
 
     if st_trc is not None:
@@ -396,28 +388,26 @@ def main_function(args):
 
     if st_gf is not None:
         st_gf_out = st_gf.copy()
-        lk = learned_kernel.reshape(args.num_egf*3, learned_kernel.shape[-1])
-        for i in range(3):
+        lk = learned_kernel_np.reshape(args.num_egf*3, learned_kernel_np.shape[-1])
+        for i in range(len(lk)):
             st_gf_out[i].data = lk[i, :]
         st_gf_out.write("{}/{}_out.mseed".format(args.PATH, args.egf.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
-    np.save("{}/Data/outGF.npy".format(args.PATH), learned_kernel)
+    np.save("{}/Data/outGF.npy".format(args.PATH), learned_kernel_np)
 
     # Plot results
     if args.synthetics == True and st_trc is None:
-        plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
+        plot_res(k, k_sub, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
                      true_stf=stf_true)
         plot_trace(trc, inferred_trace, args)
     elif args.synthetics == True and st_gf is not None and st_trc is not None:
-        plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
+        plot_res(k, k_sub, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
                  true_stf=stf_true)
-        plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args)
+        plot_st(st_trc, st_gf, inferred_trace, learned_kernel_np, image, args)
     elif st_gf is not None and st_trc is not None:
-        plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args)
+        plot_st(st_trc, st_gf, inferred_trace, learned_kernel_np, image, args)
     else:
-        plot_res(k, k_sub, image, learned_kernel, inferred_trace, stf0, gf, trc, args)
+        plot_res(k, k_sub, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args)
         plot_trace(trc, inferred_trace, args)
-
-    # calc_corr_wtrue(inferred_trace, image, learned_kernel, trc, stf0, gf)
 
     return
 
@@ -443,7 +433,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_layers', type=int, default=7, metavar='N',
                         help='number of layers for kernel (default: 7)')
     parser.add_argument('--stf_size', type=int, default=100, metavar='N',
-                        help='length of STF (default: 40)')
+                        help='length of STF (default: 100)')
     parser.add_argument('--num_egf', type=int, default=1, metavar='N',
                         help='number of EGF (default: 1)')
 
@@ -488,6 +478,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--data_sigma', type=float, default=5e-5,
                         help='data sigma (default: 5e-5)')
+    parser.add_argument('--px_init_weight', type=float, default=None,
+                        help='weight on init STF on E step prior, default 0')
     parser.add_argument('--px_weight', type=float, nargs='+', default=None,
                         help='weight on E step priors, list (default None = function of data_sigma)')
     parser.add_argument('--logdet_weight', type=float, default=None,
@@ -498,29 +490,38 @@ if __name__ == "__main__":
                         help='kernel correlation coef weight if multiple EGF, M step (default None = function of data_sigma)')
     parser.add_argument('--prior_phi_weight', type=float, default=None,
                         help='weight on init GF on M step (default None = function of data_sigma)')
-    parser.add_argument('--px_init_weight', type=float, default=None,
-                        help='weight on init STF on E step prior, default 0')
-    parser.add_argument('--phi_weight', type=float, default=1e-1,
-                        help='weight on MSE loss with random STF and init GF, M step, (default: 1e-1)')
+    parser.add_argument('--egf_qual_weight', type=float, default=None,
+                        help='if multiple EGFs, weight reflects quality of each EGF (default None = 1 for each). ')
+    parser.add_argument('--egf_multi_weight', type=float, default=None,
+                        help='if multiple EGFs, weight for multi-M-step priors. ')
 
     args = parser.parse_args()
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy5_CSH_10/'
-        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_trc_detrend.mseed"
-        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_m2_gf.mseed"
-        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_gf_true.npy"
-        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy5_CSH_stf_true.npy"
+        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_pxinit1e4_nostf0/'
+        # args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
+        # args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
+        # # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
+        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy_TOR_1_nostf0/'
+        args.trc = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_trc.mseed"
+        args.egf = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_gf.mseed"
+        # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_gf.mseed"
+        args.stf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
         args.output = True
         args.synthetics = True
-        args.num_egf = 2
-        # args.px_init_weight = 3e4
+        args.num_egf = 1
         args.btsize = 1024
         args.num_subepochsE = 40
         args.num_subepochsM = 40
-
+        args.num_epochs = 10
+        args.seqfrac = 20
+        args.stf_size = 120 #180
+        # args.egf_qual_weight = [0.5, 0.5, 0.5]
+        args.px_init_weight = 5e4
 
     if args.dir is not None:
         args.PATH = args.dir
@@ -581,6 +582,5 @@ if __name__ == "__main__":
         print("Directory ", args.PATH + "/Data", " Created ")
     except FileExistsError:
         print("Directory ", args.PATH + "/Data", " already exists")
-    with open("{}/args.json".format(args.PATH), 'w') as f:
-        json.dump(args.__dict__, f, indent=2)
+
     main_function(args)
