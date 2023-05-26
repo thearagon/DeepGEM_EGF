@@ -2,7 +2,7 @@
 # coding: utf-8
 
 
-from deconvEgf_helpers_multiM import *
+from deconvEgf_helpers import *
 import argparse
 print(torch.__version__)
 print(scipy.__version__)
