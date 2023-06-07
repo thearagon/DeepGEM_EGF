@@ -101,6 +101,13 @@ def main_function(args):
         stf_true = np.load("{}".format(args.stf_true))
         gf_true = gf_true / np.amax(np.abs(gf_true))
         stf_true = stf_true / np.amax(stf_true)
+        if npix > len(stf_true):
+            stf_rs = np.zeros(npix)
+            stf_rs[(len(stf_rs) - len(stf_true)) // 2:-(len(stf_rs) - len(stf_true)) // 2] = _true
+            stf_true = stf_rs
+        elif npix < len(stf_true):
+            args.stf_size = len(stf_true)
+            npix = len(stf_true)
 
     #
     # ############################################## MODEL SETUP #####################################################
