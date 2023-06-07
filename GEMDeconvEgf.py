@@ -103,7 +103,7 @@ def main_function(args):
         stf_true = stf_true / np.amax(stf_true)
         if npix > len(stf_true):
             stf_rs = np.zeros(npix)
-            stf_rs[(len(stf_rs) - len(stf_true)) // 2:-(len(stf_rs) - len(stf_true)) // 2] = _true
+            stf_rs[(len(stf_rs) - len(stf_true)) // 2:-(len(stf_rs) - len(stf_true)) // 2] = stf_true
             stf_true = stf_rs
         elif npix < len(stf_true):
             args.stf_size = len(stf_true)
