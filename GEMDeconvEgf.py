@@ -159,8 +159,12 @@ def main_function(args):
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.generatekernel()))
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
     L1_prior = lambda kernel: Loss_L1(kernel, gf)
-    prior_L22 = lambda kernel, weight: weight * 1e-2 * Loss_L2(kernel, gf) if weight > 0 else 0
-    prior_L2 = lambda kernel, weight: weight * 2.5e-3 * Loss_DTW_Mstep(kernel, gf) if weight > 0 else 0
+    if args.num_egf == 1:
+        prior_L2 = lambda weight, kernel : weight * 2.5e-3 * Loss_DTW_Mstep(kernel, gf) if weight > 0 else 0
+        prior_L22 = lambda kernel, weight: weight * 1e-2 * Loss_L2(kernel, gf) if weight > 0 else 0
+    else:
+        prior_L2 = lambda weight, kernel, i : weight * 2.5e-3 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) if weight > 0 else 0
+        prior_L22 = lambda weight, kernel, i: weight * 1e-2 * Loss_L2(kernel, gf[i].unsqueeze(0)) if weight > 0 else 0
     phi_priors = [f_phi_prior, prior_L2, prior_L22]  ## norms on init GF
 
     ## Priors on E step
@@ -508,21 +512,21 @@ if __name__ == "__main__":
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_pxinit1e4_nostf0/'
-        # args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
-        # args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
-        # # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy_TOR_3_nostf0/'
-        args.trc = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_trc.mseed"
-        args.egf = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
-        # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
-        args.stf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_stf_true.npy"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
+        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
+        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
+        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
+        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy_TOR_3_nostf0/'
+        # args.trc = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_trc.mseed"
+        # args.egf = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
+        # # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
+        # args.gf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
+        # args.stf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_stf_true.npy"
         args.output = True
         args.synthetics = True
-        args.num_egf = 1
+        args.num_egf = 3
         args.btsize = 1024
         args.num_subepochsE = 4
         args.num_subepochsM = 4

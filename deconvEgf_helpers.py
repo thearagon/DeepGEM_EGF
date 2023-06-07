@@ -178,10 +178,14 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
 
     ## Priors on init GF
     prior = args.prior_phi_weight * prior_phi[0](kernel.squeeze(0))
-    prior += prior_phi[1](kernel, args.prior_phi_weight )[0]
+    if args.num_egf == 1:
+        prior += prior_phi[1](args.prior_phi_weight, kernel.squeeze(0))[0]
+    else:
+        prior += prior_phi[1](args.prior_phi_weight, kernel.squeeze(0), k_egf)[0]
 
-    print('DTW : {}'.format(prior_phi[1](kernel.squeeze(0), args.prior_phi_weight ) ) )
-    print('L2 : {}'.format(prior_phi[2](kernel.squeeze(0), args.prior_phi_weight ) ) )
+        print('DTW : {}'.format(prior_phi[1](args.prior_phi_weight, kernel.squeeze(0), k_egf)[0] ) )
+        print('L2 : {}'.format(prior_phi[2](args.prior_phi_weight, kernel.squeeze(0), k_egf ) ) )
+
     ## Soft L1
     norm_k = args.kernel_norm_weight * ker_softl1(kernel_network)
 
@@ -336,7 +340,7 @@ def Loss_DTW(z, z0):
 def Loss_DTW_Mstep(z, z0):
     # uses fast DTW, similar to L2 if aligned
     sdtw = soft_dtw_cuda.SoftDTW(use_cuda= False, gamma=0.1)
-    return sdtw(z, z0.unsqueeze(0))
+    return sdtw(z, z0)
 
 def Loss_multicorr(z, args):
 
