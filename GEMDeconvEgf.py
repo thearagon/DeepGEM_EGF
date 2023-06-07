@@ -19,7 +19,7 @@ def main_function(args):
     args.phi_weight = 1e-1
 
     if args.px_init_weight == None:
-        # weight on init STF
+        # weight on init STF, 1e4 if stf0 (becomes 5e3 if no stf0)
         args.px_init_weight = (1/args.data_sigma)/2e-1 #2e-1 #6e-1
     if args.px_weight == None:
         # weight for priors on E step: list, [boundaries, TV]
@@ -29,7 +29,7 @@ def main_function(args):
         # weight on q_theta
         args.logdet_weight = (1/args.data_sigma)/5e2
     if args.prior_phi_weight == None:
-        # weight on init GF
+        # weight on init GF.
         args.prior_phi_weight = (1/args.data_sigma)/2e3 #3e2
     if args.kernel_norm_weight == None:
         # + weight on TV
@@ -71,7 +71,7 @@ def main_function(args):
             stf0 = np.load("{}".format(args.stf0))
         if npix > len(stf0):
             stf_rs = np.zeros(npix)
-            stf_rs[:len(stf0)] = stf0
+            stf_rs[(len(stf_rs) - len(stf0)) // 2:-(len(stf_rs) - len(stf0)) // 2] = stf0
             stf0 = stf_rs
         elif npix < len(stf0):
             args.stf_size = len(stf0)
@@ -81,7 +81,7 @@ def main_function(args):
     else:
         ## STF init is a gaussian
         stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix//10., 2.)))
-        args.px_init_weight /= 2.
+        args.px_init_weight /= 5.
 
     ## Normalize everything
     trc = trc/ np.amax(np.abs(trc))
@@ -152,13 +152,15 @@ def main_function(args):
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.generatekernel()))
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
     L1_prior = lambda kernel: Loss_L1(kernel, gf)
-    prior_L2 = lambda kernel, weight: weight * 1e-2 * Loss_L2(kernel, gf) if weight > 0 else 0
-    phi_priors = [f_phi_prior, prior_L2]  ## norms on init GF
+    prior_L22 = lambda kernel, weight: weight * 1e-2 * Loss_L2(kernel, gf) if weight > 0 else 0
+    prior_L2 = lambda kernel, weight: weight * 2.5e-3 * Loss_DTW_Mstep(kernel, gf) if weight > 0 else 0
+    phi_priors = [f_phi_prior, prior_L2, prior_L22]  ## norms on init GF
 
     ## Priors on E step
     x_softl1 = lambda x: torch.abs(1 - torch.sum(x))
     prior_boundary = lambda x, weight: weight * torch.sum(torch.abs(x[:, :, 0]) * torch.abs(x[:, :, -1]))
-    prior_dtw = lambda x, weight: weight * (0.5*Loss_L2(x, stf0) + Loss_DTW(x, stf0)) if weight > 0 else 0
+    prior_dtw = lambda x, weight: weight * (Loss_DTW(x, stf0)) if weight > 0 else 0
+    # prior_dtw = lambda x, weight: weight * (0.5*Loss_L2(x, stf0) + Loss_DTW(x, stf0)) if weight > 0 else 0
     prior_TV_stf = lambda x, weight: weight * Loss_TV(x)
 
     flux = torch.abs(torch.sum(stf0))
@@ -505,21 +507,21 @@ if __name__ == "__main__":
         # # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
         # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
         # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy_TOR_1_nostf0/'
-        args.trc = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_trc.mseed"
-        args.egf = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_gf.mseed"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy_TOR_3_nostf0/'
+        args.trc = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_trc.mseed"
+        args.egf = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
         # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_gf.mseed"
-        args.stf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
+        args.stf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_stf_true.npy"
         args.output = True
         args.synthetics = True
         args.num_egf = 1
         args.btsize = 1024
-        args.num_subepochsE = 40
-        args.num_subepochsM = 40
-        args.num_epochs = 10
+        args.num_subepochsE = 4
+        args.num_subepochsM = 4
+        args.num_epochs = 2
         args.seqfrac = 20
-        args.stf_size = 120 #180
+        args.stf_size = 250 #180
         # args.egf_qual_weight = [0.5, 0.5, 0.5]
         args.px_init_weight = 5e4
 
