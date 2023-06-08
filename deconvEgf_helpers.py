@@ -183,9 +183,6 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
     else:
         prior += prior_phi[1](args.prior_phi_weight, kernel.squeeze(0), k_egf)[0]
 
-        print('DTW : {}'.format(prior_phi[1](args.prior_phi_weight, kernel.squeeze(0), k_egf)[0] ) )
-        print('L2 : {}'.format(prior_phi[2](args.prior_phi_weight, kernel.squeeze(0), k_egf ) ) )
-
     ## Soft L1
     norm_k = args.kernel_norm_weight * ker_softl1(kernel_network)
 
