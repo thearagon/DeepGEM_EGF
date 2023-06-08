@@ -160,18 +160,16 @@ def main_function(args):
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
     L1_prior = lambda kernel: Loss_L1(kernel, gf)
     if args.num_egf == 1:
-        prior_L2 = lambda weight, kernel : weight * 2.5e-3 * Loss_DTW_Mstep(kernel, gf) if weight > 0 else 0
-        prior_L22 = lambda kernel, weight: weight * 1e-2 * Loss_L2(kernel, gf) if weight > 0 else 0
+        prior_L2 = lambda weight, kernel : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf) + 1e-2 * Loss_L2(kernel, gf)) if weight > 0 else 0
     else:
-        prior_L2 = lambda weight, kernel, i : weight * 2.5e-3 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) if weight > 0 else 0
-        prior_L22 = lambda weight, kernel, i: weight * 1e-2 * Loss_L2(kernel, gf[i].unsqueeze(0)) if weight > 0 else 0
-    phi_priors = [f_phi_prior, prior_L2, prior_L22]  ## norms on init GF
+        prior_L2 = lambda weight, kernel, i : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) +  1e-2 * Loss_L2(kernel, gf[i].unsqueeze(0))) if weight > 0 else 0
+    phi_priors = [f_phi_prior, prior_L2]  ## norms on init GF
 
     ## Priors on E step
     x_softl1 = lambda x: torch.abs(1 - torch.sum(x))
     prior_boundary = lambda x, weight: weight * torch.sum(torch.abs(x[:, :, 0]) * torch.abs(x[:, :, -1]))
-    prior_dtw = lambda x, weight: weight * (Loss_DTW(x, stf0)) if weight > 0 else 0
-    # prior_dtw = lambda x, weight: weight * (0.5*Loss_L2(x, stf0) + Loss_DTW(x, stf0)) if weight > 0 else 0
+    # prior_dtw = lambda x, weight: weight * (Loss_DTW(x, stf0)) if weight > 0 else 0
+    prior_dtw = lambda x, weight: weight * (Loss_L2(x, stf0) + Loss_DTW(x, stf0)) if weight > 0 else 0
     prior_TV_stf = lambda x, weight: weight * Loss_TV(x)
 
     flux = torch.abs(torch.sum(stf0))
