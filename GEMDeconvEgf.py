@@ -27,7 +27,7 @@ def main_function(args):
                           (1/args.data_sigma)/7e-1]
     if args.logdet_weight == None:
         # weight on q_theta
-        args.logdet_weight = (1/args.data_sigma)/5e2
+        args.logdet_weight = (1/args.data_sigma)/5e1
     if args.prior_phi_weight == None:
         # weight on init GF.
         args.prior_phi_weight = (1/args.data_sigma)/2e3 #3e2
