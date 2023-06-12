@@ -195,7 +195,8 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
         #     multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
         # else:
         sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
-        multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0)) + args.egf_multi_weight*1e-2* torch.sum(Loss_L2(kernel.squeeze(0), [e for i, e in enumerate(mEGF_kernel_list) if i != idx_best].squeeze(0)))
+        multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
+                                               + 0.35*sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ) + args.egf_multi_weight*1e-2* torch.sum(Loss_L2(kernel.squeeze(0), [e for i, e in enumerate(mEGF_kernel_list) if i != idx_best].squeeze(0)))
     else:
         multi_loss = torch.tensor(0.)
 
