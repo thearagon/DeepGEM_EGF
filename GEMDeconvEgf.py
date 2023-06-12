@@ -81,7 +81,7 @@ def main_function(args):
     else:
         ## STF init is a gaussian
         stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix//10., 2.)))
-        args.px_init_weight /= 2.
+        args.px_init_weight /= 4.
 
     ## Normalize everything
     trc = trc/ np.amax(np.abs(trc))
@@ -321,21 +321,6 @@ def main_function(args):
                     }, '{}/{}{}_{}.pt'.format(args.PATH, "KernelNetwork_egf", str(k).zfill(5), str(k_egf).zfill(5)))
                 np.save("{}/Data/learned_kernel.npy".format(args.PATH), learned_kernel_np)
 
-                fig, ax = plt.subplots()
-                plt.plot(np.log10(Eloss_list), label="Estep")
-                plt.plot(np.log10(Eloss_prior_list), ":", label="p(x), E step priors")
-                plt.plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-                plt.plot(np.log10(Eloss_q_list), ":", label='q')
-                plt.plot(np.log10(Mloss_list[k_egf]), label="Mstep")
-                if args.num_egf > 1:
-                    plt.plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
-                plt.plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
-                plt.plot(np.log10(Mloss_kernorm_list[k_egf]), ":", label="Mstep Kernel Norm")
-                plt.plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
-                plt.legend()
-                plt.savefig("{}/loss_{}.png".format(args.PATH,k_egf))
-                plt.close()
-
                 fig, ax = plt.subplots(1, 2, figsize=(15, 4))
                 ax[0].plot(np.log10(Eloss_list), label="Estep")
                 ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
@@ -349,7 +334,7 @@ def main_function(args):
                 ax[1].plot(np.log10(Mloss_kernorm_list[k_egf]), ":", label="Mstep Kernel Norm")
                 ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
                 ax[1].legend()
-                plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf))
+                plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf), dpi=300)
                 plt.close()
 
         ## Update mEGF lists

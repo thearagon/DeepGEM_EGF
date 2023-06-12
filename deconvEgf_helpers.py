@@ -191,11 +191,11 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:
         idx_best = torch.argmin(torch.stack(mEGF_MSE_list) )
-        if k_egf == idx_best:
-            multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
-        else:
-            sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
-            multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
+        # if k_egf == idx_best:
+        #     multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
+        # else:
+        sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
+        multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
                                                + 0.35*sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] )
     else:
         multi_loss = torch.tensor(0.)
@@ -450,17 +450,8 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
         ax6.get_xaxis().set_visible(False)
 
         # STF
-        # x0 = np.linspace(0, len(stf0), len(stf0))
         xinf = np.linspace(0, mean_img.shape[1], mean_img.shape[1])
-        if args.px_init_weight > 0:
-            if mean_img.shape[1] > len(stf0):
-                stf_rs = np.zeros(mean_img[0].shape)
-                stf_rs[:len(stf0)] = stf0
-                ax4.plot(xinf, stf_rs, lw=0.8, color=myblue)
-            else:
-                ax4.plot(xinf, stf0, lw=0.8, color=myblue)
         if true_stf is not None:
-            # xtrue = np.linspace(0, len(stf0), len(true_stf))
             if len(true_stf) < mean_img[0].shape[0]:
                 true_stf_rs = np.zeros(mean_img[0].shape)
                 true_stf_rs[:len(true_stf)] = true_stf
