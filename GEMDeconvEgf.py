@@ -327,7 +327,7 @@ def main_function(args):
                 ax[0].plot(np.log10(Eloss_list), label="Estep")
                 ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
                 ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
-                ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
+                # ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
                 ax[0].legend()
                 ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
                 if args.num_egf > 1:
@@ -349,7 +349,7 @@ def main_function(args):
                                device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
         y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
         # mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
-        mEGF_MSE_list = [ torch.Tensor([np.mean(Mloss_mse_list[i])]) for i in range(args.num_egf) ]
+        mEGF_MSE_list = [ torch.Tensor([np.mean(Mloss_mse_list[i][args.num_subepochsM//2:])]) for i in range(args.num_egf) ]
 
         inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
         learned_kernel_np = [learned_kernel[i].cpu().numpy()[0] for i in range(args.num_egf)]
@@ -482,7 +482,7 @@ if __name__ == "__main__":
     parser.add_argument('--px_weight', type=float, nargs='+', default=None,
                         help='weight on E step priors, list (default None = function of data_sigma)')
     parser.add_argument('--logdet_weight', type=float, default=None,
-                        help='weight on q_theta, E step prior (default None = function of data_sigma)')
+                        help='weight on q_theta, β on DPI paper, E step prior (default None = function of data_sigma)')
     parser.add_argument('--kernel_norm_weight', type=float, default=None,
                         help='kernel norm weight + weight on TV, M step (default None = function of data_sigma)')
     parser.add_argument('--kernel_corrcoef_weight', type=float, default=None,
