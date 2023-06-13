@@ -190,15 +190,20 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
 
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:
-        idx_best = torch.argmin(torch.stack(mEGF_MSE_list) )
-        # if k_egf == idx_best:
-        #     multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
-        # else:
-        sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
-        multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
-                                               + 0.35*sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ) + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
+        idx_best = torch.argmin(torch.stack(mEGF_MSE_list))
+        if k_egf == idx_best:
+            # multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
+            multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
+                #          + args.egf_multi_weight * 1e-3 * torch.sum(torch.Tensor(
+                # [Loss_L2(kernel.squeeze(0), e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]))
+        else:
+            sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
+            multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
+                                                   + 0.35*sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] )
+                         # + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
     else:
         multi_loss = torch.tensor(0.)
+    print('{}: {}'.format(k_egf, multi_loss))
 
     loss = meas_err + norm_k + prior + multi_loss + pphi
 
@@ -365,6 +370,8 @@ def Loss_multicorr(z, args):
             #                      args)
     return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
 
+def null(x,y):
+    return [0.]
 
 ######################################################################################################################
 
