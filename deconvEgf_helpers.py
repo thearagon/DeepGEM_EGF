@@ -203,7 +203,6 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
                          # + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
     else:
         multi_loss = torch.tensor(0.)
-    print('{}: {}'.format(k_egf, multi_loss))
 
     loss = meas_err + norm_k + prior + multi_loss + pphi
 
