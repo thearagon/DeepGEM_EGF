@@ -196,13 +196,16 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
             multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
                 #          + args.egf_multi_weight * 1e-3 * torch.sum(torch.Tensor(
                 # [Loss_L2(kernel.squeeze(0), e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]))
+            print('{} best: {}'.format(k_egf, multi_loss))
         else:
             sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
             multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
                                                    + 0.35*torch.abs(sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ))
                          # + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
+            print('{} : {}'.format(k_egf, multi_loss))
     else:
         multi_loss = torch.tensor(0.)
+
 
     loss = meas_err + norm_k + prior + multi_loss + pphi
 
@@ -396,7 +399,7 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
         ax1 = plt.subplot2grid((12,4), (0, 0), colspan=3, rowspan=2)
         ax2 = plt.subplot2grid((12,4), (2, 0), colspan=3, rowspan=2)
         ax3 = plt.subplot2grid((12,4), (4, 0), colspan=3, rowspan=2)
-        ax4 = plt.subplot2grid((12,4), (2, 3), colspan=1, rowspan=4)
+        ax4 = plt.subplot2grid((12,4), (3, 3), colspan=1, rowspan=4)
         ax5 = plt.subplot2grid((12,4), (6, 0), colspan=3, rowspan=2)
         ax6 = plt.subplot2grid((12,4), (8, 0), colspan=3, rowspan=2)
         ax7 = plt.subplot2grid((12,4), (10, 0), colspan=3, rowspan=2)
@@ -407,10 +410,13 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
             ax1.plot(x, true_gf[0], lw=0.5, color=myred, label='Target')
         ax1.plot(x, gf[0], lw=0.5, color=myblue, label='Prior')
         ax1.plot(x, learned_kernel[0], lw=0.5, color=myorange, zorder=2, label='Inferred')
+        ax1.fill_between(x, learned_kernel[0], learned_kernel[0],
+                         facecolor=myorange, alpha=0.35, zorder=0, label='2σ')
         ax1.text(0.03, 0.9, 'E',
                  horizontalalignment='right',
                  verticalalignment='top',
                  transform=ax1.transAxes)
+
         ax1.legend(loc=(1.05, 0), frameon=False)
         if true_gf is not None:
             ax2.plot(x, true_gf[1], lw=0.5, color=myred)
@@ -465,8 +471,8 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
             else:
                 ax4.plot(xinf, true_stf[:mean_img[0].shape[0]], lw=0.8, color=myred)
         ax4.plot(xinf, mean_img[0], lw=1, color=myorange)
-        ax4.fill_between(xinf, mean_img[0] - stdev_img[0], mean_img[0] + stdev_img[0],
-                         facecolor=myorange, alpha=0.35, zorder=0, label='Standard deviation')
+        ax4.fill_between(xinf, mean_img[0] - 2*stdev_img[0], mean_img[0] + 2*stdev_img[0],
+                         facecolor=myorange, alpha=0.35, zorder=0, label='2σ')
 
 
         fig.savefig("{}/out_egf{}_{}_{}.png".format(args.PATH, str(e), str(k).zfill(5), str(k_sub).zfill(5)), format='png', dpi=300,

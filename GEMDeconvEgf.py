@@ -20,14 +20,14 @@ def main_function(args):
 
     if args.px_init_weight == None:
         # weight on init STF, 1e4 if stf0 (becomes 5e3 if no stf0)
-        args.px_init_weight = (1/args.data_sigma)/2e-1 #2e-1 #6e-1
+        args.px_init_weight = (1/args.data_sigma)/2e2 #2e-1 #6e-1
     if args.px_weight == None:
         # weight for priors on E step: list, [boundaries, TV]
         args.px_weight = [(1/args.data_sigma)/1e0,
                           (1/args.data_sigma)/7e-1]
     if args.logdet_weight == None:
         # weight on q_theta
-        args.logdet_weight = (1/args.data_sigma)/2e1 # 5e2
+        args.logdet_weight = (1/args.data_sigma)/4e1 # 5e2
     if args.prior_phi_weight == None:
         # weight on init GF.
         args.prior_phi_weight = (1/args.data_sigma)/2e3 #3e2
@@ -350,7 +350,7 @@ def main_function(args):
         y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
         mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
         # mEGF_MSE_list = [ torch.Tensor([np.mean(Mloss_mse_list[i])]) for i in range(args.num_egf) ]
-
+z
         inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
         learned_kernel_np = [learned_kernel[i].cpu().numpy()[0] for i in range(args.num_egf)]
 
