@@ -348,8 +348,8 @@ def main_function(args):
         img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
                                device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
         y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
-        # mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
-        mEGF_MSE_list = [ torch.Tensor([np.mean(Mloss_mse_list[i])]) for i in range(args.num_egf) ]
+        mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
+        # mEGF_MSE_list = [ torch.Tensor([np.mean(Mloss_mse_list[i])]) for i in range(args.num_egf) ]
 
         inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
         learned_kernel_np = [learned_kernel[i].cpu().numpy()[0] for i in range(args.num_egf)]
