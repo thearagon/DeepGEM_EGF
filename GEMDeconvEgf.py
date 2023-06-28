@@ -158,11 +158,12 @@ def main_function(args):
     else:
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.generatekernel()))
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
-    L1_prior = lambda kernel: Loss_L1(kernel, gf)
     if args.num_egf == 1:
         prior_L2 = lambda weight, kernel : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf) + 1e-2 * Loss_L2(kernel, gf)) if weight > 0 else 0
+        prior_L1 = lambda kernel: Loss_L1(kernel, gf)
     else:
         prior_L2 = lambda weight, kernel, i : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) +  1e-2 * Loss_L2(kernel, gf[i].unsqueeze(0))) if weight > 0 else 0
+        prior_L1 = lambda kernel, idx: Loss_L1(kernel, gf[idx])
     phi_priors = [f_phi_prior, prior_L2]  ## norms on init GF
 
     ## Priors on E step
@@ -230,6 +231,7 @@ def main_function(args):
     trc_ext0 = torch.cat(2 * [trc_ext.unsqueeze(0)])
     mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext0).detach() for i in range(args.num_egf)]
     mEGF_kernel_list = [learned_kernel[i].detach() for i in range(args.num_egf)]
+    last_idx = torch.argmin(torch.stack(mEGF_MSE_list))
 
     trc_ext = torch.cat(args.btsize * [trc_ext.unsqueeze(0)])
 
@@ -288,13 +290,13 @@ def main_function(args):
                 z_sample = torch.randn(args.btsize, npix).to(device=args.device)
                 x_sample = torch.randn(args.btsize, npix).to(device=args.device).reshape((-1, npiy, npix))
 
-                Mloss[k_egf], mse, kernorm, priorphi, multiloss = MStep(k_egf, z_sample, x_sample, npix, npiy,
+                Mloss[k_egf], mse, kernorm, priorphi, multiloss, last_idx = MStep(k_egf, z_sample, x_sample, npix, npiy,
                                                                         trc_ext,
                                                                         stf_gen, kernel_network[k_egf],
                                                                         FTrue, logscale_factor,
-                                                                        phi_priors, ker_softl1, L1_prior,
+                                                                        phi_priors, ker_softl1, prior_L1,
                                                                         mEGF_kernel_list, mEGF_MSE_list,
-                                                                        args)
+                                                                        args, last_idx)
 
                 Mloss_list[k_egf].append(Mloss[k_egf].detach().cpu().numpy())
                 Mloss_mse_list[k_egf].append(mse.detach().cpu().numpy())

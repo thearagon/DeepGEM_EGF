@@ -160,7 +160,7 @@ def EStep(z_sample, ytrue, img_generator, kernel_network, prior_x, prior_img, lo
 
 def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, fwd_network,
           logscale_factor, prior_phi, ker_softl1, L1_prior,
-          mEGF_kernel_list, mEGF_MSE_list, args):
+          mEGF_kernel_list, mEGF_MSE_list, args, last_idx):
 
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
 
@@ -193,14 +193,16 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
         idx_best = torch.argmin(torch.stack(mEGF_MSE_list))
         if k_egf == idx_best:
             # multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
-            multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
+            multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0), idx_best) + \
+                         1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0), last_idx)
                 #          + args.egf_multi_weight * 1e-3 * torch.sum(torch.Tensor(
                 # [Loss_L2(kernel.squeeze(0), e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]))
             print('{} best: {}'.format(k_egf, multi_loss))
         else:
             sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
-            multi_loss = args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
-                                                   + 0.35*torch.abs(sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ))
+            multi_loss = 1e2*args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0)) + \
+                                                      Loss_L2(kernel.squeeze(0), mEGF_kernel_list[last_idx].squeeze(0)) + \
+                                                    0.35*torch.abs(sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ))
                          # + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
             print('{} : {}'.format(k_egf, multi_loss))
     else:
@@ -209,7 +211,7 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
 
     loss = meas_err + norm_k + prior + multi_loss + pphi
 
-    return loss, meas_err, norm_k, prior, multi_loss
+    return loss, meas_err, norm_k, prior, multi_loss, idx_best
 
 
 ######################################################################################################################
