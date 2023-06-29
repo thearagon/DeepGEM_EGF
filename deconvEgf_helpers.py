@@ -207,6 +207,7 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
             print('{} : {}'.format(k_egf, multi_loss))
     else:
         multi_loss = torch.tensor(0.)
+        idx_best = 0
 
 
     loss = meas_err + norm_k + prior + multi_loss + pphi

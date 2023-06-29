@@ -27,7 +27,8 @@ def main_function(args):
                           (1/args.data_sigma)/7e-1]
     if args.logdet_weight == None:
         # weight on q_theta
-        args.logdet_weight = (1/args.data_sigma)/4e1 # 5e2
+        # args.logdet_weight = (1/args.data_sigma)/4e1 # 5e2
+        args.logdet_weight = 1
     if args.prior_phi_weight == None:
         # weight on init GF.
         args.prior_phi_weight = (1/args.data_sigma)/2e3 #3e2
@@ -329,7 +330,7 @@ def main_function(args):
                 ax[0].plot(np.log10(Eloss_list), label="Estep")
                 ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
                 ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
-                # ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
+                ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
                 ax[0].legend()
                 ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
                 if args.num_egf > 1:
