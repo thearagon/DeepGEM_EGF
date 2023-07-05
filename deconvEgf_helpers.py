@@ -179,6 +179,9 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
         if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in
                                           range(args.num_egf)]
     mEGF_kernel_list = learned_kernel
+    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    mEGF_MSE_list = [(1e-1 / args.data_sigma) * nn.MSELoss()(y[i], fwd[:,k_egf,:,:]) for i in range(args.num_egf)]
+
     kernel = learned_kernel[k_egf]
     ## Priors on init GF
     prior = args.prior_phi_weight * prior_phi[0](kernel.squeeze(0))
