@@ -208,7 +208,7 @@ def main_function(args):
         Mloss_phiprior_list[k_egf] = []
 
     ## Initialize
-    z_sample = torch.randn(2, npiy * npix).to(device=args.device)
+    z_sample = torch.randn(args.btsize, npiy * npix).to(device=args.device)
 
     img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
                            device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
@@ -229,12 +229,12 @@ def main_function(args):
             plot_res(0, 0, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args)
 
     # for multi M EGF steps
-    trc_ext0 = torch.cat(2 * [trc_ext.unsqueeze(0)])
-    mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext0).detach() for i in range(args.num_egf)]
-    mEGF_kernel_list = [learned_kernel[i].detach() for i in range(args.num_egf)]
-    last_idx = torch.argmin(torch.stack(mEGF_MSE_list))
-
     trc_ext = torch.cat(args.btsize * [trc_ext.unsqueeze(0)])
+    mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
+    # mEGF_kernel_list = [learned_kernel[i].detach() for i in range(args.num_egf)]
+    mEGF_kernel_list = gf
+    mEGF_y_list = y
+    last_idx = torch.argmin(torch.stack(mEGF_MSE_list))
 
     # Save args
     with open("{}/args.json".format(args.PATH), 'w') as f:
@@ -291,12 +291,13 @@ def main_function(args):
                 z_sample = torch.randn(args.btsize, npix).to(device=args.device)
                 x_sample = torch.randn(args.btsize, npix).to(device=args.device).reshape((-1, npiy, npix))
 
+                # print(Mloss)
                 Mloss[k_egf], mse, kernorm, priorphi, multiloss, last_idx = MStep(k_egf, z_sample, x_sample, npix, npiy,
                                                                         trc_ext,
-                                                                        stf_gen, kernel_network[k_egf],
+                                                                        stf_gen, kernel_network,
                                                                         FTrue, logscale_factor,
                                                                         phi_priors, ker_softl1, prior_L1,
-                                                                        mEGF_kernel_list, mEGF_MSE_list,
+                                                                        mEGF_kernel_list, mEGF_MSE_list, mEGF_y_list,
                                                                         args, last_idx)
 
                 Mloss_list[k_egf].append(Mloss[k_egf].detach().cpu().numpy())
@@ -308,6 +309,11 @@ def main_function(args):
                 Mloss[k_egf].backward()
                 nn.utils.clip_grad_norm_(list(kernel_network[k_egf].parameters()), 1)
                 Moptimizer[k_egf].step()
+
+                # learned_kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
+                #     if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in
+                #                                       range(args.num_egf)]
+                # mEGF_kernel_list = learned_kernel
 
             # if ((k_sub % args.print_every == 0) and args.EMFull) or (
             #         (k % args.print_every == 0) and not args.EMFull):
@@ -346,11 +352,13 @@ def main_function(args):
         learned_kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
             if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
         mEGF_kernel_list = learned_kernel
+        # mEGF_kernel_list = gf
 
         z_sample = torch.randn(args.btsize, npix).to(device=args.device)
         img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
                                device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
         y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+        mEGF_y_list = y
         mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
         # mEGF_MSE_list = [ torch.Tensor([np.mean(Mloss_mse_list[i])]) for i in range(args.num_egf) ]
 
@@ -517,9 +525,9 @@ if __name__ == "__main__":
         args.synthetics = True
         args.num_egf = 3
         args.btsize = 1024
-        args.num_subepochsE = 4
-        args.num_subepochsM = 4
-        args.num_epochs = 2
+        args.num_subepochsE = 3
+        args.num_subepochsM = 3
+        args.num_epochs = 5
         args.seqfrac = 20
         args.stf_size = 250 #180
         # args.egf_qual_weight = [0.5, 0.5, 0.5]

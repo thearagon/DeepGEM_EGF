@@ -160,22 +160,26 @@ def EStep(z_sample, ytrue, img_generator, kernel_network, prior_x, prior_img, lo
 
 def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, fwd_network,
           logscale_factor, prior_phi, ker_softl1, L1_prior,
-          mEGF_kernel_list, mEGF_MSE_list, args, last_idx):
+          mEGF_kernel_list, mEGF_MSE_list, mEGF_y_list, args, last_idx):
 
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
 
     # inferred IMG
     img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=args.device, device_ids=device_ids)
     # TRC from inferred IMG
-    y = FForward(img, kernel_network, args.data_sigma, args.device)
+    y = FForward(img, kernel_network[k_egf], args.data_sigma, args.device)
     # TRC from random IMG
-    y_x = FForward(x_sample, kernel_network, args.data_sigma, args.device)
+    y_x = FForward(x_sample, kernel_network[k_egf], args.data_sigma, args.device)
     # TRC from random IMG but init GF
     fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
     pphi = args.phi_weight * nn.MSELoss()(y_x, fwd[:,k_egf,:,:])
 
-    kernel = kernel_network.module.generatekernel() if device_ids is not None else kernel_network.generatekernel()
-
+    # kernel = kernel_network.module.generatekernel() if device_ids is not None else kernel_network.generatekernel()
+    learned_kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
+        if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in
+                                          range(args.num_egf)]
+    mEGF_kernel_list = learned_kernel
+    kernel = learned_kernel[k_egf]
     ## Priors on init GF
     prior = args.prior_phi_weight * prior_phi[0](kernel.squeeze(0))
     if args.num_egf == 1:
@@ -184,33 +188,46 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
         prior += prior_phi[1](args.prior_phi_weight, kernel.squeeze(0), k_egf)[0]
 
     ## Soft L1
-    norm_k = args.kernel_norm_weight * ker_softl1(kernel_network)
+    norm_k = args.kernel_norm_weight * ker_softl1(kernel_network[k_egf])
 
     meas_err = (1e-1/args.data_sigma)* args.egf_qual_weight[k_egf] * nn.MSELoss()(y, ytrue)
 
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:
         idx_best = torch.argmin(torch.stack(mEGF_MSE_list))
-        if k_egf == idx_best:
-            # multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
-            multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0), idx_best) + \
-                         1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0), last_idx)
-                #          + args.egf_multi_weight * 1e-3 * torch.sum(torch.Tensor(
-                # [Loss_L2(kernel.squeeze(0), e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]))
-            print('{} best: {}'.format(k_egf, multi_loss))
-        else:
-            sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
-            multi_loss = 1e2*args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0)) + \
-                                                      Loss_L2(kernel.squeeze(0), mEGF_kernel_list[last_idx].squeeze(0)) + \
-                                                    0.35*torch.abs(sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ))
-                         # + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
-            print('{} : {}'.format(k_egf, multi_loss))
+
+        # sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
+
+        # α = [torch.tanh( Loss_L2(yi, ytrue) ) / torch.sum( torch.Tensor([torch.tanh( Loss_L2(yk, ytrue) ) for yk in mEGF_y_list]) ) for yi in mEGF_y_list]
+        # print(α)
+
+        α = [Loss_L2(yi, ytrue)  / torch.sum( torch.Tensor([ Loss_L2(yk, ytrue)  for yk in mEGF_y_list]) ) for yi in mEGF_y_list]
+        # print(α)
+        # multi_loss = args.egf_multi_weight *α[k_egf][0]*Loss_L1(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
+        # mEGF_kernel_list[k_egf] = kernel
+        multi_loss = 15*args.egf_multi_weight * torch.sum( torch.Tensor([ α[i]*Loss_L2(mEGF_kernel_list[i].squeeze(0), mEGF_kernel_list[idx_best].squeeze(0)) for i in range(len(mEGF_kernel_list)) ]) )
+        # multi_loss = torch.tensor(0.)
+
+        # if k_egf == idx_best:
+        #     # multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
+        #     multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0), idx_best) + \
+        #                  1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0), last_idx)
+        #         #          + args.egf_multi_weight * 1e-3 * torch.sum(torch.Tensor(
+        #         # [Loss_L2(kernel.squeeze(0), e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]))
+        #     print('{} best: {}'.format(k_egf, multi_loss))
+        # else:
+        #     sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
+        #     multi_loss = 1e2*args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0)) + \
+        #                                               Loss_L2(kernel.squeeze(0), mEGF_kernel_list[last_idx].squeeze(0)) + \
+        #                                             0.35*torch.abs(sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ))
+        #                  # + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
+        print('{} : {}'.format(k_egf, multi_loss))
     else:
         multi_loss = torch.tensor(0.)
         idx_best = 0
 
 
-    loss = meas_err + norm_k + prior + multi_loss + pphi
+    loss = meas_err + norm_k + prior  + pphi + multi_loss
 
     return loss, meas_err, norm_k, prior, multi_loss, idx_best
 
