@@ -193,7 +193,7 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
     ## Soft L1
     norm_k = args.kernel_norm_weight * ker_softl1(kernel_network[k_egf])
 
-    meas_err = (1e-1/args.data_sigma)* args.egf_qual_weight[k_egf] * nn.MSELoss()(y, ytrue)
+    meas_err = (1e-1/args.data_sigma)* args.egf_qual_weight[k_egf] * nn.MSELoss()(y[k_egf], ytrue)
 
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:
