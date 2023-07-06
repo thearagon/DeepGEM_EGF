@@ -158,57 +158,67 @@ def EStep(z_sample, ytrue, img_generator, kernel_network, prior_x, prior_img, lo
     return loss, logqtheta, priorx+priorimg, smoothmin_meas_err
 
 
-def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, fwd_network,
+def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, fwd_network,
           logscale_factor, prior_phi, ker_softl1, L1_prior,
-          mEGF_kernel_list, mEGF_MSE_list, mEGF_y_list, args, last_idx):
+          mEGF_kernel_list, mEGF_MSE_list, mEGF_y_list, args):
 
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
 
     # inferred IMG
-    img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=args.device, device_ids=device_ids)
-    # TRC from inferred IMG
-    y = FForward(img, kernel_network[k_egf], args.data_sigma, args.device)
-    # TRC from random IMG
-    y_x = FForward(x_sample, kernel_network[k_egf], args.data_sigma, args.device)
-    # TRC from random IMG but init GF
+    # img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=args.device, device_ids=device_ids)
+    # # TRC from inferred IMG
+    # y = FForward(img, kernel_network, args.data_sigma, args.device)
+    # # TRC from random IMG
+    # y_x = FForward(x_sample, kernel_network, args.data_sigma, args.device)
+    # # TRC from random IMG but init GF
+    # fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
+
+    kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
+        if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
+
+    img, logdet = GForward(z_sample, img_generator, npix, npiy, logscale_factor,
+                           device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
+    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    y_x = [FForward(x_sample, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
     fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
-    pphi = args.phi_weight * nn.MSELoss()(y_x, fwd[:,k_egf,:,:])
+
+    pphi = [args.phi_weight * nn.MSELoss()(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
 
     # kernel = kernel_network.module.generatekernel() if device_ids is not None else kernel_network.generatekernel()
-    learned_kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
-        if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in
-                                          range(args.num_egf)]
-    mEGF_kernel_list = learned_kernel
-    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
-    mEGF_MSE_list = [(1e-1 / args.data_sigma) * nn.MSELoss()(y[i], fwd[:,k_egf,:,:]) for i in range(args.num_egf)]
 
-    kernel = learned_kernel[k_egf]
     ## Priors on init GF
-    prior = args.prior_phi_weight * prior_phi[0](kernel.squeeze(0))
-    if args.num_egf == 1:
-        prior += prior_phi[1](args.prior_phi_weight, kernel.squeeze(0))[0]
-    else:
-        prior += prior_phi[1](args.prior_phi_weight, kernel.squeeze(0), k_egf)[0]
+    prior = [args.prior_phi_weight * prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
+    for i in range(args.num_egf):
+        if args.num_egf == 1:
+            prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0))[0]
+        else:
+            prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0), i)[0]
 
     ## Soft L1
-    norm_k = args.kernel_norm_weight * ker_softl1(kernel_network[k_egf])
+    norm_k = [args.kernel_norm_weight * ker_softl1(kernel_network[i]) for i in range(args.num_egf)]
 
-    meas_err = (1e-1/args.data_sigma)* args.egf_qual_weight[k_egf] * nn.MSELoss()(y[k_egf], ytrue)
+    meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)]
 
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:
-        idx_best = torch.argmin(torch.stack(mEGF_MSE_list))
+
+        # update with current kernel
+        # mEGF_MSE_list[k_egf] = meas_err.detach()
+        # mEGF_kernel_list[k_egf] = kernel.detach()
+        # mEGF_y_list[k_egf] = y.detach()
+
+        idx_best = torch.argmin(torch.stack(meas_err))
 
         # sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
 
         # α = [torch.tanh( Loss_L2(yi, ytrue) ) / torch.sum( torch.Tensor([torch.tanh( Loss_L2(yk, ytrue) ) for yk in mEGF_y_list]) ) for yi in mEGF_y_list]
         # print(α)
 
-        α = [Loss_L2(yi, ytrue)  / torch.sum( torch.Tensor([ Loss_L2(yk, ytrue)  for yk in mEGF_y_list]) ) for yi in mEGF_y_list]
+        α = [Loss_L2(y[i], ytrue)  / torch.sum( torch.Tensor([ Loss_L2(y[k], ytrue)  for k in range(args.num_egf)]) ) for i in range(args.num_egf)]
         # print(α)
         # multi_loss = args.egf_multi_weight *α[k_egf][0]*Loss_L1(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
-        # mEGF_kernel_list[k_egf] = kernel
-        multi_loss = 15*args.egf_multi_weight * torch.sum( torch.Tensor([ α[i]*Loss_L2(mEGF_kernel_list[i].squeeze(0), mEGF_kernel_list[idx_best].squeeze(0)) for i in range(len(mEGF_kernel_list)) ]) )
+        # multi_loss = 15*args.egf_multi_weight * torch.sum( torch.Tensor([ α[i]*Loss_L2(kernel[i].squeeze(0), kernel[idx_best].squeeze(0)) for i in range(args.num_egf) ]) )
+        multi_loss =15*args.egf_multi_weight * torch.Tensor([ α[i]*Loss_L2(kernel[i].squeeze(0), kernel[idx_best].squeeze(0)) for i in range(args.num_egf) ])
         # multi_loss = torch.tensor(0.)
 
         # if k_egf == idx_best:
@@ -224,15 +234,15 @@ def MStep(k_egf, z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_ne
         #                                               Loss_L2(kernel.squeeze(0), mEGF_kernel_list[last_idx].squeeze(0)) + \
         #                                             0.35*torch.abs(sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ))
         #                  # + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
-        print('{} : {}'.format(k_egf, multi_loss))
     else:
         multi_loss = torch.tensor(0.)
         idx_best = 0
 
+    loss = {}
+    for i in range(args.num_egf):
+        loss[i] = torch.Tensor(meas_err[i] + norm_k[i] + prior[i] + pphi[i] + multi_loss[i])
 
-    loss = meas_err + norm_k + prior  + pphi + multi_loss
-
-    return loss, meas_err, norm_k, prior, multi_loss, idx_best
+    return loss, meas_err, norm_k, prior, multi_loss
 
 
 ######################################################################################################################
