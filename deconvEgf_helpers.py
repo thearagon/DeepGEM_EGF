@@ -240,7 +240,7 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
 
     loss = {}
     for i in range(args.num_egf):
-        loss[i] = torch.Tensor(meas_err[i] + norm_k[i] + prior[i] + pphi[i] + multi_loss[i])
+        loss[i] = torch.Tensor(meas_err[i] + norm_k[i] + prior[i] + pphi[i] + multi_loss)
 
     return loss, meas_err, norm_k, prior, multi_loss
 
