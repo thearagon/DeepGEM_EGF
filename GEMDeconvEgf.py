@@ -298,7 +298,7 @@ def main_function(args):
             for k_egf in range(args.num_egf):
                 Mloss_list[k_egf].append(Mloss[k_egf].detach().cpu().numpy())
                 Mloss_mse_list[k_egf].append(mse[k_egf].detach().cpu().numpy())
-                Mloss_multi_list[k_egf].append(multiloss[k_egf].detach().cpu().numpy())
+                Mloss_multi_list[k_egf].append(multiloss.detach().cpu().numpy())
                 Mloss_phiprior_list[k_egf].append(priorphi[k_egf].detach().cpu().numpy())
                 Mloss_kernorm_list[k_egf].append(kernorm[k_egf].detach().cpu().numpy())
                 Moptimizer[k_egf].zero_grad()
