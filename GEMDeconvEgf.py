@@ -500,21 +500,21 @@ if __name__ == "__main__":
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
-        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
-        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
-        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy_TOR_3_nostf0/'
-        # args.trc = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_trc.mseed"
-        # args.egf = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
-        # # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
-        # args.gf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
-        # args.stf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_stf_true.npy"
+        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
+        # args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
+        # args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
+        # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
+        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy_TOR_3_nostf02/'
+        args.trc = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_trc.mseed"
+        args.egf = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
+        # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
+        args.stf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_stf_true.npy"
         args.output = True
         args.synthetics = True
-        args.num_egf = 3
+        args.num_egf = 1
         args.btsize = 1024
         args.num_subepochsE = 3
         args.num_subepochsM = 3
