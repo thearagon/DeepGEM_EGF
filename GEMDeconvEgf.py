@@ -84,10 +84,18 @@ def main_function(args):
         stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix//10., 2.)))
         args.px_init_weight /= 4.
 
-    ## Normalize everything
-    trc = trc/ np.amax(np.abs(trc))
+    ## Normalize EGF and STF
     gf = gf / np.amax(np.abs(gf))
+    gf = torch.Tensor(gf).to(device=args.device)
     stf0 = stf0 / np.amax(stf0)
+    stf0 = torch.Tensor(stf0).to(device=args.device)
+
+    ## TRC is normalized with the initial convulion of prior STF and prior EGF
+    init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
+    trc = trc * (np.amax(np.abs(init_trc.numpy())) / np.amax(np.abs(trc)))
+    trc = torch.Tensor(trc).to(device=args.device)
+    trc_ext = torch.Tensor(trc).to(device=args.device)
+
 
     ## If we know the truth
     if args.synthetics == True:
@@ -113,10 +121,6 @@ def main_function(args):
     #
     # ############################################## MODEL SETUP #####################################################
     #
-    trc = torch.Tensor(trc).to(device=args.device)
-    trc_ext = torch.Tensor(trc).to(device=args.device)
-    gf = torch.Tensor(gf).to(device=args.device)
-    stf0 = torch.Tensor(stf0).to(device=args.device)
 
     ##------------------------------------------------------------------------------
     # ---- INITIALIZATION
@@ -228,13 +232,7 @@ def main_function(args):
         else:
             plot_res(0, 0, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args)
 
-    # for multi M EGF steps
     trc_ext = torch.cat(args.btsize * [trc_ext.unsqueeze(0)])
-    mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
-    # mEGF_kernel_list = [learned_kernel[i].detach() for i in range(args.num_egf)]
-    mEGF_kernel_list = gf
-    mEGF_y_list = y
-    last_idx = torch.argmin(torch.stack(mEGF_MSE_list))
 
     # Save args
     with open("{}/args.json".format(args.PATH), 'w') as f:
@@ -291,8 +289,7 @@ def main_function(args):
                                                             trc_ext,
                                                             stf_gen, kernel_network,
                                                             FTrue, logscale_factor,
-                                                            phi_priors, ker_softl1, prior_L1,
-                                                            mEGF_kernel_list, mEGF_MSE_list, mEGF_y_list,
+                                                            phi_priors, ker_softl1,
                                                             args)
 
             for k_egf in range(args.num_egf):
@@ -339,20 +336,15 @@ def main_function(args):
                     plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf), dpi=300)
                     plt.close()
 
-        ## Update mEGF lists
+        ## Plot output
         learned_kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
             if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
-        mEGF_kernel_list = learned_kernel
-        # mEGF_kernel_list = gf
 
         z_sample = torch.randn(args.btsize, npix).to(device=args.device)
         img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
                                device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
+        image = img.detach().cpu().numpy()
         y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
-        mEGF_y_list = y
-        mEGF_MSE_list = [(1e-1/args.data_sigma)*nn.MSELoss()(y[i], trc_ext).detach() for i in range(args.num_egf)]
-        # mEGF_MSE_list = [ torch.Tensor([np.mean(Mloss_mse_list[i])]) for i in range(args.num_egf) ]
-
         inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
         learned_kernel_np = [learned_kernel[i].cpu().numpy()[0] for i in range(args.num_egf)]
 
@@ -506,23 +498,23 @@ if __name__ == "__main__":
         # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
         # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
         # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/semisy_TOR_3_nostf02/'
-        args.trc = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_trc.mseed"
-        args.egf = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/synth_a0_ampl/'
+        args.trc = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_trace.npy"
+        args.egf = "/home/thea/projet/EGF/synth_wf/data/a0_m0_rec0_gf.npy"
         # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_gf.mseed"
-        args.stf_true = "/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a3_TOR_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_gf.npy"
+        args.stf_true = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_stf_true.npy"
         args.output = True
         args.synthetics = True
         args.num_egf = 1
         args.btsize = 1024
-        args.num_subepochsE = 3
-        args.num_subepochsM = 3
-        args.num_epochs = 5
+        args.num_subepochsE = 10
+        args.num_subepochsM = 10
+        args.num_epochs = 10
         args.seqfrac = 20
-        args.stf_size = 250 #180
+        args.stf_size = 40 #180
         # args.egf_qual_weight = [0.5, 0.5, 0.5]
-        args.px_init_weight = 5e4
+        # args.px_init_weight = 5e4
 
     if args.dir is not None:
         args.PATH = args.dir

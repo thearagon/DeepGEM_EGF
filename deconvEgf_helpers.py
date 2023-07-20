@@ -57,7 +57,6 @@ class KNetwork(torch.nn.Module):
         else:
             ker = self.layers[0]
 
-        # out = ker / torch.max(torch.abs(ker))
         out = ker
         return out.reshape(out.shape[0], self.num_egf, 3, out.shape[-1])
 
@@ -114,7 +113,6 @@ def GForward(z_sample, img_generator, npix, npiy, logscale_factor, device=None, 
     # apply scale factor
     logscale_factor_value = logscale_factor.forward()
     scale_factor = torch.exp(logscale_factor_value)
-    # img = img_samp * scale_factor
     img = img_samp
     det_scale = logscale_factor_value * npix * npiy
     logdet = logdet + det_scale
@@ -159,8 +157,7 @@ def EStep(z_sample, ytrue, img_generator, kernel_network, prior_x, prior_img, lo
 
 
 def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, fwd_network,
-          logscale_factor, prior_phi, ker_softl1, L1_prior,
-          mEGF_kernel_list, mEGF_MSE_list, mEGF_y_list, args):
+          logscale_factor, prior_phi, ker_softl1, args):
 
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
 
@@ -201,41 +198,11 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
 
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:
-
-        # update with current kernel
-        # mEGF_MSE_list[k_egf] = meas_err.detach()
-        # mEGF_kernel_list[k_egf] = kernel.detach()
-        # mEGF_y_list[k_egf] = y.detach()
-
         idx_best = torch.argmin(torch.stack(meas_err))
-
-        # sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
-
-        # α = [torch.tanh( Loss_L2(yi, ytrue) ) / torch.sum( torch.Tensor([torch.tanh( Loss_L2(yk, ytrue) ) for yk in mEGF_y_list]) ) for yi in mEGF_y_list]
-        # print(α)
-
         α = [Loss_L2(y[i], ytrue)  / torch.sum( torch.Tensor([ Loss_L2(y[k], ytrue)  for k in range(args.num_egf)]) ) for i in range(args.num_egf)]
-        # print(α)
-        # multi_loss = args.egf_multi_weight *α[k_egf][0]*Loss_L1(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))
         sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
         multi_loss = args.egf_multi_weight * torch.sum( torch.Tensor([ α[i]*( Loss_L2(kernel[i].squeeze(0), kernel[idx_best].squeeze(0))
                                                                               + 0.35*torch.abs(sdtw(kernel[i].squeeze(0), kernel[idx_best].squeeze(0))[0]) ) for i in range(args.num_egf) ]) )
-        # multi_loss =15*args.egf_multi_weight * torch.Tensor([ α[i]*Loss_L2(kernel[i].squeeze(0), kernel[idx_best].squeeze(0)) for i in range(args.num_egf) ])
-        # multi_loss = torch.tensor(0.)
-
-        # if k_egf == idx_best:
-        #     # multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0))
-        #     multi_loss = 1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0), idx_best) + \
-        #                  1e-2 * args.egf_multi_weight * L1_prior(kernel.squeeze(0), last_idx)
-        #         #          + args.egf_multi_weight * 1e-3 * torch.sum(torch.Tensor(
-        #         # [Loss_L2(kernel.squeeze(0), e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]))
-        #     print('{} best: {}'.format(k_egf, multi_loss))
-        # else:
-        #     sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1) if k_egf != idx_best else null
-        #     multi_loss = 1e2*args.egf_multi_weight * (Loss_L2(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0)) + \
-        #                                               Loss_L2(kernel.squeeze(0), mEGF_kernel_list[last_idx].squeeze(0)) + \
-        #                                             0.35*torch.abs(sdtw(kernel.squeeze(0), mEGF_kernel_list[idx_best].squeeze(0))[0] ))
-        #                  # + args.egf_multi_weight*1e-2* torch.sum( torch.Tensor([Loss_L2(kernel.squeeze(0),e.squeeze(0)) for i, e in enumerate(mEGF_kernel_list) if i != idx_best]) )
     else:
         multi_loss = torch.tensor(0.)
 
@@ -295,7 +262,7 @@ class stf_generator(nn.Module):
 
 ######################################################################################################################
 
-def dtw_classic(x, y, dist='square'):
+def dtw_classic(x, y, dist='absolute'):
     """Classic Dynamic Time Warping (DTW) distance between two time series.
 
     References
