@@ -92,7 +92,8 @@ def main_function(args):
 
     ## TRC is normalized with the initial convulion of prior STF and prior EGF
     init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
-    trc = trc * (np.amax(np.abs(init_trc.detach().cpu().numpy())) / np.amax(np.abs(trc)))
+    trc /= np.amax(np.abs(trc))
+    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
 
@@ -492,21 +493,21 @@ if __name__ == "__main__":
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
-        # args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
-        # args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
-        # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/synth_a0_ampl/'
-        args.trc = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_trace.npy"
-        args.egf = "/home/thea/projet/EGF/synth_wf/data/a0_m0_rec0_gf.npy"
-        # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_gf.npy"
-        args.stf_true = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_stf_true.npy"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
+        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
+        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
+        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
+        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/synth_a0_ampl/'
+        # args.trc = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_trace.npy"
+        # args.egf = "/home/thea/projet/EGF/synth_wf/data/a0_m0_rec0_gf.npy"
+        # # args.stf0 ="/home/thea/projet/EGF/borrego_springs/semisynth/semisy_a2_TOR_stf_true.npy"
+        # args.gf_true = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_gf.npy"
+        # args.stf_true = "/home/thea/projet/EGF/synth_wf/data/a0_m1_rec0_stf_true.npy"
         args.output = True
         args.synthetics = True
-        args.num_egf = 1
+        args.num_egf = 3
         args.btsize = 1024
         args.num_subepochsE = 10
         args.num_subepochsM = 10
