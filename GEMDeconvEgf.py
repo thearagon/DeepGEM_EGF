@@ -81,7 +81,7 @@ def main_function(args):
 
     else:
         ## STF init is a gaussian
-        stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix/3., 2.)))
+        stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix/6., 2.)))
         args.px_init_weight /= 4.
 
     ## Normalize EGF and STF
@@ -93,7 +93,7 @@ def main_function(args):
     ## TRC is normalized with the initial convulion of prior STF and prior EGF
     init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
     trc /= np.amax(np.abs(trc))
-    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    gf *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
 
@@ -110,6 +110,7 @@ def main_function(args):
             gf_true = gf_true.reshape(3, gf_true.shape[1])
         stf_true = np.load("{}".format(args.stf_true))
         gf_true = gf_true / np.amax(np.abs(gf_true))
+        gf_true *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
         stf_true = stf_true / np.amax(stf_true)
         if npix > len(stf_true):
             stf_rs = np.zeros(npix)
