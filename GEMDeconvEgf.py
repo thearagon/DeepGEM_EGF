@@ -81,7 +81,7 @@ def main_function(args):
 
     else:
         ## STF init is a gaussian
-        stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix//10., 2.)))
+        stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix/3., 2.)))
         args.px_init_weight /= 4.
 
     ## Normalize EGF and STF
