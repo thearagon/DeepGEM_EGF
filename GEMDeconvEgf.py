@@ -93,7 +93,7 @@ def main_function(args):
     ## TRC is normalized with the initial convulion of prior STF and prior EGF
     init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
     trc /= np.amax(np.abs(trc))
-    trc /= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
 
