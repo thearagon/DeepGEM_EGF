@@ -57,7 +57,7 @@ class KNetwork(torch.nn.Module):
         else:
             ker = self.layers[0]
 
-        out = ker / torch.amax(torch.abs(ker))
+        out = ker
         return out.reshape(out.shape[0], self.num_egf, 3, out.shape[-1])
 
     def forward(self, x):
@@ -65,7 +65,7 @@ class KNetwork(torch.nn.Module):
         out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
-        return out / torch.amax(torch.abs(out))
+        return out
 
 def trueForward(k, x, num_egf):
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
@@ -235,10 +235,11 @@ class img_logscale(nn.Module):
 
 class stf_generator(nn.Module):
     '''Softplus and norm for realnvp for STF'''
-    def __init__(self, realnvp, softplus=True):
+    def __init__(self, realnvp, rap, softplus=False):
         super().__init__()
         self.realnvp = realnvp
         self.softplus = softplus
+        self.rap=rap
 
     def forward(self, input):
         return self.realnvp.forward(input)
@@ -250,7 +251,7 @@ class stf_generator(nn.Module):
             det_sigmoid = torch.sum(-img - 2 * torch.nn.Softplus()(-img), -1)
             logdet = logdet + det_sigmoid
         else:
-            out = img
+            out = self.rap* img
         return out, logdet
 
 

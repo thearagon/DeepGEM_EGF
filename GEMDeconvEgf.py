@@ -81,18 +81,24 @@ def main_function(args):
 
     else:
         ## STF init is a gaussian
-        stf0 = np.exp(-np.power(np.arange(npix) - npix//2., 2.) / (2 * np.power(npix/3., 2.)))
+        stf0 = np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (npix//3)**2)) # npix//3
         args.px_init_weight /= 4.
+
+    # Mw_e = 2.
+    # Mw = 4.
+    # M0_e = 10 ** (1.5 * (Mw_e + 6.07))
+    # M0 = 10 ** (1.5 * (Mw + 6.07))
+    rap = 1
 
     ## Normalize EGF and STF
     gf = gf / np.amax(np.abs(gf))
     gf = torch.Tensor(gf).to(device=args.device)
-    stf0 = stf0 / np.amax(stf0)
+    stf0 = rap*stf0 / np.amax(stf0)
     stf0 = torch.Tensor(stf0).to(device=args.device)
 
     init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
     trc /= np.amax(np.abs(trc))
-    # trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
 
@@ -145,7 +151,7 @@ def main_function(args):
         print("Generating Random RealNVP Network")
         permute = 'random'
     realnvp = realnvpfc_model.RealNVP(npix, n_flow, seqfrac=seqfrac, affine=affine, permute=permute).to(args.device)
-    stf_gen = stf_generator(realnvp).to(args.device)
+    stf_gen = stf_generator(realnvp, rap).to(args.device)
 
     # True forward model (with init GF), used for priors
     FTrue = lambda x: trueForward(torch.unsqueeze(gf, dim=0), x, args.num_egf)
@@ -309,13 +315,13 @@ def main_function(args):
                 nn.utils.clip_grad_norm_(list(kernel_network[k_egf].parameters()), 1)
                 Moptimizer[k_egf].step()
 
-                # if ((k_sub % args.print_every == 0) and args.EMFull) or (
-                #         (k % args.print_every == 0) and not args.EMFull):
-                print(f"epoch: {k:} {k_sub:}, M step EGF {k_egf:} losses (tot, phi_prior, norm, mse, multi) : ")
-                print(''.join(f"{x:.2f}, " for x in
-                              [Mloss_list[k_egf][-1], Mloss_phiprior_list[k_egf][-1],
-                               Mloss_kernorm_list[k_egf][-1], Mloss_mse_list[k_egf][-1],
-                               Mloss_multi_list[k_egf][-1]]))
+                if ((k_sub % args.print_every == 0) and args.EMFull) or (
+                        (k % args.print_every == 0) and not args.EMFull):
+                    print(f"epoch: {k:} {k_sub:}, M step EGF {k_egf:} losses (tot, phi_prior, norm, mse, multi) : ")
+                    print(''.join(f"{x:.2f}, " for x in
+                                  [Mloss_list[k_egf][-1], Mloss_phiprior_list[k_egf][-1],
+                                   Mloss_kernorm_list[k_egf][-1], Mloss_mse_list[k_egf][-1],
+                                   Mloss_multi_list[k_egf][-1]]))
 
                 if args.output == True:
                     with torch.no_grad():
@@ -498,15 +504,15 @@ if __name__ == "__main__":
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/Pala_test2/'
-        # args.trc = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_38245496_m4_trc.mseed"
-        # args.egf = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_38242792_m2_trc.mseed"
-        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
-        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
-        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/Pala_test2/'
+        args.trc = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_38245496_m4_trc.mseed"
+        args.egf = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_38242792_m2_trc.mseed"
+        # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
+        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
+        # args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
+        # args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
         # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
         # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
         # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
@@ -517,8 +523,8 @@ if __name__ == "__main__":
         # args.gf_true = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_gf.npy"
         # args.stf_true = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_stf_true.npy"
         args.output = True
-        args.synthetics = True
-        args.num_egf = 3
+        args.synthetics = False
+        args.num_egf = 1
         args.btsize = 1024
         args.num_subepochsE = 10
         args.num_subepochsM = 10
