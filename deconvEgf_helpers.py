@@ -57,7 +57,7 @@ class KNetwork(torch.nn.Module):
         else:
             ker = self.layers[0]
 
-        out = ker
+        out = ker / torch.amax(torch.abs(ker))
         return out.reshape(out.shape[0], self.num_egf, 3, out.shape[-1])
 
     def forward(self, x):
@@ -65,7 +65,7 @@ class KNetwork(torch.nn.Module):
         out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
-        return out
+        return out / torch.amax(torch.abs(out))
 
 def trueForward(k, x, num_egf):
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
