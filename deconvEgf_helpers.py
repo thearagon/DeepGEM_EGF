@@ -235,7 +235,7 @@ class img_logscale(nn.Module):
 
 class stf_generator(nn.Module):
     '''Softplus and norm for realnvp for STF'''
-    def __init__(self, realnvp, rap, softplus=False):
+    def __init__(self, realnvp, rap, softplus=True):
         super().__init__()
         self.realnvp = realnvp
         self.softplus = softplus
@@ -247,7 +247,7 @@ class stf_generator(nn.Module):
     def reverse(self,input):
         img, logdet = self.realnvp.reverse(input)
         if self.softplus:
-            out = torch.nn.Sigmoid()(img)
+            out = self.rap*torch.nn.Sigmoid()(img)
             det_sigmoid = torch.sum(-img - 2 * torch.nn.Softplus()(-img), -1)
             logdet = logdet + det_sigmoid
         else:

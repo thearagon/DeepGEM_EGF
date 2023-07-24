@@ -84,11 +84,11 @@ def main_function(args):
         stf0 = np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (npix//3)**2)) # npix//3
         args.px_init_weight /= 4.
 
-    # Mw_e = 2.
-    # Mw = 4.
-    # M0_e = 10 ** (1.5 * (Mw_e + 6.07))
-    # M0 = 10 ** (1.5 * (Mw + 6.07))
-    rap = 1
+    Mw_e = 2.
+    Mw = 4.
+    M0_e = 10 ** (1.5 * (Mw_e + 6.07))
+    M0 = 10 ** (1.5 * (Mw + 6.07))
+    rap = M0/M0_e
 
     ## Normalize EGF and STF
     gf = gf / np.amax(np.abs(gf))
