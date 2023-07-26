@@ -84,12 +84,6 @@ def main_function(args):
         stf0 = np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (npix//3)**2)) # npix//3
         args.px_init_weight /= 4.
 
-    Mw_e = 2.
-    Mw = 4.
-    M0_e = 10 ** (1.5 * (Mw_e + 6.07))
-    M0 = 10 ** (1.5 * (Mw + 6.07))
-    # rap = M0/M0_e
-
     ## If we know the truth
     if args.synthetics == True:
         try:
@@ -126,7 +120,8 @@ def main_function(args):
 
     init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
     trc /= np.amax(np.abs(trc))
-    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    if normalize is False:
+        trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
 
