@@ -32,12 +32,13 @@ myred = '#c3553aff'
 myorange = '#f07101'
     
 class KNetwork(torch.nn.Module):
-    def __init__(self, ini, device, num_layers = 3, num_egf = 1):
+    def __init__(self, ini, device, normalize=False, num_layers = 3, num_egf = 1):
 
         super(KNetwork, self).__init__()
         self.num_layers = num_layers
         self.num_egf = num_egf
         self.device = device
+        self.normalize = normalize
 
         ## initialize kernel
         init = makeInit(ini, self.num_layers, self.device).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
@@ -57,7 +58,11 @@ class KNetwork(torch.nn.Module):
         else:
             ker = self.layers[0]
 
-        out = ker
+        if self.normalize == True:
+            out = ker / torch.amax(torch.abs(ker))
+        else:
+            out = ker
+
         return out.reshape(out.shape[0], self.num_egf, 3, out.shape[-1])
 
     def forward(self, x):
@@ -65,7 +70,10 @@ class KNetwork(torch.nn.Module):
         out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
-        return out
+        if self.normalize == True:
+            return out / torch.amax(torch.abs(out))
+        else:
+            return out
 
 def trueForward(k, x, num_egf):
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
@@ -235,23 +243,23 @@ class img_logscale(nn.Module):
 
 class stf_generator(nn.Module):
     '''Softplus and norm for realnvp for STF'''
-    def __init__(self, realnvp, rap, softplus=True):
+    def __init__(self, realnvp, norm, softplus=True):
         super().__init__()
         self.realnvp = realnvp
         self.softplus = softplus
-        self.rap=rap
+        self.norm = norm
 
     def forward(self, input):
         return self.realnvp.forward(input)
 
-    def reverse(self,input):
+    def reverse(self, input):
         img, logdet = self.realnvp.reverse(input)
         if self.softplus:
-            out = self.rap*torch.nn.Sigmoid()(img)
+            out = self.norm * torch.nn.Sigmoid()(img)
             det_sigmoid = torch.sum(-img - 2 * torch.nn.Softplus()(-img), -1)
             logdet = logdet + det_sigmoid
         else:
-            out = self.rap* img
+            out = self.norm * img
         return out, logdet
 
 

@@ -88,20 +88,7 @@ def main_function(args):
     Mw = 4.
     M0_e = 10 ** (1.5 * (Mw_e + 6.07))
     M0 = 10 ** (1.5 * (Mw + 6.07))
-    rap = M0/M0_e
-
-    ## Normalize EGF and STF
-    gf = gf / np.amax(np.abs(gf))
-    gf = torch.Tensor(gf).to(device=args.device)
-    stf0 = rap*stf0 / np.amax(stf0)
-    stf0 = torch.Tensor(stf0).to(device=args.device)
-
-    init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
-    trc /= np.amax(np.abs(trc))
-    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
-    trc = torch.Tensor(trc).to(device=args.device)
-    trc_ext = torch.Tensor(trc).to(device=args.device)
-
+    # rap = M0/M0_e
 
     ## If we know the truth
     if args.synthetics == True:
@@ -123,12 +110,28 @@ def main_function(args):
         elif npix < len(stf_true):
             args.stf_size = len(stf_true)
             npix = len(stf_true)
-        #
-        # init_trc = F.conv1d(torch.Tensor(gf_true).reshape(3,1, -1), stf0.view(1, 1, -1), padding='same')
-        # trc /= torch.amax(torch.abs(trc))
-        # # trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
-        # trc = torch.Tensor(trc).to(device=args.device)
-        # trc_ext = torch.Tensor(trc).to(device=args.device)
+
+    ## Normalize all
+    if args.M0 is not None and args.M0_egf is not None:
+        normalize = False
+        norm = args.M0/args.M0_egf
+    else:
+        normalize = True
+        norm = 1.
+
+    gf = gf / np.amax(np.abs(gf))
+    gf = torch.Tensor(gf).to(device=args.device)
+    stf0 = norm * stf0 / np.amax(stf0)
+    stf0 = torch.Tensor(stf0).to(device=args.device)
+
+    init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
+    trc /= np.amax(np.abs(trc))
+    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    trc = torch.Tensor(trc).to(device=args.device)
+    trc_ext = torch.Tensor(trc).to(device=args.device)
+
+    if args.synthetics == True:
+        stf_true *= norm
 
     #
     # ############################################## MODEL SETUP #####################################################
@@ -141,7 +144,8 @@ def main_function(args):
     kernel_network = [KNetwork(gf[i],
                               num_layers=args.num_layers,
                               num_egf=1,
-                              device=args.device
+                              device=args.device,
+                              normalize=normalize
                               ).to(args.device) for i in range(args.num_egf)]
 
     if args.reverse == True:
@@ -151,7 +155,7 @@ def main_function(args):
         print("Generating Random RealNVP Network")
         permute = 'random'
     realnvp = realnvpfc_model.RealNVP(npix, n_flow, seqfrac=seqfrac, affine=affine, permute=permute).to(args.device)
-    stf_gen = stf_generator(realnvp, rap).to(args.device)
+    stf_gen = stf_generator(realnvp, norm).to(args.device)
 
     # True forward model (with init GF), used for priors
     FTrue = lambda x: trueForward(torch.unsqueeze(gf, dim=0), x, args.num_egf)
@@ -437,10 +441,12 @@ if __name__ == "__main__":
                         help='True: E to convergence, M to convergence False: alternate E, M every epoch (default: False)')
     parser.add_argument('--num_layers', type=int, default=7, metavar='N',
                         help='number of layers for kernel (default: 7)')
-    parser.add_argument('--stf_size', type=int, default=100, metavar='N',
-                        help='length of STF (default: 100)')
-    parser.add_argument('--num_egf', type=int, default=1, metavar='N',
-                        help='number of EGF (default: 1)')
+    parser.add_argument('--seed', type=int, default=1, metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--Elr', type=float, default=1e-3,
+                        help='learning rate(default: 1e-4)')
+    parser.add_argument('--Mlr', type=float, default=1e-3,
+                        help='learning rate(default: 1e-4)')
 
     parser.add_argument('--dv', type=str, default='cpu',
                         help='which GPU to use, or cpu by default')
@@ -453,11 +459,22 @@ if __name__ == "__main__":
     parser.add_argument('-dir', '--dir', type=str, default="results",
                         help='output folder')
     parser.add_argument('--trc', type=str, default='',
-                        help='trace file name')
+                        help='trace file name, npy array or obspy stream')
+    parser.add_argument('--M0', type=float, default=None,
+                        help='Earthquake M0')
     parser.add_argument('--egf', type=str, default='',
-                        help='init trace file name')
+                        help='EGF file name, npy array or obspy stream')
+    parser.add_argument('--M0_egf', type=float, default=None,
+                        help='EGF M0, list if multiple EGFs')
+    parser.add_argument('--num_egf', type=int, default=1, metavar='N',
+                        help='number of EGF (default: 1)')
+    parser.add_argument('--egf_qual_weight', type=float, default=None,
+                        help='if multiple EGFs, weight reflects quality of each EGF (default None = 1 for each). ')
     parser.add_argument('--stf0', type=str, default='',
                         help='init STF file name')
+    parser.add_argument('--stf_size', type=int, default=100, metavar='N',
+                        help='length of STF (default: 100)')
+
     parser.add_argument('--synthetics', action='store_true', default=False,
                         help='synthetic case, if we know the truth')
     parser.add_argument('--stf_true', type=str, default='',
@@ -470,17 +487,10 @@ if __name__ == "__main__":
                         help='random x or from a certain sample')
     parser.add_argument('--reverse', action='store_true', default=False,
                         help='permute parameter, if False, random, if True, reverse')
-    parser.add_argument('--seqfrac', type=int, default=2,
+    parser.add_argument('--seqfrac', type=int, default=8,
                         help='seqfrac (default:2), should be < to stf length')
 
     # parameters
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--Elr', type=float, default=1e-3,
-                        help='learning rate(default: 1e-4)')
-    parser.add_argument('--Mlr', type=float, default=1e-3,
-                        help='learning rate(default: 1e-4)')
-
     parser.add_argument('--data_sigma', type=float, default=5e-5,
                         help='data sigma (default: 5e-5)')
     parser.add_argument('--px_init_weight', type=float, default=None,
@@ -495,8 +505,6 @@ if __name__ == "__main__":
                         help='kernel correlation coef weight if multiple EGF, M step (default None = function of data_sigma)')
     parser.add_argument('--prior_phi_weight', type=float, default=None,
                         help='weight on init GF on M step (default None = function of data_sigma)')
-    parser.add_argument('--egf_qual_weight', type=float, default=None,
-                        help='if multiple EGFs, weight reflects quality of each EGF (default None = 1 for each). ')
     parser.add_argument('--egf_multi_weight', type=float, default=None,
                         help='if multiple EGFs, weight for multi-M-step priors. ')
 
@@ -504,18 +512,20 @@ if __name__ == "__main__":
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/Pala_test2/'
-        args.trc = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_38245496_m4_trc.mseed"
-        args.egf = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_38242792_m2_trc.mseed"
+        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/Pala_test2/'
+        # args.trc = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_38245496_m4_trc.mseed"
+        # args.egf = "/home/thea/projet/EGF/cahuilla/data/38245496/PALA_38242792_m2_trc.mseed"
+        # args.M0_egf = 1.27e12
+        # args.M0 = 1.27e15
         # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
-        # args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
-        # args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
-        # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
+        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
+        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
+        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
+        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
+        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
         # args.dir = '/home/thea/projet/EGF/deconvEgf_res/synth_2a0_ampl/'
         # args.trc = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_trc.npy"
         # args.egf = "/home/thea/projet/EGF/synth_wf/data/2a0_m0_rec0_gf.npy"
@@ -523,8 +533,8 @@ if __name__ == "__main__":
         # args.gf_true = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_gf.npy"
         # args.stf_true = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_stf_true.npy"
         args.output = True
-        args.synthetics = False
-        args.num_egf = 1
+        args.synthetics = True
+        args.num_egf = 3
         args.btsize = 1024
         args.num_subepochsE = 10
         args.num_subepochsM = 10
