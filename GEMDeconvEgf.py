@@ -513,14 +513,14 @@ if __name__ == "__main__":
         # args.M0_egf = 1.27e12
         # args.M0 = 1.27e15
         # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_gf_true.npy"
+        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_stf_true.npy"
         args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
-        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_trc_detrend.mseed"
-        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_m2_gf.mseed"
-        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
+        args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_trc_detrend.mseed"
+        args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_m2_gf.mseed"
+        args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_stf_true.npy"
+        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
+        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
         # args.dir = '/home/thea/projet/EGF/deconvEgf_res/synth_2a0_ampl/'
         # args.trc = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_trc.npy"
         # args.egf = "/home/thea/projet/EGF/synth_wf/data/2a0_m0_rec0_gf.npy"
@@ -535,7 +535,7 @@ if __name__ == "__main__":
         args.num_subepochsM = 10
         args.num_epochs = 10
         args.seqfrac = 20
-        args.stf_size = 200 #180
+        args.stf_size = 70 #180
         # args.egf_qual_weight = [0.5, 0.5, 0.5]
         # args.px_init_weight = 5e4
 
