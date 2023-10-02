@@ -31,7 +31,7 @@ def main_function(args):
         args.logdet_weight = 1
     if args.prior_phi_weight == None:
         # weight on init GF.
-        args.prior_phi_weight = (1/args.data_sigma)/2e3 #3e2
+        args.prior_phi_weight = (1/args.data_sigma)/3e2 #2e3 #3e2
     if args.kernel_norm_weight == None:
         # + weight on TV
         args.kernel_norm_weight = (1/args.data_sigma)/1e6 #1e4

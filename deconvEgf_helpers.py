@@ -343,7 +343,7 @@ def Loss_L1(z, z0):
     return torch.sum( torch.abs(z - z0) )
 
 def Loss_TV(z):
-    return torch.mean( torch.abs(z[:,:, 1::] - z[:,:, 0:-1]))
+    return torch.pow( z[:,:, 1::] - z[:,:, 0:-1], 2).sum()
 
 def Loss_DTW(z, z0):
     # Dynamic Time Warping loss with initial STF
