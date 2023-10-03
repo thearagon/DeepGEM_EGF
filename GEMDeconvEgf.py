@@ -81,7 +81,7 @@ def main_function(args):
 
     else:
         ## STF init is a gaussian
-        stf0 = np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (npix//3)**2)) # npix//3
+        stf0 = np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (npix//6)**2)) # npix//3
         args.px_init_weight /= 4.
 
     ## If we know the truth
