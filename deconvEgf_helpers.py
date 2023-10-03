@@ -74,11 +74,14 @@ class KNetwork(torch.nn.Module):
         else:
             return out
 
-def trueForward(k, x, num_egf):
+def trueForward(k, x, num_egf, normalize=False):
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
-    return out
+    if normalize == True:
+        return out / torch.amax(torch.abs(out))
+    else:
+        return out
 
 
 def makeInit(init, num_layers, device, noise_amp=.5):

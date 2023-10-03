@@ -118,7 +118,7 @@ def main_function(args):
     stf0 = norm * stf0 / np.amax(stf0)
     stf0 = torch.Tensor(stf0).to(device=args.device)
 
-    init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
+    init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf, normalize)
     trc /= np.amax(np.abs(trc))
     if normalize is False:
         trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
