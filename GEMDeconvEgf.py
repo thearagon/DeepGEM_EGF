@@ -255,6 +255,8 @@ def main_function(args):
     with open("{}/args.json".format(args.PATH), 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
+    print(args.px_init_weight)
+    
     for k in range(args.num_epochs):
 
         ############################ E STEP Update STF Network #######################
