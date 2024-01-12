@@ -501,8 +501,8 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
     gf = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
     gf = gf.reshape(gf.shape[0] // 3, 3, gf.shape[1], order='F')
     trc = np.concatenate([st_trc[k].data[:, None] for k in range(len(st_trc))], axis=1).T
-    gf = gf/np.amax(np.abs(gf))
-    trc = trc/np.amax(np.abs(trc))
+    # gf = gf/np.amax(np.abs(gf))
+    # trc = trc/np.amax(np.abs(trc))
 
     if args.num_egf == 1:
         rap = [np.amax(st_trc[i].data) / np.amax(st_gf[i].data) for i in range(3)]
@@ -524,9 +524,9 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
             ax.fill_between(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] - stdev_trc[0,i] + (2 - i) * 0.6,
                             mean_trc[0,i] + stdev_trc[0,i] + (2 - i) * 0.6,
                             facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation', clip_on=False)
-            l1 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, trc[i] + (2 - i) * 0.6, color='k', lw=0.8,
+            l1 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, trc[i] + (2 - i) * 0.6, color='k', lw=0.7,
                          clip_on=False)
-            l2 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] + (2 - i) * 0.6, lw=0.7, color=myorange,
+            l2 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
                          clip_on=False)
             ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) - 5, np.mean(trc[i] + (2 - i) * 0.6), chan[i],
                     horizontalalignment='right',
@@ -550,8 +550,8 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
             labelbottom=True)
         for i in range(3):
             tmax = np.amax(st_gf[0].times())
-            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, gf[0,i] + (2 - i) * 0.6, color='k', lw=0.8, clip_on=False)
-            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, learned_kernel[0,0,i] + (2 - i) * 0.6, lw=0.7, color=myorange,
+            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, gf[0,i] + (2 - i) * 0.6, color='k', lw=0.7, clip_on=False)
+            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, learned_kernel[0,0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
                     clip_on=False)
         plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
         ax.text(1, .8, 'data', horizontalalignment='right', verticalalignment='top', color='k', transform=ax.transAxes)
@@ -570,7 +570,7 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
         ax.fill_between(np.arange(len(mean_img[0])) / st_gf[0].stats.sampling_rate, mean_img[0] - stdev_img[0],
                         mean_img[0] + stdev_img[0],
                         facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation')
-        ax.plot(np.arange(len(mean_img[0])) / st_gf[0].stats.sampling_rate, mean_img[0], lw=1, color=myorange)
+        ax.plot(np.arange(len(mean_img[0])) / st_gf[0].stats.sampling_rate, mean_img[0], lw=0.8, color=myorange)
 
     else:
         fig = plt.figure(figsize=(4,(args.num_egf+1)*1.2))
@@ -587,7 +587,7 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
             labelbottom=True)
         ax.fill_between(np.arange(len(mean_img[0]))/st_gf[0].stats.sampling_rate, mean_img[0] - stdev_img[0], mean_img[0] + stdev_img[0],
                          facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation')
-        ax.plot(np.arange(len(mean_img[0]))/st_gf[0].stats.sampling_rate, mean_img[0], lw=1, color=myorange)
+        ax.plot(np.arange(len(mean_img[0]))/st_gf[0].stats.sampling_rate, mean_img[0], lw=0.8, color=myorange)
         plt.xlabel('Time (s)', labelpad=2, loc='left')
         tmax=np.amax(np.arange(len(mean_img[0]))/st_gf[0].stats.sampling_rate)
         ticklab = ax.xaxis.get_ticklabels()[0]
@@ -613,8 +613,8 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
                 tmax = np.amax(st_trc[0].times())
                 ax.fill_between(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i] - stdev_trc[k,i]+(2-i)*0.6, mean_trc[k,i] + stdev_trc[k,i]+(2-i)*0.6,
                                  facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
-                l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc[i]+(2-i)*0.6, color='k', lw=0.8,clip_on=False)
-                l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.7, color=myorange,clip_on=False)
+                l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
+                l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
                 ax.text(np.amin(st_trc[0].times()-(2-i)*tmax//5)-tmax//7, np.mean(trc[i]+(2-i)*0.6), chan[i],
                          horizontalalignment='right',
                          verticalalignment='top',weight='bold')
@@ -637,8 +637,8 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
                 labelbottom=True)
             for i in range(3):
                 tmax = np.amax(st_gf[0].times())
-                ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf[k,i]+(2-i)*0.6, color='k', lw=0.8,clip_on=False)
-                ax.plot(st_gf[0].times()-(2-i)*tmax//5, learned_kernel[k,0,i]+(2-i)*0.6, lw=0.7, color=myorange,clip_on=False)
+                ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf[k,i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
+                ax.plot(st_gf[0].times()-(2-i)*tmax//5, learned_kernel[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
             plt.xlim(np.amin(st_gf[0].times()-(2)*tmax//5)+10, tmax-5)
 
     fig.savefig("{}/out_{}.pdf".format(args.PATH, 'res'),
