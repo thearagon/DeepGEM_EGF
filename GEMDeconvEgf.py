@@ -84,6 +84,8 @@ def main_function(args):
         stf0 = 0.2*np.ones(npix) + 0.8*np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (npix//6)**2)) # npix//3
         args.px_init_weight /= 4.
 
+    print(args.px_init_weight)
+
     ## If we know the truth
     if args.synthetics == True:
         try:
