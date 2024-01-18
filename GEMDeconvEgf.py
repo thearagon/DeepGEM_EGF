@@ -43,7 +43,7 @@ def main_function(args):
     else:
         args.egf_multi_weight = 0.
         args.egf_qual_weight = [1]
-        args.prior_phi_weight *= 5e0
+        #args.prior_phi_weight *= 5e0
 
         ################################################ SET UP DATA ####################################################
     try:
@@ -81,10 +81,9 @@ def main_function(args):
 
     else:
         ## STF init is a gaussian
-        stf0 = 0.2*np.ones(npix) + 0.8*np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (npix//6)**2)) # npix//3
+        τc = npix//10. ## function of rate... M0 ?
+        stf0 = 0.1*np.ones(npix) + 0.9*np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (τc/2)**2)) # npix//3
         args.px_init_weight /= 4.
-
-    print(args.px_init_weight)
 
     ## If we know the truth
     if args.synthetics == True:
@@ -107,7 +106,7 @@ def main_function(args):
             args.stf_size = len(stf_true)
             npix = len(stf_true)
 
-    ## Normalize all
+    ## Normalize everything
     if args.M0 is not None and args.M0_egf is not None:
         normalize = False
         norm = args.M0/args.M0_egf
@@ -255,8 +254,6 @@ def main_function(args):
     with open("{}/args.json".format(args.PATH), 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
-    print(args.px_init_weight)
-    
     for k in range(args.num_epochs):
 
         ############################ E STEP Update STF Network #######################
