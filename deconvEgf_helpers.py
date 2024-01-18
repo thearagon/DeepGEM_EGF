@@ -493,7 +493,7 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
     return
 
 
-def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
+def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc):
     mean_img = np.mean(image, axis=0)
     stdev_img = np.std(image, axis=0)
     mean_trc = np.mean(inferred_trace, axis=0)
@@ -501,8 +501,11 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args):
     gf = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
     gf = gf.reshape(gf.shape[0] // 3, 3, gf.shape[1], order='F')
     trc = np.concatenate([st_trc[k].data[:, None] for k in range(len(st_trc))], axis=1).T
-    # gf = gf/np.amax(np.abs(gf))
-    # trc = trc/np.amax(np.abs(trc))
+
+    # Norm stream
+    gf /= np.amax(np.abs(gf))
+    trc /= np.amax(np.abs(trc))
+    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
 
     if args.num_egf == 1:
         rap = [np.amax(st_trc[i].data) / np.amax(st_gf[i].data) for i in range(3)]

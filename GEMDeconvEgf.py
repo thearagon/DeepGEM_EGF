@@ -124,9 +124,9 @@ def main_function(args):
 
     init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf, normalize)
     trc /= np.amax(np.abs(trc))
-    # test MODIFIED
+    # test
     # if normalize is False:
-    #trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
 
@@ -411,9 +411,9 @@ def main_function(args):
     elif args.synthetics == True and st_gf is not None and st_trc is not None:
         plot_res(k, k_sub, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args, true_gf=gf_true,
                  true_stf=stf_true)
-        plot_st(st_trc, st_gf, inferred_trace, learned_kernel_np, image, args)
+        plot_st(st_trc, st_gf, inferred_trace, learned_kernel_np, image, args, init_trc)
     elif st_gf is not None and st_trc is not None:
-        plot_st(st_trc, st_gf, inferred_trace, learned_kernel_np, image, args)
+        plot_st(st_trc, st_gf, inferred_trace, learned_kernel_np, image, args, init_trc)
     else:
         plot_res(k, k_sub, image, learned_kernel_np, inferred_trace, stf0, gf, trc, args)
         plot_trace(trc, inferred_trace, args)
@@ -512,9 +512,9 @@ if __name__ == "__main__":
 
     if os.uname().nodename == 'wouf':
         matplotlib.use('TkAgg')
-        args.dir = '/home/thea/projet/EGF/deconvEgf_res/borr_test/'
-        args.trc = "/home/thea/projet/EGF/borrego_springs/data/dg/BOR_m5_trc.mseed"
-        args.egf = "/home/thea/projet/EGF/borrego_springs/data/dg/BOR_m3_trc.mseed"
+        args.dir = '/home/thea/projet/2023_EGF/deconvEgf_res/borr_test/'
+        args.trc = "/home/thea/projet/2023_EGF/borrego_springs/data/dg/BOR_m5_trc.mseed"
+        args.egf = "/home/thea/projet/2023_EGF/borrego_springs/data/dg/BOR_m3_trc.mseed"
         # args.M0_egf = 1.27e12
         # args.M0 = 1.27e15
         # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
@@ -535,12 +535,12 @@ if __name__ == "__main__":
         args.output = True
         args.synthetics = False
         args.num_egf = 1
-        args.btsize = 1024
-        args.num_subepochsE = 10
-        args.num_subepochsM = 10
-        args.num_epochs = 10
+        args.btsize = 24
+        args.num_subepochsE = 1
+        args.num_subepochsM = 1
+        args.num_epochs = 1
         args.seqfrac = 20
-        args.stf_size = 400 #180
+        args.stf_size = 250 #180
         # args.egf_qual_weight = [0.5, 0.5, 0.5]
         # args.px_init_weight = 5e4
 
