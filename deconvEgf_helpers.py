@@ -196,7 +196,7 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
     prior = [args.prior_phi_weight * prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
     for i in range(args.num_egf):
         if args.num_egf == 1:
-            prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0))[0]
+            prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0))#[0] #MODIF!!
         else:
             prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0), i)[0]
 
