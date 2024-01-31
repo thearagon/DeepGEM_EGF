@@ -20,15 +20,11 @@ from: jupyter/scipy-notebook
 
   conda install pytorch pytorch-cuda torchvision cudatoolkit=11.8 -c pytorch
   conda install -c anaconda xarray
-  conda install -y -c conda-forge cartopy numpy ffmpeg matplotlib scipy obspy pandas pillow pyproj pyqt5 seaborn shapely 
+  conda install -y -c conda-forge cartopy numpy ffmpeg matplotlib scipy obspy pandas pillow pyproj pyqt5 seaborn shapely  pip
 
   conda clean --tarballs
 
 #  python setup.py install  
-
-  # Install git and pip
-  apt-get -y install git-all
-  apt-get -y install python3-pip
 
   pip install fastdtw
   pip install gpustat

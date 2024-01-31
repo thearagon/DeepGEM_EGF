@@ -180,8 +180,9 @@ def main_function(args):
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.generatekernel()))
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
     if args.num_egf == 1:
-        prior_L2 = lambda weight, kernel : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf) + 1e-2 * Loss_L2(kernel, gf)) if weight > 0 else 0
-        prior_L1 = lambda kernel: Loss_L1(kernel, gf)
+        prior_L2 = lambda kernel, weight: weight * Loss_TSV(kernel, gf) if weight > 0 else 0 ## Total Variation
+        #prior_L2 = lambda weight, kernel : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf) + 1e-2 * Loss_L2(kernel, gf)) if weight > 0 else 0
+        #prior_L1 = lambda kernel: Loss_L1(kernel, gf)
     else:
         prior_L2 = lambda weight, kernel, i : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) +  1e-2 * Loss_L2(kernel, gf[i].unsqueeze(0))) if weight > 0 else 0
         prior_L1 = lambda kernel, idx: Loss_L1(kernel, gf[idx])
@@ -578,7 +579,7 @@ if __name__ == "__main__":
         print(" Using {} GPUS".format(len(args.device_ids)))
 
     if args.EMFull == True:
-        args.num_epochs = args.num_epochs + 1
+        args.num_epochs = args.num_epochs + 11
         args.num_subepochsE = args.num_subepochsE + 1
         args.num_subepochsM = args.num_subepochsM + 1
         print("Full EM w/ {} epochs and {} E subepochs {} M subepochs".format(args.num_epochs, args.num_subepochsE,

@@ -9,7 +9,7 @@ import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import seaborn as sns
+#import seaborn as sns
 import random
 import json
 import itertools
@@ -180,9 +180,6 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
     # # TRC from random IMG but init GF
     # fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
 
-    kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
-        if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
-
     img, logdet = GForward(z_sample, img_generator, npix, npiy, logscale_factor,
                            device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
     y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
@@ -192,6 +189,8 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
     pphi = [args.phi_weight * nn.MSELoss()(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
 
     # kernel = kernel_network.module.generatekernel() if device_ids is not None else kernel_network.generatekernel()
+    kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
+        if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
 
     ## Priors on init GF
     prior = [args.prior_phi_weight * prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
@@ -338,6 +337,9 @@ def priorPhi(k, k0):
     ker = k - k0
     out = ker
     return torch.mean(torch.abs(out))
+
+def Loss_TSV(z, z0):
+    return torch.mean( (z - z0)**2 )
 
 def Loss_L2(z, z0):
     return torch.sqrt(torch.sum( (z - z0)**2 ))
