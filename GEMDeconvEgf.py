@@ -117,9 +117,9 @@ def main_function(args):
         normalize = True
         norm = 1.
     
-    #for i in range(gf.shape[0]): ## MODIF!!
-        #gf[i] = gf[i]/ np.amax(np.abs(gf[i]))
-    gf = gf / np.amax(np.abs(gf))
+    for i in range(gf.shape[0]): ## MODIF!!
+        gf[i] = gf[i]/ np.amax(np.abs(gf[i]))
+    # gf = gf / np.amax(np.abs(gf))
     gf = torch.Tensor(gf).to(device=args.device)
     stf0 = norm * stf0 / np.amax(stf0)
     stf0 = torch.Tensor(stf0).to(device=args.device)
