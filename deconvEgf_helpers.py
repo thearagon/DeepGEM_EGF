@@ -9,7 +9,7 @@ import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-#import seaborn as sns
+import seaborn as sns
 import random
 import json
 import itertools
