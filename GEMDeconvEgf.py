@@ -117,7 +117,7 @@ def main_function(args):
         normalize = True
         norm = 1.
     
-    for i in range(gf.shape[0]):
+    for i in range(gf.shape[0]): ## MODIF!!
         gf[i] = gf[i]/ np.amax(np.abs(gf[i]))
     #gf = gf / np.amax(np.abs(gf))
     gf = torch.Tensor(gf).to(device=args.device)
@@ -182,7 +182,8 @@ def main_function(args):
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.generatekernel()))
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
     if args.num_egf == 1:
-        prior_L2 = lambda kernel, weight: weight * Loss_TSV(kernel, gf) if weight > 0 else 0 ## Total Variation
+        prior_L2 = lambda kernel, weight: weight * Loss_TSV(kernel, gf)  ## Total Variation
+        ## MODIF!!
         #prior_L2 = lambda weight, kernel : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf) + 1e-2 * Loss_L2(kernel, gf)) if weight > 0 else 0
         #prior_L1 = lambda kernel: Loss_L1(kernel, gf)
     else:
