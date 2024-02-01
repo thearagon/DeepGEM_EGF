@@ -126,7 +126,7 @@ def main_function(args):
     trc /= np.amax(np.abs(trc))
     # test
     # if normalize is False:
-    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    # trc *= np.amax(np.abs(init_trc.detach().cpu().numpy())) ##MODIF!!
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
 
@@ -180,7 +180,7 @@ def main_function(args):
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.generatekernel()))
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
     if args.num_egf == 1:
-        prior_L2 = lambda weight, kernel: weight * Loss_TSV(kernel, gf)  ## Total Variation
+        prior_L2 = lambda weight, kernel: weight * Loss_L2(kernel, gf)  ## Total Variation
         ## MODIF!!
         # prior_L2 = lambda weight, kernel : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf) + 1e-2 * Loss_L2(kernel, gf)) if weight > 0 else 0
         #prior_L1 = lambda kernel: Loss_L1(kernel, gf)
@@ -230,13 +230,21 @@ def main_function(args):
         Mloss_phiprior_list[k_egf] = []
 
     ## Initialize
-    z_sample = torch.randn(args.btsize, npiy * npix).to(device=args.device)
+    if args.num_egf == 1:
+        z_sample = torch.randn(2, npiy * npix).to(device=args.device)
+        img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
+                               device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
+        image = img.detach().cpu().numpy()
+        y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+        inferred_trace = [y0.detach().cpu().numpy() for y0 in y]
+    else:
+        z_sample = torch.randn(args.btsize, npiy * npix).to(device=args.device)
 
-    img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
-                           device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
-    image = img.detach().cpu().numpy()
-    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
-    inferred_trace = [ y0.detach().cpu().numpy() for y0 in y ]
+        img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
+                               device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
+        image = img.detach().cpu().numpy()
+        y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+        inferred_trace = [ y0.detach().cpu().numpy() for y0 in y ]
 
 
     learned_kernel = [kernel_network[i].module.generatekernel() for i in range(args.num_egf)] \
