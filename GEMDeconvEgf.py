@@ -81,9 +81,9 @@ def main_function(args):
 
     else:
         ## STF init is a gaussian
-        τc = npix//10. ## function of rate... M0 ?
-        stf0 = 0.1*np.ones(npix) + 0.9*np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (τc/2)**2)) # npix//3
-        args.px_init_weight /= 4.
+        τc = npix//10. ## TODO function of rate... M0 ?
+        stf0 = 0.01*np.ones(npix) + 0.99*np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (τc/2)**2)) # npix//3
+        #args.px_init_weight /= 4.
 
     ## If we know the truth
     if args.synthetics == True:
@@ -124,7 +124,7 @@ def main_function(args):
 
     init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf, normalize)
     trc /= np.amax(np.abs(trc))
-    # test
+    # TODO
     # if normalize is False:
     # trc *= np.amax(np.abs(init_trc.detach().cpu().numpy())) ##MODIF!!
     trc = torch.Tensor(trc).to(device=args.device)
