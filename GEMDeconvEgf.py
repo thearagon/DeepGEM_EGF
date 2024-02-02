@@ -181,7 +181,7 @@ def main_function(args):
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
     if args.num_egf == 1:
         prior_L2 = lambda weight, kernel: weight * Loss_L2(kernel, gf)  ## Total Variation
-        ## MODIF!!
+        ## TODO MODIF!!
         # prior_L2 = lambda weight, kernel : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf) + 1e-2 * Loss_L2(kernel, gf)) if weight > 0 else 0
         #prior_L1 = lambda kernel: Loss_L1(kernel, gf)
     else:
@@ -284,7 +284,8 @@ def main_function(args):
             nn.utils.clip_grad_norm_(list(stf_gen.parameters()) + list(logscale_factor.parameters()), 1)
             Eoptimizer.step()
 
-            if ((k_sub % args.save_every == 0) and args.EMFull) or ((k % args.save_every == 0) and not args.EMFull):
+            if ((k_sub % args.save_every == 0) and args.EMFull) or (
+                    (k % args.save_every == 0) and not args.EMFull):
 
                 z_sample = torch.randn(args.btsize, npix).to(device=args.device)
                 img, logdet = GForward(z_sample, stf_gen, npix, npiy, logscale_factor,
@@ -300,9 +301,35 @@ def main_function(args):
                                 'optimizer_state_dict': Eoptimizer.state_dict(),
                             }, '{}/{}{}_{}.pt'.format(args.PATH, "GeneratorNetwork", str(k).zfill(5), str(k_sub).zfill(5)))
 
-            if ((k_sub % args.print_every == 0) and args.EMFull) or ((k % args.print_every == 0) and not args.EMFull):
+            if ((k_sub % args.print_every == 0) and args.EMFull) or (
+                    (k % args.print_every == 0) and not args.EMFull):
                 print(f"epoch: {k:} {k_sub:}, E step losses (tot, prior, q, mse): ")
                 print(''.join(f"{x:.2f}, " for x in [Eloss_list[-1], Eloss_prior_list[-1], Eloss_q_list[-1], Eloss_mse_list[-1]]) )
+
+                if args.output == True:
+                    with torch.no_grad():
+                        torch.save({
+                            'epoch': k,
+                            'model_state_dict': kernel_network[k_egf].state_dict(),
+                            'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
+                        }, '{}/{}{}_{}.pt'.format(args.PATH, "KernelNetwork_egf", str(k).zfill(5), str(k_egf).zfill(5)))
+                    np.save("{}/Data/learned_kernel.npy".format(args.PATH), learned_kernel_np)
+
+                    fig, ax = plt.subplots(1, 2, figsize=(15, 4))
+                    ax[0].plot(np.log10(Eloss_list), label="Estep")
+                    ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
+                    ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
+                    ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
+                    ax[0].legend()
+                    ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
+                    if args.num_egf > 1:
+                        ax[1].plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
+                    ax[1].plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
+                    # ax[1].plot(np.log10(Mloss_kernorm_list[k_egf]), ":", label="Mstep Kernel Norm")
+                    ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
+                    ax[1].legend()
+                    plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf), dpi=300)
+                    plt.close()
 
         ############################ M STEP Update Kernel Network #######################
 
@@ -337,30 +364,30 @@ def main_function(args):
                                    Mloss_kernorm_list[k_egf][-1], Mloss_mse_list[k_egf][-1],
                                    Mloss_multi_list[k_egf][-1]]))
 
-                if args.output == True:
-                    with torch.no_grad():
-                        torch.save({
-                            'epoch': k,
-                            'model_state_dict': kernel_network[k_egf].state_dict(),
-                            'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
-                        }, '{}/{}{}_{}.pt'.format(args.PATH, "KernelNetwork_egf", str(k).zfill(5), str(k_egf).zfill(5)))
-                    np.save("{}/Data/learned_kernel.npy".format(args.PATH), learned_kernel_np)
+                    if args.output == True:
+                        with torch.no_grad():
+                            torch.save({
+                                'epoch': k,
+                                'model_state_dict': kernel_network[k_egf].state_dict(),
+                                'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
+                            }, '{}/{}{}_{}.pt'.format(args.PATH, "KernelNetwork_egf", str(k).zfill(5), str(k_egf).zfill(5)))
+                        np.save("{}/Data/learned_kernel.npy".format(args.PATH), learned_kernel_np)
 
-                    fig, ax = plt.subplots(1, 2, figsize=(15, 4))
-                    ax[0].plot(np.log10(Eloss_list), label="Estep")
-                    ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-                    ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
-                    ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
-                    ax[0].legend()
-                    ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
-                    if args.num_egf > 1:
-                        ax[1].plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
-                    ax[1].plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
-                    # ax[1].plot(np.log10(Mloss_kernorm_list[k_egf]), ":", label="Mstep Kernel Norm")
-                    ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
-                    ax[1].legend()
-                    plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf), dpi=300)
-                    plt.close()
+                        fig, ax = plt.subplots(1, 2, figsize=(15, 4))
+                        ax[0].plot(np.log10(Eloss_list), label="Estep")
+                        ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
+                        ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
+                        ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
+                        ax[0].legend()
+                        ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
+                        if args.num_egf > 1:
+                            ax[1].plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
+                        ax[1].plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
+                        # ax[1].plot(np.log10(Mloss_kernorm_list[k_egf]), ":", label="Mstep Kernel Norm")
+                        ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
+                        ax[1].legend()
+                        plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf), dpi=300)
+                        plt.close()
 
         ## Plot output
         learned_kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
