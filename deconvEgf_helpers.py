@@ -85,19 +85,19 @@ def trueForward(k, x, num_egf, normalize=False):
     return out
 
 
-def makeInit(init, num_layers, device, noise_amp=.5):
+def makeInit(init, num_layers, device, noise_amp=.1):
     """
     """
     l0 = torch.zeros(init.shape, device=device)
     l0[ :, init.shape[1]//2] = 1.
 
     out = torch.zeros(num_layers, init.shape[0], init.shape[1], device=device)
-    #for i in range(num_layers - 1):
-        #out[i] = l0 + (torch.randn(1, device=device)[0] * noise_amp / 100.) * torch.randn(l0.shape, device=device)
-    #out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
-    for i in range(num_layers ):
+    for i in range(num_layers - 1):
         out[i] = l0 + (torch.randn(1, device=device)[0] * noise_amp / 100.) * torch.randn(l0.shape, device=device)
-    #out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
+    out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
+    #for i in range(num_layers ):
+        #out[i] = l0 + (torch.randn(1, device=device)[0] * noise_amp / 100.) * torch.randn(l0.shape, device=device)
+    ##out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
 
     return out
 
@@ -197,10 +197,10 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
         if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
 
     ## Priors on init GF
-    prior = [1e2*args.prior_phi_weight * prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
+    prior = [args.prior_phi_weight * 3 *prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
     for i in range(args.num_egf):
         if args.num_egf == 1:
-            prior[i] += 0*prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0))#[0] #MODIF!!
+            prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0))#[0] #MODIF!!
         else:
             prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0), i)[0]
 
