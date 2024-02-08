@@ -81,7 +81,7 @@ def main_function(args):
 
     else:
         ## STF init is a gaussian
-        τc = npix//10. ## TODO function of rate... M0 ?
+        τc = npix//30. ## TODO function of rate... M0 ?
         stf0 = 0.01*np.ones(npix) + 0.99*np.exp(-(np.arange(npix) - npix//2.)**2 / (2 * (τc/2)**2)) # npix//3
         #args.px_init_weight /= 4.
 
