@@ -59,7 +59,7 @@ class KNetwork(torch.nn.Module):
             ker = self.layers[0]
 
         # if self.normalize == True: # TODO
-        out = ker / torch.amax(torch.abs(ker))
+        out = ker / torch.max(torch.abs(ker))
         # else:
         #     out = ker
         return out.reshape(out.shape[0], self.num_egf, 3, out.shape[-1])
