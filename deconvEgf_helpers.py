@@ -197,12 +197,14 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
         if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
 
     ## Priors on init GF
-    prior = [args.prior_phi_weight * 3 *prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
+    prior = [args.prior_phi_weight[0]prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
     for i in range(args.num_egf):
         if args.num_egf == 1:
-            prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0))[0]
+            for k in range(1,len(prior_phi)):
+                prior[i] += prior_phi[k](kernel[i].squeeze(0), args.prior_phi_weight[k])[0]
         else:
-            prior[i] += prior_phi[1](args.prior_phi_weight, kernel[i].squeeze(0), i)[0]
+            for k in range(1,len(prior_phi)):
+             prior[i] += prior_phi[k](kernel[i].squeeze(0), args.prior_phi_weight[k], i)[0]
 
     ## Soft L1
     norm_k = [args.kernel_norm_weight * ker_softl1(kernel_network[i]) for i in range(args.num_egf)]
@@ -355,6 +357,9 @@ def Loss_L1(z, z0):
 #     return torch.pow( z[:,:, 1::] - z[:,:, 0:-1], 2).sum()
 
 def Loss_TV(z):
+    return torch.abs( z[:,:, 1::] - z[:,:, 0:-1]).sum()
+
+def Loss_TV_Mstep(z):
     return torch.abs( z[:,:, 1::] - z[:,:, 0:-1]).sum()
 
 def Loss_DTW(z, z0):

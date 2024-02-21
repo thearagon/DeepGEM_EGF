@@ -182,12 +182,13 @@ def main_function(args):
     if args.num_egf == 1:
         # prior_L2 = lambda weight, kernel: weight * Loss_TSV(kernel, gf)  ## Total Variation
         ## TODO MODIF!!
-        prior_L2 = lambda weight, kernel : weight * (0.5 * Loss_DTW_Mstep(kernel, gf) + Loss_L2(kernel, gf)) if weight > 0 else 0
-        #prior_L1 = lambda kernel: Loss_L1(kernel, gf)
+        prior_L2 = lambda kernel, weight : weight * (0.5 * Loss_DTW_Mstep(kernel, gf) + Loss_L2(kernel, gf)) if weight > 0 else 0
+        prior_L1 = lambda kernel: Loss_L1(kernel, gf)
+        prior_TV = lambda kernel, weight: weight*Loss_TV_Mstep(kernel)
     else:
-        prior_L2 = lambda weight, kernel, i : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) +  1e-2 * Loss_L2(kernel, gf[i].unsqueeze(0))) if weight > 0 else 0
+        prior_L2 = lambda kernel, weight, i : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) +  1e-2 * Loss_L2(kernel, gf[i].unsqueeze(0))) if weight > 0 else 0
         prior_L1 = lambda kernel, idx: Loss_L1(kernel, gf[idx])
-    phi_priors = [f_phi_prior, prior_L2]  ## norms on init GF
+    phi_priors = [f_phi_prior, prior_L2, prior_TV]  ## norms on init GF
 
     ## Priors on E step
     x_softl1 = lambda x, weight: torch.abs(1 - torch.sum(x))
