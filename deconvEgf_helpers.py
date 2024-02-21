@@ -197,7 +197,7 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
         if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
 
     ## Priors on init GF
-    prior = [args.prior_phi_weight[0]prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
+    prior = [args.prior_phi_weight[0]*prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
     for i in range(args.num_egf):
         if args.num_egf == 1:
             for k in range(1,len(prior_phi)):
