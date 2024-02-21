@@ -190,7 +190,7 @@ def main_function(args):
     phi_priors = [f_phi_prior, prior_L2]  ## norms on init GF
 
     ## Priors on E step
-    x_softl1 = lambda x: torch.abs(1 - torch.sum(x))
+    x_softl1 = lambda x, weight: torch.abs(1 - torch.sum(x))
     prior_boundary = lambda x, weight: weight * torch.sum(torch.abs(x[:, :, 0]) * torch.abs(x[:, :, -1]))
     # prior_dtw = lambda x, weight: weight * (Loss_DTW(x, stf0)) if weight > 0 else 0
     prior_dtw = lambda x, weight: weight * (Loss_L2(x, stf0) + Loss_DTW(x, stf0)) if weight > 0 else 0
