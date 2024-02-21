@@ -200,7 +200,7 @@ def main_function(args):
     logscale_factor = img_logscale(scale=flux / (0.8 * stf0.shape[0]), device=args.device).to(args.device)
     logdet_weight = args.logdet_weight #flux/(npix*args.data_sigma)
     prior_x = prior_dtw
-    prior_img = [prior_boundary, prior_TV_stf]  # prior on STF, can be a list
+    prior_img = [prior_boundary, prior_TV_stf, x_softl1]  # prior on STF, can be a list
 
     ### DEFINE OPTIMIZERS
     Eoptimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, list(stf_gen.parameters())
