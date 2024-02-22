@@ -201,10 +201,10 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
     for i in range(args.num_egf):
         if args.num_egf == 1:
             for k in range(1,len(prior_phi)):
-                prior[i] += prior_phi[k](kernel[i].squeeze(0), args.prior_phi_weight[k])[0]
+                prior[i] += prior_phi[k](kernel[i].squeeze(0), args.prior_phi_weight[k])
         else:
             for k in range(1,len(prior_phi)):
-             prior[i] += prior_phi[k](kernel[i].squeeze(0), args.prior_phi_weight[k], i)[0]
+             prior[i] += prior_phi[k](kernel[i].squeeze(0), args.prior_phi_weight[k], i)
 
     ## Soft L1
     norm_k = [args.kernel_norm_weight * ker_softl1(kernel_network[i]) for i in range(args.num_egf)]
@@ -370,7 +370,7 @@ def Loss_DTW(z, z0):
 def Loss_DTW_Mstep(z, z0):
     # uses fast DTW, similar to L2 if aligned
     sdtw = soft_dtw_cuda.SoftDTW(use_cuda= False, gamma=0.1)
-    return sdtw(z, z0)
+    return sdtw(z, z0)[0]
 
 def Loss_multicorr(z, args):
 

@@ -24,6 +24,7 @@ def main_function(args):
     if args.px_weight == None:
         # weight for priors on E step: list, [boundaries, TV]
         args.px_weight = [(1/args.data_sigma)/1e0,
+                          (1/args.data_sigma)/7e-1,
                           (1/args.data_sigma)/7e-1]
     if args.logdet_weight == None:
         # weight on q_theta
@@ -31,7 +32,9 @@ def main_function(args):
         args.logdet_weight = 1
     if args.prior_phi_weight == None:
         # weight on init GF.
-        args.prior_phi_weight = (1/args.data_sigma)/3e2 #2e3 #3e2
+        args.prior_phi_weight = [(1/args.data_sigma)/3e2,
+                                 (1/args.data_sigma)/3e2,
+                                 (1/args.data_sigma)/3e2] #2e3 #3e2
     if args.kernel_norm_weight == None:
         # + weight on TV
         args.kernel_norm_weight = (1/args.data_sigma)/1e6 #1e4
