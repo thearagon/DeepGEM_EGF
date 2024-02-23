@@ -127,9 +127,8 @@ def main_function(args):
 
     init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf, normalize)
     trc /= np.amax(np.abs(trc))
-    # TODO
-    # if normalize is False:
-    # trc *= np.amax(np.abs(init_trc.detach().cpu().numpy())) ##MODIF!!
+    if normalize is False:
+        trc *= np.amax(np.abs(init_trc.detach().cpu().numpy())) ##MODIF!!
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
 
@@ -183,8 +182,6 @@ def main_function(args):
         ker_softl1 = lambda kernel_network: torch.abs(1 - torch.sum(kernel_network.generatekernel()))
     f_phi_prior = lambda kernel: priorPhi(kernel, gf)
     if args.num_egf == 1:
-        # prior_L2 = lambda weight, kernel: weight * Loss_TSV(kernel, gf)  ## Total Variation
-        ## TODO MODIF!!
         prior_L2 = lambda kernel, weight : weight * (0.5 * Loss_DTW_Mstep(kernel, gf) + Loss_L2(kernel, gf)) if weight > 0 else 0
         prior_L1 = lambda kernel: Loss_L1(kernel, gf)
         prior_TV = lambda kernel, weight: weight*Loss_TV_Mstep(kernel)
