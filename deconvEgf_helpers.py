@@ -31,15 +31,15 @@ mycyan = '#3f7f93ff'
 myred = '#c3553aff'
 myorange = '#f07101'
     
-class KNetwork(torch.nn.Module):
+class GFNetwork(torch.nn.Module):
     def __init__(self, ini, device, num_layers = 3, num_egf = 1):
 
-        super(KNetwork, self).__init__()
+        super(GFNetwork, self).__init__()
         self.num_layers = num_layers
         self.num_egf = num_egf
         self.device = device
 
-        ## initialize kernel
+        ## initialize GF
         init = makeInit(ini, self.num_layers, self.device).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
 
         self.layers = torch.nn.Parameter(init, requires_grad = True)
@@ -48,20 +48,20 @@ class KNetwork(torch.nn.Module):
         checkpoint = torch.load(filepath, map_location=device)
         self.load_state_dict(checkpoint['model_state_dict'], strict=True)
         
-    def generatekernel(self):
+    def generategf(self):
         if self.num_layers >= 2:
-            ker = self.layers[0]
+            gf = self.layers[0]
             for i in range(1, self.num_layers):
-                ker = F.conv1d(ker, self.layers[i].view(self.num_egf* 3, 1, self.layers[0].shape[-1]).flip(2),
+                gf = F.conv1d(gf, self.layers[i].view(self.num_egf* 3, 1, self.layers[0].shape[-1]).flip(2),
                                padding='same', groups=3*self.num_egf)
         else:
-            ker = self.layers[0]
+            gf = self.layers[0]
 
-        out = ker / torch.max(torch.abs(ker))
+        out = gf / torch.max(torch.abs(gf))
         return out.reshape(out.shape[0], self.num_egf, 3, out.shape[-1])
 
     def forward(self, x):
-        k = self.generatekernel()
+        k = self.generategf()
         out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
@@ -99,104 +99,104 @@ def makeInit(init, num_layers, device, noise_amp=.1):
 
 ######################################################################################################################
 
-def GForward(z_sample, img_generator, npix, npiy, logscale_factor, device=None, imginit=None, device_ids=None):
-    if imginit is None:
+def GForward(z_sample,  stf_generator, len_stf, logscale_factor, device=None, stfinit=None, device_ids=None):
+    if stfinit is None:
         if device_ids is not None:
-            img_samp, logdet = img_generator.module.reverse(z_sample)
+            stf_samp, logdet = stf_generator.module.reverse(z_sample)
         else:
-            img_samp, logdet = img_generator.reverse(z_sample)
-        img_samp = img_samp.reshape((-1, npiy, npix))
+            stf_samp, logdet = stf_generator.reverse(z_sample)
+        stf_samp = stf_samp.reshape((-1, 1, len_stf))
     else:
-        ini = 0.05*torch.randn(imginit.shape) + 0.95*imginit
-        img_samp = torch.repeat(ini, [len(z_sample)], axis=0)
-        img_samp = img_samp.reshape((-1, npiy, npix))
-        img_samp = torch.Tensor(img_samp).to(device=device)
+        ini = 0.05*torch.randn(stfinit.shape) + 0.95*stfinit
+        stf_samp = torch.repeat(ini, [len(z_sample)], axis=0)
+        stf_samp = stf_samp.reshape((-1, 1, len_stf))
+        stf_samp = torch.Tensor(stf_samp).to(device=device)
         logdet = 0
 
     # apply scale factor
     logscale_factor_value = logscale_factor.forward()
     scale_factor = torch.exp(logscale_factor_value)
-    img = img_samp
-    det_scale = logscale_factor_value * npix * npiy
+    stf = stf_samp
+    det_scale = logscale_factor_value * len_stf
     logdet = logdet + det_scale
-    return img, logdet
+    return stf, logdet
 
-def FForward(x, kernel_network, sigma, device):
-    y = kernel_network(x)
+def FForward(x, gf_network, sigma, device):
+    y = gf_network(x)
     noise = torch.randn(y.shape)*sigma
     y += noise.to(device)
     return y
 
 
-def EStep(z_sample, ytrue, img_generator, kernel_network, prior_x, prior_img, logdet_weight,
-          npix, npiy, logscale_factor, args):
+def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet_weight,
+          len_stf, logscale_factor, args):
 
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
     data_weight = 1 / args.data_sigma ** 2
 
-    img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=args.device, device_ids=device_ids)
-    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(len(kernel_network))]
+    stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor, device=args.device, device_ids=device_ids)
+    y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(len(gf_network))]
 
     ## log likelihood
     logqtheta = -logdet_weight*torch.mean(logdet)
 
     ## prior on trace
-    meas_err = torch.stack([data_weight*nn.MSELoss()(y[i], ytrue) for i in range(len(kernel_network))])
+    meas_err = torch.stack([data_weight*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
-    priorx = torch.mean(prior_x(img, args.px_init_weight))
+    priorx = torch.mean(prior_x(stf, args.px_init_weight))
 
-    if isinstance(prior_img, list):
+    if isinstance(prior_stf, list):
         if isinstance(args.px_weight, list):
-            priorimg = torch.mean( torch.Tensor( [torch.mean(prior_img[i](img, args.px_weight[i])) for i in range(len(prior_img))] ))
+            priorstf = torch.mean( torch.Tensor( [torch.mean(prior_stf[i](stf, args.px_weight[i])) for i in range(len(prior_stf))] ))
         else:
-            priorimg = torch.mean( torch.Tensor( [torch.mean(prior_img[i](img, args.px_weight)) for i in range(len(prior_img))] ))
+            priorstf = torch.mean( torch.Tensor( [torch.mean(prior_stf[i](stf, args.px_weight)) for i in range(len(prior_stf))] ))
     else:
-        priorimg = torch.mean(prior_img(img, args.px_weight))
+        priorstf = torch.mean(prior_stf(stf, args.px_weight))
 
-    loss = logqtheta + priorx + smoothmin_meas_err + priorimg
-    return loss, logqtheta, priorx+priorimg, smoothmin_meas_err
+    loss = logqtheta + priorx + smoothmin_meas_err + priorstf
+    return loss, logqtheta, priorx+priorstf, smoothmin_meas_err
 
 
-def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, fwd_network,
-          logscale_factor, prior_phi, ker_softl1, args):
+def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_network,
+          logscale_factor, prior_phi, gf_softl1, args):
 
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
 
-    # inferred IMG
-    # img, logdet = GForward(z_sample, img_generator, npix,npiy, logscale_factor, device=args.device, device_ids=device_ids)
-    # # TRC from inferred IMG
-    # y = FForward(img, kernel_network, args.data_sigma, args.device)
-    # # TRC from random IMG
-    # y_x = FForward(x_sample, kernel_network, args.data_sigma, args.device)
-    # # TRC from random IMG but init GF
+    # inferred STF
+    # stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor, device=args.device, device_ids=device_ids)
+    # # TRC from inferred STF
+    # y = FForward(stf, gf_network, args.data_sigma, args.device)
+    # # TRC from random STF
+    # y_x = FForward(x_sample, gf_network, args.data_sigma, args.device)
+    # # TRC from random STF but init GF
     # fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
 
-    img, logdet = GForward(z_sample, img_generator, npix, npiy, logscale_factor,
+    stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor,
                            device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
-    y = [FForward(img, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
-    y_x = [FForward(x_sample, kernel_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    y_x = [FForward(x_sample, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
     fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
 
     pphi = [args.phi_weight * nn.MSELoss()(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
 
-    # kernel = kernel_network.module.generatekernel() if device_ids is not None else kernel_network.generatekernel()
-    kernel = [kernel_network[i].module.generatekernel().detach() for i in range(args.num_egf)] \
-        if len(args.device_ids) > 1 else [kernel_network[i].generatekernel().detach() for i in range(args.num_egf)]
+    # gf = gf_network.module.generategf() if device_ids is not None else gf_network.generategf()
+    gf = [gf_network[i].module.generategf().detach() for i in range(args.num_egf)] \
+        if len(args.device_ids) > 1 else [gf_network[i].generategf().detach() for i in range(args.num_egf)]
 
     ## Priors on init GF
-    prior = [args.prior_phi_weight[0]*prior_phi[0](kernel[i].squeeze(0)) for i in range(args.num_egf)]
+    prior = [args.prior_phi_weight[0]*prior_phi[0](gf[i].squeeze(0)) for i in range(args.num_egf)]
     for i in range(args.num_egf):
         if args.num_egf == 1:
             for k in range(1,len(prior_phi)):
-                prior[i] += prior_phi[k](kernel[i].squeeze(0), args.prior_phi_weight[k])
+                prior[i] += prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k])
         else:
             for k in range(1,len(prior_phi)):
-             prior[i] += prior_phi[k](kernel[i].squeeze(0), args.prior_phi_weight[k], i)
+             prior[i] += prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k], i)
 
     ## Soft L1
-    norm_k = [args.kernel_norm_weight * ker_softl1(kernel_network[i]) for i in range(args.num_egf)]
+    norm_k = [args.egf_norm_weight * gf_softl1(gf_network[i]) for i in range(args.num_egf)]
 
     meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)]
 
@@ -205,7 +205,7 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
         idx_best = torch.argmin(torch.stack(meas_err))
         α = [Loss_L2(y[i], ytrue)  / torch.sum( torch.Tensor([ Loss_L2(y[k], ytrue)  for k in range(args.num_egf)]) ) for i in range(args.num_egf)] # Goodness of fit for EGF i
         sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
-        multi_loss = args.egf_multi_weight * torch.sum( torch.Tensor([ α[i]*( Loss_L2(kernel[i].squeeze(0), kernel[idx_best].squeeze(0)) + 0.35*torch.abs(sdtw(kernel[i].squeeze(0), kernel[idx_best].squeeze(0))[0]) ) for i in range(args.num_egf) ]) ) # Closeness to best EGF (idx_best)
+        multi_loss = args.egf_multi_weight * torch.sum( torch.Tensor([ α[i]*( Loss_L2(gf[i].squeeze(0), gf[idx_best].squeeze(0)) + 0.35*torch.abs(sdtw(gf[i].squeeze(0), gf[idx_best].squeeze(0))[0]) ) for i in range(args.num_egf) ]) ) # Closeness to best EGF (idx_best)
     else:
         multi_loss = torch.tensor(0.)
 
@@ -226,7 +226,7 @@ def MStep(z_sample, x_sample, npix, npiy, ytrue, img_generator, kernel_network, 
 
 
 
-class img_logscale(nn.Module):
+class stf_logscale(nn.Module):
     """ Custom Linear layer but mimics a standard linear layer """
     def __init__(self, device, scale=1):
         super().__init__()
@@ -238,23 +238,22 @@ class img_logscale(nn.Module):
 
 class stf_generator(nn.Module):
     '''Softplus and norm for realnvp for STF'''
-    def __init__(self, realnvp, norm, softplus=True):
+    def __init__(self, realnvp, softplus=True):
         super().__init__()
         self.realnvp = realnvp
         self.softplus = softplus
-        self.norm = norm
 
     def forward(self, input):
         return self.realnvp.forward(input)
 
     def reverse(self, input):
-        img, logdet = self.realnvp.reverse(input)
+        stf, logdet = self.realnvp.reverse(input)
         if self.softplus:
-            out = self.norm * torch.nn.Sigmoid()(img)
-            det_sigmoid = torch.sum(-img - 2 * torch.nn.Softplus()(-img), -1)
+            out = torch.nn.Sigmoid()(stf)
+            det_sigmoid = torch.sum(-stf - 2 * torch.nn.Softplus()(-stf), -1)
             logdet = logdet + det_sigmoid
         else:
-            out = self.norm * img
+            out = stf
         return out, logdet
 
 
@@ -328,8 +327,8 @@ def dtw_classic(x, y, dist='absolute'):
     return dtw_dist
 
 def priorPhi(k, k0):
-    ker = k - k0
-    out = ker
+    gf = k - k0
+    out = gf
     return torch.mean(torch.abs(out))
 
 def Loss_TSV(z, z0):
@@ -360,32 +359,6 @@ def Loss_DTW_Mstep(z, z0):
     sdtw = soft_dtw_cuda.SoftDTW(use_cuda= False, gamma=0.1)
     return sdtw(z, z0)[0]
 
-def Loss_multicorr(z, args):
-
-    n = len(z)
-    comb = torch.combinations(torch.arange(0, n), 2)
-
-    sdtw = soft_dtw_cuda.SoftDTW(use_cuda= False, gamma=0.1)
-    coef = sdtw(z[comb[:,0], :, :], z[comb[:,1], :, :])
-
-    # nbr_combi = np.math.factorial(n) / 2 / np.math.factorial(n-2)
-    # coef = torch.zeros(( int(nbr_combi) ,3))
-
-    # for i,co in enumerate(itertools.combinations(range(n), 2)):
-        # for k in range(3):
-            # Pearson coeff
-            # coef[i,k] = 1 - torch.corrcoef(z[co, k, :])[0,1]
-
-            # TV
-            # coef[i,k] = torch.mean(torch.abs(z[co[0], k, :] - z[co[1], k, :]) )
-
-            # DTW
-            # coef[i,k] = dtw_classic(z[co[0], k, :], z[co[1], k, :])
-            # coef[i,k] = Loss_DTW(z[co[0], k, :],
-            #                      z[co[1], k, :],
-            #                      args)
-    return torch.mean(coef) / 10**(torch.floor(torch.log10(torch.mean(coef))))
-
 def null(x,y):
     return [0.]
 
@@ -397,18 +370,18 @@ def null(x,y):
 
 ######################################################################################################################
 
-def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_stf=None, true_gf=None):
-    mean_img = np.mean(image, axis=0)
-    stdev_img = np.std(image, axis=0)
-    gf_np = gf.detach().cpu().numpy()
+def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, args, true_stf=None, true_gf=None):
+    mean_stf = np.mean(inferred_stf, axis=0)
+    stdev_stf = np.std(inferred_stf, axis=0)
+    gf0_np = gf0.detach().cpu().numpy()
     stf0 = stf0.detach().cpu().numpy()
-    trc = trc.detach().cpu().numpy()
+    trc0 = trc0.detach().cpu().numpy()
     mean_trc = [np.mean(learned_trc[i], axis=0) for i in range(len(learned_trc))]
     stdev_trc = [np.std(learned_trc[i], axis=0) for i in range(len(learned_trc))]
 
     for e in range(args.num_egf):
-        learned_kernel = learned_k[e][0]
-        gf = gf_np[e]
+        inferred_gf = learned_gf[e][0]
+        gf0 = gf0_np[e]
         fig = plt.figure(figsize=(8, 5))
         ax1 = plt.subplot2grid((12,4), (0, 0), colspan=3, rowspan=2)
         ax2 = plt.subplot2grid((12,4), (2, 0), colspan=3, rowspan=2)
@@ -420,11 +393,11 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
         x = np.arange(0, gf.shape[1])
 
         if true_gf is not None:
-            true_gf = signal.resample(true_gf, gf.shape[-1],axis=1)
+            true_gf = signal.resample(true_gf, gf0.shape[-1],axis=1)
             ax1.plot(x, true_gf[0], lw=0.5, color=myred, label='Target')
-        ax1.plot(x, gf[0], lw=0.5, color=myblue, label='Prior')
-        ax1.plot(x, learned_kernel[0], lw=0.5, color=myorange, zorder=2, label='Inferred')
-        ax1.fill_between(x, learned_kernel[0], learned_kernel[0],
+        ax1.plot(x, gf0[0], lw=0.5, color=myblue, label='Prior')
+        ax1.plot(x, inferred_gf[0], lw=0.5, color=myorange, zorder=2, label='Inferred')
+        ax1.fill_between(x, inferred_gf[0], inferred_gf[0],
                          facecolor=myorange, alpha=0.35, zorder=0, label='2σ')
         ax1.text(0.03, 0.9, 'E',
                  horizontalalignment='right',
@@ -434,16 +407,16 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
         ax1.legend(loc=(1.05, 0), frameon=False)
         if true_gf is not None:
             ax2.plot(x, true_gf[1], lw=0.5, color=myred)
-        ax2.plot(x, gf[1], lw=0.5, color=myblue)
-        ax2.plot(x, learned_kernel[1], lw=0.5, color=myorange, zorder=2)
+        ax2.plot(x, gf0[1], lw=0.5, color=myblue)
+        ax2.plot(x, inferred_gf[1], lw=0.5, color=myorange, zorder=2)
         ax2.text(0.03, 0.9, 'N',
                  horizontalalignment='right',
                  verticalalignment='top',
                  transform=ax2.transAxes)
         if true_gf is not None:
             ax3.plot(x , true_gf[2], lw=0.5, color=myred)
-        ax3.plot(x, gf[2], lw=0.5, color=myblue)
-        ax3.plot(x, learned_kernel[2], lw=0.5, color=myorange, zorder=2)
+        ax3.plot(x, gf0[2], lw=0.5, color=myblue)
+        ax3.plot(x, inferred_gf[2], lw=0.5, color=myorange, zorder=2)
         ax3.text(0.03, 0.9, 'Z',
                  horizontalalignment='right',
                  verticalalignment='top',
@@ -476,16 +449,16 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
         ax6.get_xaxis().set_visible(False)
 
         # STF
-        xinf = np.linspace(0, mean_img.shape[1], mean_img.shape[1])
+        xinf = np.linspace(0, mean_stf.shape[1], mean_stf.shape[1])
         if true_stf is not None:
-            if len(true_stf) < mean_img[0].shape[0]:
-                true_stf_rs = np.zeros(mean_img[0].shape)
+            if len(true_stf) < mean_stf[0].shape[0]:
+                true_stf_rs = np.zeros(mean_stf[0].shape)
                 true_stf_rs[:len(true_stf)] = true_stf
                 ax4.plot(xinf, true_stf_rs, lw=0.8, color=myred)
             else:
-                ax4.plot(xinf, true_stf[:mean_img[0].shape[0]], lw=0.8, color=myred)
-        ax4.plot(xinf, mean_img[0], lw=1, color=myorange)
-        ax4.fill_between(xinf, mean_img[0] - 2*stdev_img[0], mean_img[0] + 2*stdev_img[0],
+                ax4.plot(xinf, true_stf[:mean_stf[0].shape[0]], lw=0.8, color=myred)
+        ax4.plot(xinf, mean_stf[0], lw=1, color=myorange)
+        ax4.fill_between(xinf, mean_stf[0] - 2*stdev_stf[0], mean_stf[0] + 2*stdev_stf[0],
                          facecolor=myorange, alpha=0.35, zorder=0, label='2σ')
 
 
@@ -495,19 +468,19 @@ def plot_res(k, k_sub, image, learned_k, learned_trc, stf0, gf, trc, args, true_
     return
 
 
-def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc):
-    mean_img = np.mean(image, axis=0)
-    stdev_img = np.std(image, axis=0)
+def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init_trc):
+    mean_stf = np.mean(inferred_stf, axis=0)
+    stdev_stf = np.std(inferred_stf, axis=0)
     mean_trc = np.mean(inferred_trace, axis=0)
     stdev_trc = np.std(inferred_trace, axis=0)
-    gf = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
-    gf = gf.reshape(gf.shape[0] // 3, 3, gf.shape[1], order='F')
-    trc = np.concatenate([st_trc[k].data[:, None] for k in range(len(st_trc))], axis=1).T
+    gf0 = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
+    gf0 = gf0.reshape(gf0.shape[0] // 3, 3, gf0.shape[1], order='F')
+    trc0 = np.concatenate([st_trc[k].data[:, None] for k in range(len(st_trc))], axis=1).T
 
     # Norm stream
-    gf /= np.amax(np.abs(gf))
-    trc /= np.amax(np.abs(trc))
-    trc *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    gf0 /= np.amax(np.abs(gf0))
+    trc0 /= np.amax(np.abs(trc0))
+    trc0 *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
 
     if args.num_egf == 1:
         rap = [np.amax(st_trc[i].data) / np.amax(st_gf[i].data) for i in range(3)]
@@ -529,7 +502,7 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc
             ax.fill_between(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] - stdev_trc[0,i] + (2 - i) * 0.6,
                             mean_trc[0,i] + stdev_trc[0,i] + (2 - i) * 0.6,
                             facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation', clip_on=False)
-            l1 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, trc[i] + (2 - i) * 0.6, color='k', lw=0.7,
+            l1 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, trc0[i] + (2 - i) * 0.6, color='k', lw=0.7,
                          clip_on=False)
             l2 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
                          clip_on=False)
@@ -555,8 +528,8 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc
             labelbottom=True)
         for i in range(3):
             tmax = np.amax(st_gf[0].times())
-            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, gf[0,i] + (2 - i) * 0.6, color='k', lw=0.7, clip_on=False)
-            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, learned_kernel[0,0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
+            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, gf0[0,i] + (2 - i) * 0.6, color='k', lw=0.7, clip_on=False)
+            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, inferred_gf[0,0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
                     clip_on=False)
         plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
         ax.text(1, .8, 'data', horizontalalignment='right', verticalalignment='top', color='k', transform=ax.transAxes)
@@ -572,10 +545,10 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc
             bottom=True,  # ticks along the bottom edge are off
             top=False,  # ticks along the top edge are off
             labelbottom=True)
-        ax.fill_between(np.arange(len(mean_img[0])) / st_gf[0].stats.sampling_rate, mean_img[0] - stdev_img[0],
-                        mean_img[0] + stdev_img[0],
+        ax.fill_between(np.arange(len(mean_stf[0])) / st_gf[0].stats.sampling_rate, mean_stf[0] - stdev_stf[0],
+                        mean_stf[0] + stdev_stf[0],
                         facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation')
-        ax.plot(np.arange(len(mean_img[0])) / st_gf[0].stats.sampling_rate, mean_img[0], lw=0.8, color=myorange)
+        ax.plot(np.arange(len(mean_stf[0])) / st_gf[0].stats.sampling_rate, mean_stf[0], lw=0.8, color=myorange)
 
     else:
         fig = plt.figure(figsize=(4,(args.num_egf+1)*1.2))
@@ -590,11 +563,11 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc
             bottom=True,  # ticks along the bottom edge are off
             top=False,  # ticks along the top edge are off
             labelbottom=True)
-        ax.fill_between(np.arange(len(mean_img[0]))/st_gf[0].stats.sampling_rate, mean_img[0] - stdev_img[0], mean_img[0] + stdev_img[0],
+        ax.fill_between(np.arange(len(mean_stf[0]))/st_gf[0].stats.sampling_rate, mean_stf[0] - stdev_stf[0], mean_stf[0] + stdev_stf[0],
                          facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation')
-        ax.plot(np.arange(len(mean_img[0]))/st_gf[0].stats.sampling_rate, mean_img[0], lw=0.8, color=myorange)
+        ax.plot(np.arange(len(mean_stf[0]))/st_gf[0].stats.sampling_rate, mean_stf[0], lw=0.8, color=myorange)
         plt.xlabel('Time (s)', labelpad=2, loc='left')
-        tmax=np.amax(np.arange(len(mean_img[0]))/st_gf[0].stats.sampling_rate)
+        tmax=np.amax(np.arange(len(mean_stf[0]))/st_gf[0].stats.sampling_rate)
         ticklab = ax.xaxis.get_ticklabels()[0]
         trans = ticklab.get_transform()
         ax.xaxis.set_label_coords(-.35*tmax, 0, transform=trans)
@@ -618,7 +591,7 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc
                 tmax = np.amax(st_trc[0].times())
                 ax.fill_between(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i] - stdev_trc[k,i]+(2-i)*0.6, mean_trc[k,i] + stdev_trc[k,i]+(2-i)*0.6,
                                  facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
-                l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
+                l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc0[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
                 l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
                 ax.text(np.amin(st_trc[0].times()-(2-i)*tmax//5)-tmax//7, np.mean(trc[i]+(2-i)*0.6), chan[i],
                          horizontalalignment='right',
@@ -642,8 +615,8 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc
                 labelbottom=True)
             for i in range(3):
                 tmax = np.amax(st_gf[0].times())
-                ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf[k,i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
-                ax.plot(st_gf[0].times()-(2-i)*tmax//5, learned_kernel[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
+                ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf0[k,i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
+                ax.plot(st_gf[0].times()-(2-i)*tmax//5, inferred_gf[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
             plt.xlim(np.amin(st_gf[0].times()-(2)*tmax//5)+10, tmax-5)
 
     fig.savefig("{}/out_{}.pdf".format(args.PATH, 'res'),
@@ -652,39 +625,39 @@ def plot_st(st_trc, st_gf, inferred_trace, learned_kernel, image, args, init_trc
     return
 
 
-def plot_trace(trc, inferred_trace, args):
+def plot_trace(trc0, inferred_trace, args):
 
-    mean_blur_img = np.mean(inferred_trace, axis=(0,1))
-    stdev_blur_img = np.std(inferred_trace, axis=(0,1))
-    std_max = stdev_blur_img.max()
-    truetrc = trc.detach().cpu().numpy()
+    mean_trc = np.mean(inferred_trace, axis=(0,1))
+    stdev_trc = np.std(inferred_trace, axis=(0,1))
+    std_max = stdev_trc.max()
+    truetrc = trc0.detach().cpu().numpy()
 
     fig = plt.figure(figsize=(8, 3))
     ax1 = plt.subplot2grid((6, 4), (0, 0), colspan=3, rowspan=2)
     ax2 = plt.subplot2grid((6, 4), (2, 0), colspan=3, rowspan=2)
     ax3 = plt.subplot2grid((6, 4), (4, 0), colspan=3, rowspan=2)
     ax1.plot(truetrc[0], lw=0.5, color=myblue)
-    ax1.plot(mean_blur_img[0], lw=0.5, color=myorange, zorder=2)
-    ax1.fill_between(np.arange(len(mean_blur_img[0])), mean_blur_img[0] - stdev_blur_img[0],
-                     mean_blur_img[0] + stdev_blur_img[0],
+    ax1.plot(mean_trc[0], lw=0.5, color=myorange, zorder=2)
+    ax1.fill_between(np.arange(len(mean_trc[0])), mean_trc[0] - stdev_trc[0],
+                     mean_trc[0] + stdev_trc[0],
                      facecolor=myorange, alpha=0.25, zorder=0)
     ax1.text(0.03, 0.9, 'E',
              horizontalalignment='right',
              verticalalignment='top',
              transform=ax1.transAxes)
     ax2.plot(truetrc[1], lw=0.5, color=myblue)
-    ax2.plot(mean_blur_img[1], lw=0.5, color=myorange, zorder=2)
-    ax2.fill_between(np.arange(len(mean_blur_img[1])), mean_blur_img[1] - stdev_blur_img[1],
-                     mean_blur_img[1] + stdev_blur_img[1],
+    ax2.plot(mean_trc[1], lw=0.5, color=myorange, zorder=2)
+    ax2.fill_between(np.arange(len(mean_trc[1])), mean_trc[1] - stdev_trc[1],
+                     mean_trc[1] + stdev_trc[1],
                      facecolor=myorange, alpha=0.25, zorder=0)
     ax2.text(0.03, 0.9, 'N',
              horizontalalignment='right',
              verticalalignment='top',
              transform=ax2.transAxes)
     ax3.plot(truetrc[2], lw=0.5, color=myblue)
-    ax3.plot(mean_blur_img[2], lw=0.5, color=myorange, zorder=2)
-    ax3.fill_between(np.arange(len(mean_blur_img[2])), mean_blur_img[2] - stdev_blur_img[2],
-                     mean_blur_img[2] + stdev_blur_img[2],
+    ax3.plot(mean_trc[2], lw=0.5, color=myorange, zorder=2)
+    ax3.fill_between(np.arange(len(mean_trc[2])), mean_trc[2] - stdev_trc[2],
+                     mean_trc[2] + stdev_trc[2],
                      facecolor=myorange, alpha=0.25, zorder=0)
     ax3.text(0.03, 0.9, 'Z',
              horizontalalignment='right',
