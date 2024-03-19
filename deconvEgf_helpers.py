@@ -394,7 +394,7 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
         ax5 = plt.subplot2grid((12,4), (6, 0), colspan=3, rowspan=2)
         ax6 = plt.subplot2grid((12,4), (8, 0), colspan=3, rowspan=2)
         ax7 = plt.subplot2grid((12,4), (10, 0), colspan=3, rowspan=2)
-        x = np.arange(0, gf.shape[1])
+        x = np.arange(0, gf0.shape[1])
 
         if true_gf is not None:
             true_gf = signal.resample(true_gf, gf0.shape[-1],axis=1)
@@ -431,19 +431,19 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
         # trace
         learned_trace = mean_trc[e]
 
-        ax5.plot(trc[0], lw=0.5, color=myred)
+        ax5.plot(trc0[0], lw=0.5, color=myred)
         ax5.plot(learned_trace[0], lw=0.5, color=myorange, zorder=2)
         ax5.text(0.03, 0.9, 'E',
                  horizontalalignment='right',
                  verticalalignment='top',
                  transform=ax5.transAxes)
-        ax6.plot(trc[1], lw=0.5, color=myred)
+        ax6.plot(trc0[1], lw=0.5, color=myred)
         ax6.plot(learned_trace[1], lw=0.5, color=myorange, zorder=2)
         ax6.text(0.03, 0.9, 'N',
                  horizontalalignment='right',
                  verticalalignment='top',
                  transform=ax6.transAxes)
-        ax7.plot(trc[2], lw=0.5, color=myred)
+        ax7.plot(trc0[2], lw=0.5, color=myred)
         ax7.plot(learned_trace[2], lw=0.5, color=myorange, zorder=2)
         ax7.text(0.03, 0.9, 'Z',
                  horizontalalignment='right',

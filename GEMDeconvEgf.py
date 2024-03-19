@@ -56,13 +56,13 @@ def main_function(args):
         trc0 = np.load("{}".format(args.trc0))
 
     try:
-        st_gf = obspy.read("{}".format(args.egf))
+        st_gf = obspy.read("{}".format(args.egf0))
         gf0 = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
         ## Order in stream is all traces E, all traces N, all traces Z
         gf0 = gf0.reshape(gf0.shape[0]//3, 3, gf0.shape[1], order='F')
     except TypeError:
         st_gf = None
-        gf0 = np.load("{}".format(args.egf))
+        gf0 = np.load("{}".format(args.egf0))
         gf0 = gf0.reshape(gf0.shape[0] // 3, 3, gf0.shape[1])
 
     if len(args.stf0) > 0:
@@ -420,7 +420,7 @@ def main_function(args):
         lk = learned_gf_np.reshape(args.num_egf*3, learned_gf_np.shape[-1])
         for i in range(len(lk)):
             st_gf_out[i].data = lk[i, :]
-        st_gf_out.write("{}/{}_out.mseed".format(args.PATH, args.egf.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
+        st_gf_out.write("{}/{}_out.mseed".format(args.PATH, args.egf0.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
     np.save("{}/Data/outGF.npy".format(args.PATH), learned_gf_np)
 
     # Plot results
