@@ -25,7 +25,11 @@ from generative_model import realnvpfc_model
 sns.set_style("white", {'axes.edgecolor': 'darkgray',
                         'axes.spines.right': False,
                         'axes.spines.top': False})
-plt.style.use('myfig.mplstyle')
+try:
+    plt.style.use('myfig.mplstyle')
+except OSError:
+    plt.style.use("seaborn-notebook")
+
 myblue = '#244c77ff'
 mycyan = '#3f7f93ff'
 myred = '#c3553aff'
