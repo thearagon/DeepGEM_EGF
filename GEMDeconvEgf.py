@@ -170,14 +170,13 @@ def main_function(args):
         prior_L1 = lambda kernel: Loss_L1(kernel, gf)
         prior_TV = lambda kernel, weight: weight*Loss_TV_Mstep(kernel)
     else:
-        prior_L2 = lambda kernel, weight, i : weight * (2.5e-3 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) +  1e-2 * Loss_L2(kernel, gf[i].unsqueeze(0))) if weight > 0 else 0
+        prior_L2 = lambda kernel, weight, i : weight * (0.5 * Loss_DTW_Mstep(kernel, gf[i].unsqueeze(0)) + Loss_L2(kernel, gf[i].unsqueeze(0))) if weight > 0 else 0
         prior_L1 = lambda kernel, idx: Loss_L1(kernel, gf[idx])
     phi_priors = [f_phi_prior, prior_L2, prior_TV]  ## norms on init GF
 
     ## Priors on E step
     x_softl1 = lambda x, weight: torch.abs(1 - torch.sum(x))
     prior_boundary = lambda x, weight: weight * torch.sum(torch.abs(x[:, :, 0]) * torch.abs(x[:, :, -1]))
-    # prior_dtw = lambda x, weight: weight * (Loss_DTW(x, stf0)) if weight > 0 else 0
     prior_dtw = lambda x, weight: weight * (Loss_L2(x, stf0) + Loss_DTW(x, stf0)) if weight > 0 else 0
     prior_TV_stf = lambda x, weight: weight * Loss_TV(x)
 
@@ -479,19 +478,17 @@ if __name__ == "__main__":
 
     # User configurations
     parser.add_argument('-dir', '--dir', type=str, default="results",
-                        help='output folder')
+                        help='Output directory')
     parser.add_argument('--trc', type=str, default='',
-                        help='trace file name, npy array or obspy stream')
-    parser.add_argument('--M0', type=float, default=None,
-                        help='Earthquake M0')
+                        help='Path or name of trace file, npy array or obspy stream')
+    # parser.add_argument('--M0', type=float, default=None,
+    #                     help='Earthquake M0')
     parser.add_argument('--egf', type=str, default='',
-                        help='EGF file name, npy array or obspy stream')
-    parser.add_argument('--M0_egf', type=float, default=None,
-                        help='EGF M0, list if multiple EGFs')
+                        help='Path or name of EGF file, npy array or obspy stream')
+    # parser.add_argument('--M0_egf', type=float, default=None,
+    #                     help='EGF M0, list if multiple EGFs')
     parser.add_argument('--num_egf', type=int, default=1, metavar='N',
                         help='number of EGF (default: 1)')
-    parser.add_argument('--egf_qual_weight', type=float, default=None,
-                        help='if multiple EGFs, weight reflects quality of each EGF (default None = 1 for each). ')
     parser.add_argument('--stf0', type=str, default='',
                         help='init STF file name')
     parser.add_argument('--stf_size', type=int, default=100, metavar='N',
@@ -528,43 +525,11 @@ if __name__ == "__main__":
     parser.add_argument('--prior_phi_weight', type=float, default=None,
                         help='weight on init GF on M step (default None = function of data_sigma)')
     parser.add_argument('--egf_multi_weight', type=float, default=None,
-                        help='if multiple EGFs, weight for multi-M-step priors. ')
+                        help='if multiple EGFs, weight to closeness of EGFs to best EGF (the one that minimizes the fit to the data). ')
+    parser.add_argument('--egf_qual_weight', type=float, default=None,
+                        help='if multiple EGFs, weights the Mstep MSE loss of each EGFs (default None = 1 for each). ')
 
     args = parser.parse_args()
-
-    if os.uname().nodename == 'wouf':
-        matplotlib.use('TkAgg')
-        args.dir = '/home/thea/projet/2023_EGF/deconvEgf_res/borr_test/'
-        args.trc = "/home/thea/projet/2023_EGF/borrego_springs/data/dg/BOR_m5_trc.mseed"
-        args.egf = "/home/thea/projet/2023_EGF/borrego_springs/data/dg/BOR_m3_trc.mseed"
-        # args.M0_egf = 1.27e12
-        # args.M0 = 1.27e15
-        # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_gf_true.npy"
-        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_stf_true.npy"
-        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/multiM_semisy8_CSH_xx/'
-        # args.trc = "/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_trc_detrend.mseed"
-        # args.egf = "/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_m2_gf.mseed"
-        # args.stf0 ="/home/thea/projet/EGF/cahuilla/semisynth/data/multi_semisy8_CSH_stf_true.npy"
-        # args.gf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_gf_true.npy"
-        # args.stf_true = "/home/thea/projet/EGF/cahuilla/semisynth/multi_semisy8_CSH_stf_true.npy"
-        # args.dir = '/home/thea/projet/EGF/deconvEgf_res/synth_2a0_ampl/'
-        # args.trc = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_trc.npy"
-        # args.egf = "/home/thea/projet/EGF/synth_wf/data/2a0_m0_rec0_gf.npy"
-        # # args.stf0 ="/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_stf_true.npy"
-        # args.gf_true = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_gf.npy"
-        # args.stf_true = "/home/thea/projet/EGF/synth_wf/data/2a0_m1_rec0_stf_true.npy"
-        args.output = True
-        args.synthetics = False
-        args.num_egf = 1
-        args.btsize = 24
-        args.num_subepochsE = 1
-        args.num_subepochsM = 1
-        args.num_epochs = 1
-        args.seqfrac = 20
-        args.stf_size = 250 #180
-        # args.egf_qual_weight = [0.5, 0.5, 0.5]
-        # args.px_init_weight = 5e4
 
     if args.dir is not None:
         args.PATH = args.dir
