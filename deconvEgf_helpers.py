@@ -145,15 +145,15 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
-    priorx = torch.mean(prior_x(stf, args.px_init_weight))
+    priorx = torch.mean(prior_x(stf, args.stf_init_weight))
 
     if isinstance(prior_stf, list):
-        if isinstance(args.px_weight, list):
-            priorstf = torch.mean( torch.Tensor( [torch.mean(prior_stf[i](stf, args.px_weight[i])) for i in range(len(prior_stf))] ))
+        if isinstance(args.stf_weight, list):
+            priorstf = torch.mean( torch.Tensor( [torch.mean(prior_stf[i](stf, args.stf_weight[i])) for i in range(len(prior_stf))] ))
         else:
-            priorstf = torch.mean( torch.Tensor( [torch.mean(prior_stf[i](stf, args.px_weight)) for i in range(len(prior_stf))] ))
+            priorstf = torch.mean( torch.Tensor( [torch.mean(prior_stf[i](stf, args.stf_weight)) for i in range(len(prior_stf))] ))
     else:
-        priorstf = torch.mean(prior_stf(stf, args.px_weight))
+        priorstf = torch.mean(prior_stf(stf, args.stf_weight))
 
     loss = logqtheta + priorx + smoothmin_meas_err + priorstf
     return loss, logqtheta, priorx+priorstf, smoothmin_meas_err

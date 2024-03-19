@@ -49,11 +49,11 @@ def main_function(args):
 
         ################################################ SET UP DATA ####################################################
     try:
-        st_trc = obspy.read("{}".format(args.trc))
+        st_trc = obspy.read("{}".format(args.trc0))
         trc0 = np.concatenate([st_trc[k].data[:, None] for k in range(len(st_trc))], axis=1).T
     except TypeError:
         st_trc = None
-        trc0 = np.load("{}".format(args.trc))
+        trc0 = np.load("{}".format(args.trc0))
 
     try:
         st_gf = obspy.read("{}".format(args.egf))
@@ -411,8 +411,8 @@ def main_function(args):
         for i in range(3):
             st_trc_mn[i].data = np.mean(inferred_trace, axis=(0,1))[i]
             st_trc_sd[i].data = np.std(inferred_trace, axis=(0,1))[i]
-        st_trc_mn.write("{}/{}_out_mean.mseed".format(args.PATH, args.trc.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
-        st_trc_sd.write("{}/{}_out_std.mseed".format(args.PATH, args.trc.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
+        st_trc_mn.write("{}/{}_out_mean.mseed".format(args.PATH, args.trc0.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
+        st_trc_sd.write("{}/{}_out_std.mseed".format(args.PATH, args.trc0.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
     np.save("{}/Data/outTRC.npy".format(args.PATH), inferred_trace)
 
     if st_gf is not None:
@@ -478,11 +478,11 @@ if __name__ == "__main__":
     # User configurations
     parser.add_argument('-dir', '--dir', type=str, default="results",
                         help='Output directory')
-    parser.add_argument('--trc', type=str, default='',
+    parser.add_argument('--trc0', type=str, default='',
                         help='Path or name of trace file, npy array or obspy stream')
     # parser.add_argument('--M0', type=float, default=None,
     #                     help='Earthquake M0')
-    parser.add_argument('--egf', type=str, default='',
+    parser.add_argument('--egf0', type=str, default='',
                         help='Path or name of EGF file, npy array or obspy stream')
     # parser.add_argument('--M0_egf', type=float, default=None,
     #                     help='EGF M0, list if multiple EGFs')
