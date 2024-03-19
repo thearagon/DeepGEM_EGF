@@ -110,30 +110,15 @@ def main_function(args):
             npix = len(stf_true)
 
     ## Normalize everything
-    if args.M0 is not None and args.M0_egf is not None:
-        normalize = False
-        norm = args.M0/args.M0_egf
-    elif args.num_egf > 1:
-        normalize = True
-        norm = 1.
-    else:
-        normalize = True
-        norm = 1.
-
     gf = gf / np.amax(np.abs(gf))
     gf = torch.Tensor(gf).to(device=args.device)
     stf0 = norm * stf0 / np.amax(stf0)
     stf0 = torch.Tensor(stf0).to(device=args.device)
 
-    init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf, normalize)
+    init_trc = trueForward(gf, stf0.view(1,1,-1), args.num_egf)
     trc /= np.amax(np.abs(trc))
-    if normalize is False:
-        trc *= np.amax(np.abs(init_trc.detach().cpu().numpy())) ##MODIF!!
     trc = torch.Tensor(trc).to(device=args.device)
     trc_ext = torch.Tensor(trc).to(device=args.device)
-
-    if args.synthetics == True:
-        stf_true *= norm
 
     #
     # ############################################## MODEL SETUP #####################################################
@@ -147,7 +132,6 @@ def main_function(args):
                               num_layers=args.num_layers,
                               num_egf=1,
                               device=args.device,
-                              normalize=normalize
                               ).to(args.device) for i in range(args.num_egf)]
 
     if args.reverse == True:

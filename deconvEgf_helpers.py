@@ -32,13 +32,12 @@ myred = '#c3553aff'
 myorange = '#f07101'
     
 class KNetwork(torch.nn.Module):
-    def __init__(self, ini, device, normalize=False, num_layers = 3, num_egf = 1):
+    def __init__(self, ini, device, num_layers = 3, num_egf = 1):
 
         super(KNetwork, self).__init__()
         self.num_layers = num_layers
         self.num_egf = num_egf
         self.device = device
-        self.normalize = normalize
 
         ## initialize kernel
         init = makeInit(ini, self.num_layers, self.device).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
@@ -58,10 +57,7 @@ class KNetwork(torch.nn.Module):
         else:
             ker = self.layers[0]
 
-        # if self.normalize == True: # TODO
         out = ker / torch.max(torch.abs(ker))
-        # else:
-        #     out = ker
         return out.reshape(out.shape[0], self.num_egf, 3, out.shape[-1])
 
     def forward(self, x):
@@ -70,18 +66,15 @@ class KNetwork(torch.nn.Module):
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
         # TODO MODIF!!!
-        #if self.normalize == True:
-            #return out / torch.amax(torch.abs(out))
-        #else:
+        #return out / torch.amax(torch.abs(out))
         return out
 
-def trueForward(k, x, num_egf, normalize=False):
+def trueForward(k, x, num_egf):
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
-    # if normalize == True:
-    #     return out / torch.amax(torch.abs(out))
-    # else:
+    # TODO MODIF!!
+    # return out / torch.amax(torch.abs(out))
     return out
 
 
@@ -95,10 +88,6 @@ def makeInit(init, num_layers, device, noise_amp=.1):
     for i in range(num_layers - 1):
         out[i] = l0 + (torch.randn(1, device=device)[0] * noise_amp / 100.) * torch.randn(l0.shape, device=device)
     out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
-    #for i in range(num_layers ):
-        #out[i] = l0 + (torch.randn(1, device=device)[0] * noise_amp / 100.) * torch.randn(l0.shape, device=device)
-    ##out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
-
     return out
 
 
