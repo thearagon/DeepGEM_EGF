@@ -2,13 +2,13 @@
 
 args=(
     # Input
-    --trc /home/ragon/projet/egf/DeepGEM/EGFdata/38245496_PALA_m4_trc.npy
-    --egf /home/ragon/projet/egf/DeepGEM/EGFdata/PALA_38242792_m2_trc.npy
+    --trc0 /home/ragon/projet/egf/DeepGEM/EGFdata/38245496_PALA_m4_trc.npy
+    --egf0 /home/ragon/projet/egf/DeepGEM/EGFdata/PALA_38242792_m2_trc.npy
     --stf0 /home/ragon/projet/egf/DeepGEM/EGFdata/a0_m1_rec0_stf.npy
 #     --synthetics
 #     --stf_true /home/ragon/projet/egf/DeepGEM/EGFdata/a0_m1_rec0_stf_true.npy # if synthetics True
 #     --gf_true /home/ragon/projet/egf/DeepGEM/EGFdata/a0_m1_rec0_gf.npy  # if synthetics True
-    # Kernel and STF size
+    # GF and STF size
     --num_layers 3 
     --stf_size 40
     --num_egf 1
@@ -26,13 +26,13 @@ args=(
     --Mlr 1e-3
     --data_sigma 5e-5  # weight on MSE loss with trace, def: 5e-5
     # E step priors, every weight must scale with data_sigma
-    --px_init_weight 0   # weight on init STF
-#     --px_weight 5e4 0. 5e3  # weight for priors: list, [boundaries = (1/sigma)/2, area=0., TV = (1/sigma)/2e1]
+    --stf_init_weight 0   # weight on init STF
+#     --stf_weight 5e4 0. 5e3  # weight for priors: list, [boundaries = (1/sigma)/2, area=0., TV = (1/sigma)/2e1]
 #     --logdet_weight 5e3   # weight on q_theta, the larger the larger the posterior uncertainty on STF, = (1/sigma)/2e1
     # M step priors
 #     --phi_weight 1e-1  # weight on MSE loss with randome STF and init GF, def: 1e-1
     --prior_phi_weight 5e2  # weight on init GF, = (1/sigma)/2e3
-#     --kernel_norm_weight 1e2 # + weight on TV, has to be <= prior_phi_weight, = (1/sigma)/1e3
+#     --egf_norm_weight 1e2 # + weight on TV, has to be <= prior_phi_weight, = (1/sigma)/1e3
     # Output
     --save_every 500 
     --print_every 500 
