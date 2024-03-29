@@ -32,6 +32,7 @@ def main_function(args):
                                  (1/args.data_sigma)/4e4]
     if args.egf_norm_weight == None:
         args.egf_norm_weight = (1/args.data_sigma)/1e6
+
     if args.num_egf > 1:
         if args.egf_multi_weight == None:
             args.egf_multi_weight = (1/args.data_sigma)/4e4
@@ -78,9 +79,8 @@ def main_function(args):
             args.stf_size = len(stf0)
             len_stf = len(stf0)
             print('STF size set to length of STF0')
-
     else:
-        # STF init is a gaussian
+        # STF prior is a gaussian
         τc = len_stf//30. ## TODO function of rate... M0 ?
         stf0 = 0.01*np.ones(len_stf) + 0.99*np.exp(-(np.arange(len_stf) - len_stf//2.)**2 / (2 * (τc/2)**2)) # len_stf//3
         # args.stf_init_weight /= 4.
@@ -113,7 +113,7 @@ def main_function(args):
     stf0 = stf0 / np.amax(stf0)
     stf0 = torch.Tensor(stf0).to(device=args.device)
 
-    init_trc = trueForward(gf0, stf0.view(1,1,-1), args.num_egf)
+    init_trc = trueForward(gf0, stf0.view(1, 1, -1), args.num_egf)
     trc0 /= np.amax(np.abs(trc0))
     trc0 = torch.Tensor(trc0).to(device=args.device)
     trc_ext = torch.Tensor(trc0).to(device=args.device) # will have a btsize format
@@ -247,7 +247,7 @@ def main_function(args):
 
     for k in range(args.num_epochs):
 
-        ############################ E STEP Update STF Network #######################
+        ############################ Estep - Update STF network ############################
 
         for k_sub in range(args.num_subepochsE):
 
@@ -266,55 +266,46 @@ def main_function(args):
             nn.utils.clip_grad_norm_(list(stf_gen.parameters()) + list(logscale_factor.parameters()), 1)
             Eoptimizer.step()
 
-            if ((k_sub % args.save_every == 0) and args.EMFull) or (
-                    (k % args.save_every == 0) and not args.EMFull):
+            if (args.EMFull and (k_sub % args.print_every == 0)) or (not args.EMFull and (k % args.print_every == 0)):
+
+                print(f"epoch: {k:}, subepoch: {k_sub:}, E step losses (tot, prior, q, mse): ")
+                print(''.join(f"{x:.2f}, " for x in [Eloss_list[-1], Eloss_prior_list[-1], Eloss_q_list[-1], Eloss_mse_list[-1]]))
+
+            if (args.EMFull and (k_sub % args.save_every == 0)) or (not args.EMFull and (k % args.save_every == 0)):
 
                 z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
                 stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
                                        device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
                 stf_np = stf.detach().cpu().numpy()
 
-                if args.output == True:
-                    if k_sub != 0 and k % 10 == 0:
-                        with torch.no_grad():
-                            torch.save({
-                                'epoch': k,
-                                'model_state_dict': stf_gen.state_dict(),
-                                'optimizer_state_dict': Eoptimizer.state_dict(),
-                            }, '{}/{}{}_{}.pt'.format(args.PATH, "GeneratorNetwork", str(k).zfill(5), str(k_sub).zfill(5)))
+                if args.output:
 
-            if ((k_sub % args.print_every == 0) and args.EMFull) or (
-                    (k % args.print_every == 0) and not args.EMFull):
-
-                print(f"epoch: {k:} {k_sub:}, E step losses (tot, prior, q, mse): ")
-                print(''.join(f"{x:.2f}, " for x in [Eloss_list[-1], Eloss_prior_list[-1], Eloss_q_list[-1], Eloss_mse_list[-1]]) )
-
-                if args.output == True:
                     with torch.no_grad():
                         torch.save({
                             'epoch': k,
-                            'model_state_dict': gf_network[k_egf].state_dict(),
-                            'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
-                        }, '{}/{}{}_{}.pt'.format(args.PATH, "gfNetwork_egf", str(k).zfill(5), str(k_egf).zfill(5)))
-                    np.save("{}/Data/learned_gf.npy".format(args.PATH), learned_gf_np)
+                            'model_state_dict': stf_gen.state_dict(),
+                            'optimizer_state_dict': Eoptimizer.state_dict(),
+                        }, '{}/{}_{}_{}.pt'.format(args.PATH, "stf_network", str(k).zfill(5), str(k_sub).zfill(5)))
+                    
+                    for k_egf in range(args.num_egf):
+                        fig, ax = plt.subplots(1, 2, figsize=(15, 4))
+                        ax[0].plot(np.log10(Eloss_list), label="Estep")
+                        ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
+                        ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
+                        ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
+                        ax[0].legend()
+                        ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
+                        if args.num_egf > 1:
+                            ax[1].plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
+                        ax[1].plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
+                        # ax[1].plot(np.log10(Mloss_gfnorm_list[k_egf]), ":", label="Mstep GF Norm")
+                        ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
+                        ax[1].legend()
+                        fig.savefig("{}/SeparatedLoss_{}.png".format(args.PATH, k_egf), dpi=300)
+                        plt.close()
 
-                    fig, ax = plt.subplots(1, 2, figsize=(15, 4))
-                    ax[0].plot(np.log10(Eloss_list), label="Estep")
-                    ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-                    ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
-                    ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
-                    ax[0].legend()
-                    ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
-                    if args.num_egf > 1:
-                        ax[1].plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
-                    ax[1].plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
-                    # ax[1].plot(np.log10(Mloss_gfnorm_list[k_egf]), ":", label="Mstep GF Norm")
-                    ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
-                    ax[1].legend()
-                    plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf), dpi=300)
-                    plt.close()
 
-        ############################ M STEP Update GF Network #######################
+        ############################ Mstep - Update GF network ############################
 
         for k_sub in range(args.num_subepochsM):
 
@@ -340,22 +331,24 @@ def main_function(args):
                 nn.utils.clip_grad_norm_(list(gf_network[k_egf].parameters()), 1)
                 Moptimizer[k_egf].step()
 
-                if ((k_sub % args.print_every == 0) and args.EMFull) or (
-                        (k % args.print_every == 0) and not args.EMFull):
+                if (args.EMFull and (k_sub % args.print_every == 0)) or (not args.EMFull and (k % args.print_every == 0)):
                     
-                    print(f"epoch: {k:} {k_sub:}, M step EGF {k_egf:} losses (tot, phi_prior, norm, mse, multi) : ")
-                    print(''.join(f"{x:.2f}, " for x in
-                                  [Mloss_list[k_egf][-1], Mloss_phiprior_list[k_egf][-1],
-                                   Mloss_gfnorm_list[k_egf][-1], Mloss_mse_list[k_egf][-1],
-                                   Mloss_multi_list[k_egf][-1]]))
+                    print(f"epoch: {k:}, subepoch: {k_sub:}, M step EGF {k_egf:} losses (tot, phi_prior, norm, mse, multi) : ")
+                    print(''.join(f"{x:.2f}, " for x in [Mloss_list[k_egf][-1], Mloss_phiprior_list[k_egf][-1],
+                                                         Mloss_gfnorm_list[k_egf][-1], Mloss_mse_list[k_egf][-1],
+                                                         Mloss_multi_list[k_egf][-1]]))
 
-                    if args.output == True:
+                if (args.EMFull and (k_sub % args.save_every == 0)) or (not args.EMFull and (k % args.save_every == 0)):
+
+                    if args.output:
+
                         with torch.no_grad():
                             torch.save({
                                 'epoch': k,
                                 'model_state_dict': gf_network[k_egf].state_dict(),
                                 'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
-                            }, '{}/{}{}_{}.pt'.format(args.PATH, "GFNetwork_egf", str(k).zfill(5), str(k_egf).zfill(5)))
+                            }, '{}/{}_{}_{}.pt'.format(args.PATH, "egf_network", str(k).zfill(5), str(k_egf).zfill(5)))
+                        
                         np.save("{}/Data/learned_gf.npy".format(args.PATH), learned_gf_np)
 
                         fig, ax = plt.subplots(1, 2, figsize=(15, 4))
@@ -567,7 +560,8 @@ if __name__ == "__main__":
         args.num_epochs = args.num_epochs + 11
         args.num_subepochsE = args.num_subepochsE + 1
         args.num_subepochsM = args.num_subepochsM + 1
-        print("Full EM w/ {} epochs and {} E subepochs {} M subepochs".format(args.num_epochs, args.num_subepochsE,
+        print("Full EM w/ {} epochs and {} E subepochs {} M subepochs".format(args.num_epochs,
+                                                                              args.num_subepochsE,
                                                                               args.num_subepochsM))
     else:
         args.num_epochs = args.num_epochs + 1
