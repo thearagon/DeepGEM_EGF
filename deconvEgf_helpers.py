@@ -510,7 +510,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
                          clip_on=False)
             l2 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
                          clip_on=False)
-            ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) - 5, np.mean(trc[i] + (2 - i) * 0.6), chan[i],
+            ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) - 5, np.mean(trc0[i] + (2 - i) * 0.6), chan[i],
                     horizontalalignment='right',
                     verticalalignment='top', weight='bold')
             ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5), (2 - i) * 0.6 + 0.25, 'x ' + str(int(rap[i])),
@@ -597,7 +597,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
                                  facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
                 l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc0[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
                 l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
-                ax.text(np.amin(st_trc[0].times()-(2-i)*tmax//5)-tmax//7, np.mean(trc[i]+(2-i)*0.6), chan[i],
+                ax.text(np.amin(st_trc[0].times()-(2-i)*tmax//5)-tmax//7, np.mean(trc0[i]+(2-i)*0.6), chan[i],
                          horizontalalignment='right',
                          verticalalignment='top',weight='bold')
                 ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) , (2 - i) * 0.6+0.3, 'x '+str(int(rap[i])),
