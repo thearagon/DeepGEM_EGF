@@ -369,6 +369,23 @@ def null(x, y):
 
 ######################################################################################################################
 
+def plot_seploss(args, Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list, Mloss_list, Mloss_mse_list, Mloss_phiprior_list, Mloss_multi_list, idx_egf):    
+    fig, ax = plt.subplots(1, 2, figsize=(15, 4))
+    ax[0].plot(np.log10(Eloss_list), label="Estep")
+    ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
+    ax[0].plot(np.log10(Eloss_prior_list), "--", label="Estep Priors")
+    ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
+    ax[1].plot(np.log10(Mloss_list[idx_egf]), label="Mstep")
+    ax[1].plot(np.log10(Mloss_mse_list[idx_egf]), "--", label="Mstep MSE")
+    ax[1].plot(np.log10(Mloss_phiprior_list[idx_egf]), "--", label="Mstep Priors")
+    if args.num_egf > 1:
+        ax[1].plot(np.log10(Mloss_multi_list[idx_egf]), ":", label="Mstep Multi Loss")
+    ax[0].legend()
+    ax[1].legend()
+    fig.savefig("{}/SeparatedLoss_egf{}.png".format(args.PATH, idx_egf), dpi=300)
+    plt.close()
+
+
 def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, args, true_stf=None, true_gf=None):
     mean_stf = np.mean(inferred_stf, axis=0)
     stdev_stf = np.std(inferred_stf, axis=0)
@@ -391,6 +408,10 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
         ax7 = plt.subplot2grid((12,4), (10, 0), colspan=3, rowspan=2)
         x = np.arange(0, gf0.shape[1])
 
+        ax1.set_title('EGF')
+        ax5.set_title('Traces')
+        ax4.set_title('STF')
+        
         if true_gf is not None:
             true_gf = signal.resample(true_gf, gf0.shape[-1],axis=1)
             ax1.plot(x, true_gf[0], lw=0.5, color=myred, label='Target')
@@ -423,7 +444,7 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
         ax1.get_xaxis().set_visible(False)
         ax2.get_xaxis().set_visible(False)
 
-        # trace
+        # Traces
         learned_trace = mean_trc[e]
 
         ax5.plot(trc0[0], lw=0.5, color=myred)
@@ -460,11 +481,9 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
         ax4.fill_between(xinf, mean_stf[0] - 2*stdev_stf[0], mean_stf[0] + 2*stdev_stf[0],
                          facecolor=myorange, alpha=0.35, zorder=0, label='2σ')
 
-
         fig.savefig("{}/out_egf{}_{}_{}.png".format(args.PATH, str(e), str(k).zfill(5), str(k_sub).zfill(5)), format='png', dpi=300,
                 bbox_inches="tight")
         plt.close()
-    return
 
 
 def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init_trc):
@@ -505,7 +524,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
                          clip_on=False)
             l2 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
                          clip_on=False)
-            ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) - 5, np.mean(trc[i] + (2 - i) * 0.6), chan[i],
+            ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) - 5, np.mean(trc0[i] + (2 - i) * 0.6), chan[i],
                     horizontalalignment='right',
                     verticalalignment='top', weight='bold')
             ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5), (2 - i) * 0.6 + 0.25, 'x ' + str(int(rap[i])),
@@ -592,7 +611,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
                                  facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
                 l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc0[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
                 l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
-                ax.text(np.amin(st_trc[0].times()-(2-i)*tmax//5)-tmax//7, np.mean(trc[i]+(2-i)*0.6), chan[i],
+                ax.text(np.amin(st_trc[0].times()-(2-i)*tmax//5)-tmax//7, np.mean(trc0[i]+(2-i)*0.6), chan[i],
                          horizontalalignment='right',
                          verticalalignment='top',weight='bold')
                 ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) , (2 - i) * 0.6+0.3, 'x '+str(int(rap[i])),

@@ -245,6 +245,9 @@ def main_function(args):
     with open("{}/args.json".format(args.PATH), 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
+
+    ############################################# RUN ###########################################################
+
     for k in range(args.num_epochs):
 
         ############################ Estep - Update STF network ############################
@@ -267,43 +270,46 @@ def main_function(args):
             Eoptimizer.step()
 
             if (args.EMFull and (k_sub % args.print_every == 0)) or (not args.EMFull and (k % args.print_every == 0)):
+                
+                print()
+                print(f"Estep ----- epoch {k:}, subepoch {k_sub:}")
+                print(f"Loss  ----- tot {Eloss_list[-1]:.2f}, prior {Eloss_prior_list[-1]:.2f}, q {Eloss_q_list[-1]:.2f}, mse {Eloss_mse_list[-1]:.2f}")
 
-                print(f"epoch: {k:}, subepoch: {k_sub:}, E step losses (tot, prior, q, mse): ")
-                print(''.join(f"{x:.2f}, " for x in [Eloss_list[-1], Eloss_prior_list[-1], Eloss_q_list[-1], Eloss_mse_list[-1]]))
-
-            if (args.EMFull and (k_sub % args.save_every == 0)) or (not args.EMFull and (k % args.save_every == 0)):
+            if args.output and ((args.EMFull and (k_sub % args.save_every == 0)) or (not args.EMFull and (k % args.save_every == 0))):
 
                 z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
                 stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
-                                       device=args.device, device_ids=args.device_ids if len(args.device_ids)>1 else None)
+                                    device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
                 stf_np = stf.detach().cpu().numpy()
 
-                if args.output:
+                learned_gf = [gf_network[i].module.generategf().detach() for i in range(args.num_egf)] \
+                    if len(args.device_ids) > 1 else [gf_network[i].generategf().detach() for i in range(args.num_egf)]
+                y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+                inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
+                learned_gf_np = [learned_gf[i].cpu().numpy()[0] for i in range(args.num_egf)]
 
-                    with torch.no_grad():
-                        torch.save({
-                            'epoch': k,
-                            'model_state_dict': stf_gen.state_dict(),
-                            'optimizer_state_dict': Eoptimizer.state_dict(),
-                        }, '{}/{}_{}_{}.pt'.format(args.PATH, "stf_network", str(k).zfill(5), str(k_sub).zfill(5)))
+                # Save PyTorch model
+                with torch.no_grad():
+                    torch.save({
+                        'epoch': k,
+                        'model_state_dict': stf_gen.state_dict(),
+                        'optimizer_state_dict': Eoptimizer.state_dict(),
+                    }, '{}/{}_{}_{}.pt'.format(args.PATH, "stf_network", str(k).zfill(5), str(k_sub).zfill(5)))
+                
+                # Save STF
+                np.save("{}/Data/stf.npy".format(args.PATH), learned_gf_np)
+
+                # Plots
+                for k_egf in range(args.num_egf):
+                    plot_seploss(args,
+                                 Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list,
+                                 Mloss_list, Mloss_mse_list, Mloss_phiprior_list, Mloss_multi_list,
+                                 k_egf)
                     
-                    for k_egf in range(args.num_egf):
-                        fig, ax = plt.subplots(1, 2, figsize=(15, 4))
-                        ax[0].plot(np.log10(Eloss_list), label="Estep")
-                        ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-                        ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
-                        ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
-                        ax[0].legend()
-                        ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
-                        if args.num_egf > 1:
-                            ax[1].plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
-                        ax[1].plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
-                        # ax[1].plot(np.log10(Mloss_gfnorm_list[k_egf]), ":", label="Mstep GF Norm")
-                        ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
-                        ax[1].legend()
-                        fig.savefig("{}/SeparatedLoss_{}.png".format(args.PATH, k_egf), dpi=300)
-                        plt.close()
-
+                if args.synthetics:
+                    plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true, true_stf=stf_true)
+                else:
+                    plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args)
 
         ############################ Mstep - Update GF network ############################
 
@@ -333,60 +339,47 @@ def main_function(args):
 
                 if (args.EMFull and (k_sub % args.print_every == 0)) or (not args.EMFull and (k % args.print_every == 0)):
                     
-                    print(f"epoch: {k:}, subepoch: {k_sub:}, M step EGF {k_egf:} losses (tot, phi_prior, norm, mse, multi) : ")
-                    print(''.join(f"{x:.2f}, " for x in [Mloss_list[k_egf][-1], Mloss_phiprior_list[k_egf][-1],
-                                                         Mloss_gfnorm_list[k_egf][-1], Mloss_mse_list[k_egf][-1],
-                                                         Mloss_multi_list[k_egf][-1]]))
+                    print()
+                    print(f"Mstep ----- epoch {k:}, subepoch {k_sub:}, egf {k_egf:}")
+                    print(f"Loss  ----- tot {Mloss_list[k_egf][-1]:.2f}, phi_prior {Mloss_phiprior_list[k_egf][-1]:.2f}, norm {Mloss_gfnorm_list[k_egf][-1]:.2f}, mse {Mloss_mse_list[k_egf][-1]:.2f}, multi {Mloss_multi_list[k_egf][-1]:.2f}")
 
-                if (args.EMFull and (k_sub % args.save_every == 0)) or (not args.EMFull and (k % args.save_every == 0)):
+                if args.output and ((args.EMFull and (k_sub % args.save_every == 0)) or (not args.EMFull and (k % args.save_every == 0))):
 
-                    if args.output:
+                    z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
+                    stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
+                                        device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
+                    stf_np = stf.detach().cpu().numpy()
 
-                        with torch.no_grad():
-                            torch.save({
-                                'epoch': k,
-                                'model_state_dict': gf_network[k_egf].state_dict(),
-                                'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
-                            }, '{}/{}_{}_{}.pt'.format(args.PATH, "egf_network", str(k).zfill(5), str(k_egf).zfill(5)))
-                        
-                        np.save("{}/Data/learned_gf.npy".format(args.PATH), learned_gf_np)
+                    learned_gf = [gf_network[i].module.generategf().detach() for i in range(args.num_egf)] \
+                        if len(args.device_ids) > 1 else [gf_network[i].generategf().detach() for i in range(args.num_egf)]
+                    y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+                    inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
+                    learned_gf_np = [learned_gf[i].cpu().numpy()[0] for i in range(args.num_egf)]
 
-                        fig, ax = plt.subplots(1, 2, figsize=(15, 4))
-                        ax[0].plot(np.log10(Eloss_list), label="Estep")
-                        ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
-                        ax[0].plot(np.log10(Eloss_prior_list), ":", label="Estep Priors")
-                        ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
-                        ax[0].legend()
-                        ax[1].plot(np.log10(Mloss_list[k_egf]), label="Mstep")
-                        if args.num_egf > 1:
-                            ax[1].plot(np.log10(Mloss_multi_list[k_egf]), ":", label="Mstep Multi Loss")
-                        ax[1].plot(np.log10(Mloss_mse_list[k_egf]), ":", label="Mstep MSE")
-                        # ax[1].plot(np.log10(Mloss_gfnorm_list[k_egf]), ":", label="Mstep GF Norm")
-                        ax[1].plot(np.log10(Mloss_phiprior_list[k_egf]), ":", label="Mstep Priors")
-                        ax[1].legend()
-                        plt.savefig("{}/SeparatedLoss_{}.png".format(args.PATH,k_egf), dpi=300)
-                        plt.close()
+                    # Save PyTorch model
+                    with torch.no_grad():
+                        torch.save({
+                            'epoch': k,
+                            'model_state_dict': gf_network[k_egf].state_dict(),
+                            'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
+                        }, '{}/{}_egf{}_{}_{}.pt'.format(args.PATH, "egf_network", str(k_egf), str(k).zfill(5), str(k_sub).zfill(5)))
+                    
+                    # Save EGF
+                    np.save("{}/Data/learned_gf.npy".format(args.PATH), learned_gf_np)
 
-        ## Plot output
-        learned_gf = [gf_network[i].module.generategf().detach() for i in range(args.num_egf)] \
-            if len(args.device_ids) > 1 else [gf_network[i].generategf().detach() for i in range(args.num_egf)]
+                    # Plots
+                    plot_seploss(args,
+                                 Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list,
+                                 Mloss_list, Mloss_mse_list, Mloss_phiprior_list, Mloss_multi_list,
+                                 k_egf)
 
-        z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
-        stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
-                               device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
-        stf_np = stf.detach().cpu().numpy()
-        y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
-        inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
-        learned_gf_np = [learned_gf[i].cpu().numpy()[0] for i in range(args.num_egf)]
+                    if args.synthetics:
+                        plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true, true_stf=stf_true)
+                    else:
+                        plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args)
 
-        if args.output == True:
-            if args.synthetics == True:
-                plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true,
-                         true_stf=stf_true)
-            else:
-                plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args)
 
-    ############################################# GENERATE FIGURES ###########################################################
+    ############################################# GENERATE OUTPUT FIGURES ###########################################################
 
     learned_gf = [gf_network[i].module.generategf().detach() for i in range(args.num_egf)] \
             if len(args.device_ids) > 1 else [gf_network[i].generategf().detach() for i in range(args.num_egf)]
@@ -418,12 +411,12 @@ def main_function(args):
         st_gf_out.write("{}/{}_out.mseed".format(args.PATH, args.egf0.rsplit("/", 1)[1].rsplit(".", 1)[0]) )
     np.save("{}/Data/outGF.npy".format(args.PATH), learned_gf_np)
 
-    # Plot results
-    if args.synthetics == True and st_trc is None:
+    # Plot
+    if args.synthetics and st_trc is None:
         plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true,
-                     true_stf=stf_true)
+                 true_stf=stf_true)
         plot_trace(trc0, inferred_trace, args)
-    elif args.synthetics == True and st_gf is not None and st_trc is not None:
+    elif args.synthetics and st_gf is not None and st_trc is not None:
         plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true,
                  true_stf=stf_true)
         plot_st(st_trc, st_gf, inferred_trace, learned_gf_np, stf_np, args, init_trc)
@@ -432,8 +425,6 @@ def main_function(args):
     else:
         plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args)
         plot_trace(trc0, inferred_trace, args)
-
-    return
 
 
 if __name__ == "__main__":
@@ -546,9 +537,6 @@ if __name__ == "__main__":
     torch.cuda.manual_seed(args.seed)
     np.random.seed(args.seed)
     random.seed(args.seed)
-    print(args)
-
-    USE_GPU = True
 
     print("cuda available ", torch.cuda.is_available())
     print("---> num gpu", torch.cuda.device_count())
@@ -556,8 +544,8 @@ if __name__ == "__main__":
     if torch.cuda.is_available():
         print(" Using {} GPUS".format(len(args.device_ids)))
 
-    if args.EMFull == True:
-        args.num_epochs = args.num_epochs + 11
+    if args.EMFull:
+        args.num_epochs = args.num_epochs + 1
         args.num_subepochsE = args.num_subepochsE + 1
         args.num_subepochsM = args.num_subepochsM + 1
         print("Full EM w/ {} epochs and {} E subepochs {} M subepochs".format(args.num_epochs,
@@ -577,6 +565,7 @@ if __name__ == "__main__":
         print("Directory ", args.PATH, " Created ")
     except FileExistsError:
         print("Directory ", args.PATH, " already exists")
+
     try:
         # Create target Directory
         os.mkdir(args.PATH + "/Data")
