@@ -4,7 +4,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 import os
 import numpy as np
 import matplotlib
@@ -16,10 +15,8 @@ import itertools
 import scipy
 from scipy import signal
 import obspy
-
 from pytorch_softdtw_cuda import soft_dtw_cuda_wojit as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
 from generative_model import realnvpfc_model
-
 
 
 sns.set_style("white", {'axes.edgecolor': 'darkgray',
@@ -28,7 +25,7 @@ sns.set_style("white", {'axes.edgecolor': 'darkgray',
 try:
     plt.style.use('myfig.mplstyle')
 except OSError:
-    plt.style.use("seaborn-notebook")
+    plt.style.use("seaborn-v0_8-notebook")
 
 myblue = '#244c77ff'
 mycyan = '#3f7f93ff'
@@ -36,7 +33,8 @@ myred = '#c3553aff'
 myorange = '#f07101'
     
 class GFNetwork(torch.nn.Module):
-    def __init__(self, ini, device, num_layers = 3, num_egf = 1):
+
+    def __init__(self, ini, device, num_layers=3, num_egf=1):
 
         super(GFNetwork, self).__init__()
         self.num_layers = num_layers
@@ -46,9 +44,9 @@ class GFNetwork(torch.nn.Module):
         ## initialize GF
         init = makeInit(ini, self.num_layers, self.device).view(self.num_layers, 1, 3*self.num_egf, ini.shape[-1])
 
-        self.layers = torch.nn.Parameter(init, requires_grad = True)
+        self.layers = torch.nn.Parameter(init, requires_grad=True)
 
-    def load(self,filepath,device):
+    def load(self, filepath, device):
         checkpoint = torch.load(filepath, map_location=device)
         self.load_state_dict(checkpoint['model_state_dict'], strict=True)
         
@@ -74,6 +72,7 @@ class GFNetwork(torch.nn.Module):
         return out
 
 def trueForward(k, x, num_egf):
+    # convolution STF*EGF=TRACES
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
@@ -86,7 +85,7 @@ def makeInit(init, num_layers, device, noise_amp=.1):
     """
     """
     l0 = torch.zeros(init.shape, device=device)
-    l0[ :, init.shape[1]//2] = 1.
+    l0[:, init.shape[1]//2] = 1.
 
     out = torch.zeros(num_layers, init.shape[0], init.shape[1], device=device)
     for i in range(num_layers - 1):
@@ -103,7 +102,7 @@ def makeInit(init, num_layers, device, noise_amp=.1):
 
 ######################################################################################################################
 
-def GForward(z_sample,  stf_generator, len_stf, logscale_factor, device=None, stfinit=None, device_ids=None):
+def GForward(z_sample, stf_generator, len_stf, logscale_factor, device=None, stfinit=None, device_ids=None):
     if stfinit is None:
         if device_ids is not None:
             stf_samp, logdet = stf_generator.module.reverse(z_sample)
@@ -229,7 +228,6 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
 ######################################################################################################################
 
 
-
 class stf_logscale(nn.Module):
     """ Custom Linear layer but mimics a standard linear layer """
     def __init__(self, device, scale=1):
@@ -336,22 +334,19 @@ def priorPhi(k, k0):
     return torch.mean(torch.abs(out))
 
 def Loss_TSV(z, z0):
-    return torch.mean( (z - z0)**2 )
+    return torch.mean((z - z0)**2)
 
 def Loss_L2(z, z0):
-    return torch.sqrt(torch.sum( (z - z0)**2 ))
+    return torch.sqrt(torch.sum((z - z0)**2))
 
 def Loss_L1(z, z0):
-    return torch.sum( torch.abs(z - z0) )
-
-# def Loss_TV(z):
-#     return torch.pow( z[:,:, 1::] - z[:,:, 0:-1], 2).sum()
+    return torch.sum(torch.abs(z - z0))
 
 def Loss_TV(z):
     return torch.abs( z[:,:, 1::] - z[:,:, 0:-1]).sum()
 
 def Loss_TV_Mstep(z):
-    return torch.abs( z[:,:, 1::] - z[:,:, 0:-1]).sum()
+    return torch.abs(z[:,:, 1::] - z[:,:, 0:-1]).sum()
 
 def Loss_DTW(z, z0):
     # Dynamic Time Warping loss with initial STF
@@ -363,7 +358,7 @@ def Loss_DTW_Mstep(z, z0):
     sdtw = soft_dtw_cuda.SoftDTW(use_cuda= False, gamma=0.1)
     return sdtw(z, z0)[0]
 
-def null(x,y):
+def null(x, y):
     return [0.]
 
 ######################################################################################################################

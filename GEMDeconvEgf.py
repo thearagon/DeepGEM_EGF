@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-
 from deconvEgf_helpers import *
 import argparse
-print(torch.__version__)
-print(scipy.__version__)
 
 def main_function(args):
 
@@ -47,7 +44,9 @@ def main_function(args):
         args.egf_qual_weight = [1]
         #args.prior_phi_weight *= 5e0
 
-        ################################################ SET UP DATA ####################################################
+    ################################################ SET UP DATA ####################################################
+    
+    # Traces
     try:
         st_trc = obspy.read("{}".format(args.trc0))
         trc0 = np.concatenate([st_trc[k].data[:, None] for k in range(len(st_trc))], axis=1).T
@@ -55,16 +54,18 @@ def main_function(args):
         st_trc = None
         trc0 = np.load("{}".format(args.trc0))
 
+    # EGF
     try:
         st_gf = obspy.read("{}".format(args.egf0))
         gf0 = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
-        ## Order in stream is all traces E, all traces N, all traces Z
+        # Order in stream is: all traces E, all traces N, all traces Z
         gf0 = gf0.reshape(gf0.shape[0]//3, 3, gf0.shape[1], order='F')
     except TypeError:
         st_gf = None
         gf0 = np.load("{}".format(args.egf0))
         gf0 = gf0.reshape(gf0.shape[0] // 3, 3, gf0.shape[1])
 
+    # STF
     if len(args.stf0) > 0:
         try:
             st_stf0 = obspy.read("{}".format(args.stf0))
@@ -82,12 +83,12 @@ def main_function(args):
             print('STF size set to length of STF0')
 
     else:
-        ## STF init is a gaussian
+        # STF init is a gaussian
         τc = len_stf//30. ## TODO function of rate... M0 ?
         stf0 = 0.01*np.ones(len_stf) + 0.99*np.exp(-(np.arange(len_stf) - len_stf//2.)**2 / (2 * (τc/2)**2)) # len_stf//3
-        #args.stf_init_weight /= 4.
+        # args.stf_init_weight /= 4.
 
-    ## If we know the truth
+    # Synthetics
     if args.synthetics == True:
         try:
             st_gf_true = obspy.read("{}".format(args.gf_true))
@@ -108,9 +109,10 @@ def main_function(args):
             args.stf_size = len(stf_true)
             len_stf = len(stf_true)
 
-    ## Normalize everything
+    # Normalize everything
     gf0 = gf0 / np.amax(np.abs(gf0))
     gf0 = torch.Tensor(gf0).to(device=args.device)
+
     stf0 = stf0 / np.amax(stf0)
     stf0 = torch.Tensor(stf0).to(device=args.device)
 
@@ -128,10 +130,10 @@ def main_function(args):
 
     # EGF init
     gf_network = [GFNetwork(gf0[i],
-                              num_layers=args.num_layers,
-                              num_egf=1,
-                              device=args.device,
-                              ).to(args.device) for i in range(args.num_egf)]
+                            num_layers=args.num_layers,
+                            num_egf=1,
+                            device=args.device,
+                            ).to(args.device) for i in range(args.num_egf)]
 
     if args.reverse == True:
         print("Generating Reverse RealNVP Network")
@@ -147,7 +149,7 @@ def main_function(args):
 
     print("Models Initialized")
 
-    # MULTIPLE GPUS
+    # MULTIPLE GPUs
     if len(args.device_ids) > 1:
         stf_gen = nn.DataParallel(stf_gen, device_ids=args.device_ids)
         stf_gen.to(args.device)
@@ -229,7 +231,6 @@ def main_function(args):
         y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
         inferred_trace = [ y0.detach().cpu().numpy() for y0 in y ]
 
-
     learned_gf = [gf_network[i].module.generategf() for i in range(args.num_egf)] \
         if len(args.device_ids) > 1 else [gf_network[i].generategf() for i in range(args.num_egf)]
 
@@ -252,6 +253,7 @@ def main_function(args):
         ############################ E STEP Update STF Network #######################
 
         for k_sub in range(args.num_subepochsE):
+
             z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
 
             Eloss, qloss, priorloss, mseloss = EStep(z_sample, trc_ext, stf_gen, gf_network,
@@ -286,6 +288,7 @@ def main_function(args):
 
             if ((k_sub % args.print_every == 0) and args.EMFull) or (
                     (k % args.print_every == 0) and not args.EMFull):
+
                 print(f"epoch: {k:} {k_sub:}, E step losses (tot, prior, q, mse): ")
                 print(''.join(f"{x:.2f}, " for x in [Eloss_list[-1], Eloss_prior_list[-1], Eloss_q_list[-1], Eloss_mse_list[-1]]) )
 
@@ -329,6 +332,7 @@ def main_function(args):
                                                             args)
 
             for k_egf in range(args.num_egf):
+
                 Mloss_list[k_egf].append(Mloss[k_egf].detach().cpu().numpy())
                 Mloss_mse_list[k_egf].append(mse[k_egf].detach().cpu().numpy())
                 Mloss_multi_list[k_egf].append(multiloss.detach().cpu().numpy())
@@ -341,6 +345,7 @@ def main_function(args):
 
                 if ((k_sub % args.print_every == 0) and args.EMFull) or (
                         (k % args.print_every == 0) and not args.EMFull):
+                    
                     print(f"epoch: {k:} {k_sub:}, M step EGF {k_egf:} losses (tot, phi_prior, norm, mse, multi) : ")
                     print(''.join(f"{x:.2f}, " for x in
                                   [Mloss_list[k_egf][-1], Mloss_phiprior_list[k_egf][-1],
@@ -457,7 +462,7 @@ if __name__ == "__main__":
                         help='checkpoint model (default: 50)')
     parser.add_argument('--print_every', type=int, default=50, metavar='N',
                         help='checkpoint model (default: 50)')
-    parser.add_argument('--EMFull', action='store_true', default=True,
+    parser.add_argument('--EMFull', action='store_true', default=False,
                         help='True: E to convergence, M to convergence False: alternate E, M every epoch (default: False)')
     parser.add_argument('--num_layers', type=int, default=7, metavar='N',
                         help='number of layers for GF generator (default: 7)')
