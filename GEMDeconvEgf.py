@@ -15,34 +15,31 @@ def main_function(args):
     args.phi_weight = 1e-1
 
     if args.stf_init_weight == None:
-        # weight on init STF, 1e4 if stf0 (becomes 5e3 if no stf0)
-        args.stf_init_weight = (1/args.data_sigma)/2e2 #2e-1 #6e-1
+        # weight on init STF
+        args.stf_init_weight = (1/args.data_sigma)/2e1
     if args.stf_weight == None:
-        # weight for priors on E step: list, [boundaries, TV]
-        args.stf_weight = [(1/args.data_sigma)/1e0,
-                          (1/args.data_sigma)/7e-1,
-                          (1/args.data_sigma)/7e-1]
+        # weights for priors on E step: list, [boundaries, TV, L1]
+        args.stf_weight = [(1/args.data_sigma)/2e2,
+                          (1/args.data_sigma)/4e1,
+                          (1/args.data_sigma)/2e2]
     if args.logdet_weight == None:
         # weight on q_theta
-        # args.logdet_weight = (1/args.data_sigma)/4e1 # 5e2
-        args.logdet_weight = 1
+        args.logdet_weight = (1/args.data_sigma)/1e2
     if args.prior_phi_weight == None:
-        # weight on init GF.
-        args.prior_phi_weight = [(1/args.data_sigma)/3e2,
-                                 (1/args.data_sigma)/3e2,
-                                 (1/args.data_sigma)/3e2] #2e3 #3e2
+        # weights for priors on M step: list, [L1, L2, TV]
+        args.prior_phi_weight = [(1/args.data_sigma)/6e3,
+                                 (1/args.data_sigma)/4e4,
+                                 (1/args.data_sigma)/4e4]
     if args.egf_norm_weight == None:
-        # + weight on TV
-        args.egf_norm_weight = (1/args.data_sigma)/1e6 #1e4
+        args.egf_norm_weight = (1/args.data_sigma)/1e6
     if args.num_egf > 1:
         if args.egf_multi_weight == None:
-            args.egf_multi_weight = 5e-1
+            args.egf_multi_weight = (1/args.data_sigma)/4e4
         if args.egf_qual_weight == None:
             args.egf_qual_weight = np.ones(args.num_egf).tolist()
     else:
         args.egf_multi_weight = 0.
         args.egf_qual_weight = [1]
-        #args.prior_phi_weight *= 5e0
 
     ################################################ SET UP DATA ####################################################
     
@@ -523,7 +520,7 @@ if __name__ == "__main__":
     parser.add_argument('--logdet_weight', type=float, default=None,
                         help='β, controls entropy, E step prior (default None = function of data_sigma)')
     parser.add_argument('--egf_norm_weight', type=float, default=None,
-                        help='EGF norm weight + weight on TV, M step (default None = function of data_sigma)')
+                        help='EGF norm weight, M step (default None = function of data_sigma)')
     parser.add_argument('--prior_phi_weight', type=float, default=None,
                         help='weight on init GF on M step (default None = function of data_sigma)')
     parser.add_argument('--egf_multi_weight', type=float, default=None,
