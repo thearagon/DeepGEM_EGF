@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -411,7 +412,7 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
         ax1.set_title('EGF')
         ax5.set_title('Traces')
         ax4.set_title('STF')
-        
+
         if true_gf is not None:
             true_gf = signal.resample(true_gf, gf0.shape[-1],axis=1)
             ax1.plot(x, true_gf[0], lw=0.5, color=myred, label='Target')

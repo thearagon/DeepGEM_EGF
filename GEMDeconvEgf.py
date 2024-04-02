@@ -2,7 +2,6 @@
 # coding: utf-8
 
 from deconvEgf_helpers import *
-import argparse
 
 def main_function(args):
 
