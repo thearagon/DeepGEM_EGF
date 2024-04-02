@@ -19,19 +19,6 @@ import obspy
 from pytorch_softdtw_cuda import soft_dtw_cuda_wojit as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
 from generative_model import realnvpfc_model
 
-
-sns.set_style("white", {'axes.edgecolor': 'darkgray',
-                        'axes.spines.right': False,
-                        'axes.spines.top': False})
-try:
-    plt.style.use('myfig.mplstyle')
-except OSError:
-    plt.style.use("seaborn-v0_8-notebook")
-
-myblue = '#244c77ff'
-mycyan = '#3f7f93ff'
-myred = '#c3553aff'
-myorange = '#f07101'
     
 class GFNetwork(torch.nn.Module):
 
@@ -96,12 +83,11 @@ def makeInit(init, num_layers, device, noise_amp=.1):
 
 
 ######################################################################################################################
-
-        
+#       
 #                            EM
-    
-
+#
 ######################################################################################################################
+
 
 def GForward(z_sample, stf_generator, len_stf, logscale_factor, device=None, stfinit=None, device_ids=None):
     if stfinit is None:
@@ -142,7 +128,7 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
     y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(len(gf_network))]
 
     ## log likelihood
-    logqtheta = -logdet_weight*torch.mean(logdet)
+    logqtheta = - logdet_weight * torch.mean(logdet)
 
     ## prior on trace
     meas_err = torch.stack([data_weight*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
@@ -221,11 +207,9 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
 
 
 ######################################################################################################################
-
-        
+#       
 #                            DPI
-    
-
+#
 ######################################################################################################################
 
 
@@ -261,12 +245,11 @@ class stf_generator(nn.Module):
 
 
 ######################################################################################################################
-
-
-#                            Losses
-
-
+#
+#                            LOSSES
+#
 ######################################################################################################################
+
 
 def dtw_classic(x, y, dist='absolute'):
     """Classic Dynamic Time Warping (DTW) distance between two time series.
@@ -344,10 +327,7 @@ def Loss_L1(z, z0):
     return torch.sum(torch.abs(z - z0))
 
 def Loss_TV(z):
-    return torch.abs( z[:,:, 1::] - z[:,:, 0:-1]).sum()
-
-def Loss_TV_Mstep(z):
-    return torch.abs(z[:,:, 1::] - z[:,:, 0:-1]).sum()
+    return torch.abs(z[:, :, 1::] - z[:, :, 0:-1]).sum()
 
 def Loss_DTW(z, z0):
     # Dynamic Time Warping loss with initial STF
@@ -362,13 +342,28 @@ def Loss_DTW_Mstep(z, z0):
 def null(x, y):
     return [0.]
 
-######################################################################################################################
 
-        
+######################################################################################################################
+#       
 #                            PLOT
-    
-
+#   
 ######################################################################################################################
+
+
+sns.set_style("white", {'axes.edgecolor': 'darkgray',
+                        'axes.spines.right': False,
+                        'axes.spines.top': False})
+
+try:
+    plt.style.use('myfig.mplstyle')
+except OSError:
+    plt.style.use("seaborn-v0_8-notebook")
+
+myblue = '#244c77ff'
+mycyan = '#3f7f93ff'
+myred = '#c3553aff'
+myorange = '#f07101'
+
 
 def plot_seploss(args, Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list, Mloss_list, Mloss_mse_list, Mloss_phiprior_list, Mloss_multi_list, idx_egf):    
     fig, ax = plt.subplots(1, 2, figsize=(15, 4))
@@ -387,7 +382,7 @@ def plot_seploss(args, Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_lis
     plt.close()
 
 
-def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, args, true_stf=None, true_gf=None):
+def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, args, true_stf=None, true_gf=None, step=''):
     mean_stf = np.mean(inferred_stf, axis=0)
     stdev_stf = np.std(inferred_stf, axis=0)
     gf0_np = gf0.detach().cpu().numpy()
@@ -482,8 +477,7 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
         ax4.fill_between(xinf, mean_stf[0] - 2*stdev_stf[0], mean_stf[0] + 2*stdev_stf[0],
                          facecolor=myorange, alpha=0.35, zorder=0, label='2σ')
 
-        fig.savefig("{}/out_egf{}_{}_{}.png".format(args.PATH, str(e), str(k).zfill(5), str(k_sub).zfill(5)), format='png', dpi=300,
-                bbox_inches="tight")
+        fig.savefig("{}/out_egf{}_{}_{}{}.png".format(args.PATH, str(e), str(k).zfill(5), step, str(k_sub).zfill(5)), dpi=300, bbox_inches="tight")
         plt.close()
 
 
@@ -638,10 +632,8 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
                 ax.plot(st_gf[0].times()-(2-i)*tmax//5, inferred_gf[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
             plt.xlim(np.amin(st_gf[0].times()-(2)*tmax//5)+10, tmax-5)
 
-    fig.savefig("{}/out_{}.pdf".format(args.PATH, 'res'),
-                bbox_inches="tight")
+    fig.savefig("{}/out_{}.pdf".format(args.PATH, 'res'), bbox_inches="tight")
     plt.close()
-    return
 
 
 def plot_trace(trc0, inferred_trace, args):
@@ -685,7 +677,5 @@ def plot_trace(trc0, inferred_trace, args):
     ax1.get_xaxis().set_visible(False)
     ax2.get_xaxis().set_visible(False)
     plt.tight_layout()
-    plt.savefig("{}/outTRC.pdf".format(args.PATH), format='pdf',
-                bbox_inches="tight")
+    plt.savefig("{}/outTRC.pdf".format(args.PATH), format='pdf', bbox_inches="tight")
     plt.close()
-    return
