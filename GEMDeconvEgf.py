@@ -11,7 +11,6 @@ def main_function(args):
     affine = True
 
     seqfrac = args.seqfrac
-    len_stf = args.stf_size
     args.phi_weight = 1e-1
 
     if args.stf_init_weight == None: # weight on init STF
@@ -61,6 +60,11 @@ def main_function(args):
         gf0 = gf0.reshape(gf0.shape[0]//3, 3, gf0.shape[1])
 
     # STF
+    if args.stf_dur is not None and st_gf is not None:
+        len_stf = args.stf_dur / st_gf[0].stats['delta']
+    else:
+        len_stf = args.stf_size
+
     if len(args.stf0) > 0:
         try:
             st_stf0 = obspy.read("{}".format(args.stf0))
@@ -73,7 +77,6 @@ def main_function(args):
             stf_rs[(len(stf_rs) - len(stf0)) // 2:-(len(stf_rs) - len(stf0)) // 2] = stf0
             stf0 = stf_rs
         elif len_stf < len(stf0):
-            args.stf_size = len(stf0)
             len_stf = len(stf0)
             print('STF size set to length of STF0')
     else:
@@ -98,7 +101,6 @@ def main_function(args):
             stf_rs[(len(stf_rs) - len(stf_true)) // 2:-(len(stf_rs) - len(stf_true)) // 2] = stf_true
             stf_true = stf_rs
         elif len_stf < len(stf_true):
-            args.stf_size = len(stf_true)
             len_stf = len(stf_true)
 
     # Normalize
@@ -467,8 +469,10 @@ if __name__ == "__main__":
                         help='number of EGF (default: 1)')
     parser.add_argument('--stf0', type=str, default='',
                         help='init STF file name')
+    parser.add_argument('--stf_dur', type=float, default=None,
+                        help='STF duration in seconds')
     parser.add_argument('--stf_size', type=int, default=100, metavar='N',
-                        help='length of STF (default: 100)')
+                        help='Length of STF (number of samples, default: 100)')
 
     parser.add_argument('--synthetics', action='store_true', default=False,
                         help='synthetic case, if we know the truth')
