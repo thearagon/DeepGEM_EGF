@@ -493,7 +493,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
     # Norm stream
     gf0 /= np.amax(np.abs(gf0))
     trc0 /= np.amax(np.abs(trc0))
-    trc0 *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
+    # trc0 *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
 
     if args.num_egf == 1:
         rap = [np.amax(st_trc[i].data) / np.amax(st_gf[i].data) for i in range(3)]
