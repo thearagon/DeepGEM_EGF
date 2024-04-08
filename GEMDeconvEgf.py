@@ -61,7 +61,7 @@ def main_function(args):
 
     # STF
     if args.stf_dur is not None and st_gf is not None:
-        len_stf = args.stf_dur / st_gf[0].stats['delta']
+        len_stf = int(args.stf_dur / st_gf[0].stats['delta'])
     else:
         len_stf = args.stf_size
 
