@@ -457,16 +457,16 @@ if __name__ == "__main__":
                         help='Output directory')
     parser.add_argument('--trc0', type=str, default='',
                         help='Path or name of trace file, npy array or obspy stream')
-    # parser.add_argument('--M0', type=float, default=None,
-    #                     help='Earthquake M0')
     parser.add_argument('--egf0', type=str, default='',
                         help='Path or name of EGF file, npy array or obspy stream')
-    # parser.add_argument('--M0_egf', type=float, default=None,
-    #                     help='EGF M0, list if multiple EGFs')
-    parser.add_argument('--num_egf', type=int, default=1, metavar='N',
-                        help='number of EGF (default: 1)')
     parser.add_argument('--stf0', type=str, default='',
                         help='init STF file name')
+    parser.add_argument('--M0', type=float, default=None,
+                        help='Main event seismic moment M0')
+    parser.add_argument('--M0_egf', type=float, default=None,
+                        help='EGF seismic moment(s) M0, list if multiple EGFs')
+    parser.add_argument('--num_egf', type=int, default=1, metavar='N',
+                        help='number of EGF (default: 1)')
     parser.add_argument('--stf_size', type=int, default=100, metavar='N',
                         help='length of STF (default: 100)')
 
@@ -485,7 +485,7 @@ if __name__ == "__main__":
     parser.add_argument('--seqfrac', type=int, default=8,
                         help='seqfrac (default:2), should be < to stf length')
 
-    # parameters
+    # Weight parameters
     parser.add_argument('--data_sigma', type=float, default=5e-5,
                         help='data sigma (default: 5e-5)')
     parser.add_argument('--stf_init_weight', type=float, default=None,
