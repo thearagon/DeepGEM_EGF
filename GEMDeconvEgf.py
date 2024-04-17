@@ -168,6 +168,7 @@ def main_function(args):
         prior_TV = lambda gf, weight: weight * Loss_TV(gf)
     else:
         prior_L2 = lambda gf, weight, i : weight * (0.5 * Loss_DTW_Mstep(gf, gf0[i].unsqueeze(0)) + Loss_L2(gf, gf0[i].unsqueeze(0))) if weight > 0 else 0
+        prior_TV = lambda gf, weight,i: weight * Loss_TV(gf)
     phi_priors = [f_phi_prior, prior_L2, prior_TV] # norms on init GF
 
     # Priors on Estep (STF)
