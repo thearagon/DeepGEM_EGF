@@ -18,6 +18,7 @@ from scipy import signal
 import obspy
 from pytorch_softdtw_cuda import soft_dtw_cuda_wojit as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
 from generative_model import realnvpfc_model
+import time
 
     
 class GFNetwork(torch.nn.Module):
@@ -367,18 +368,24 @@ myorange = '#f07101'
 
 def plot_seploss(args, Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list, Mloss_list, Mloss_mse_list, Mloss_phiprior_list, Mloss_multi_list, idx_egf):    
     fig, ax = plt.subplots(1, 2, figsize=(15, 4))
+    
     ax[0].plot(np.log10(Eloss_list), label="Estep")
     ax[0].plot(np.log10(Eloss_mse_list), "--", label="Estep MSE")
     ax[0].plot(np.log10(Eloss_prior_list), "--", label="Estep Priors")
     ax[0].plot(np.log10(Eloss_q_list), ":", label="q")
+    
     ax[1].plot(np.log10(Mloss_list[idx_egf]), label="Mstep")
     ax[1].plot(np.log10(Mloss_mse_list[idx_egf]), "--", label="Mstep MSE")
     ax[1].plot(np.log10(Mloss_phiprior_list[idx_egf]), "--", label="Mstep Priors")
+    
     if args.num_egf > 1:
         ax[1].plot(np.log10(Mloss_multi_list[idx_egf]), ":", label="Mstep Multi Loss")
-    ax[0].legend()
-    ax[1].legend()
-    fig.savefig("{}/SeparatedLoss_egf{}.png".format(args.PATH, idx_egf), dpi=300)
+    for k in range(2):
+        ax[k].legend()
+        ax[k].set_xlabel('sub.epochs #')
+        ax[k].set_title(['Estep losses', 'Mstep losses'][k])
+
+    fig.savefig("{}/SeparatedLoss_egf{}.png".format(args.PATH, idx_egf), dpi=300, bbox_inches='tight')
     plt.close()
 
 

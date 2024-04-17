@@ -4,34 +4,32 @@
 from deconvEgf_helpers import *
 
 def main_function(args):
+    
+    start_time = time.time()
 
     ################################################ SET UP WEIGHTS ################################################
 
-    n_flow = 32
-    affine = True
-
-    seqfrac = args.seqfrac
     args.phi_weight = 1e-1
 
-    if args.stf_init_weight == None: # weight on init STF
+    if args.stf_init_weight is None: # weight on init STF
         args.stf_init_weight = (1/args.data_sigma)/2e1
 
-    if args.stf_weight == None: # weights for priors on Estep: list, [boundaries, TV, L1]
+    if args.stf_weight is None: # weights for priors on Estep: list, [boundaries, TV, L1]
         args.stf_weight = [(1/args.data_sigma)/2e2, (1/args.data_sigma)/4e1, (1/args.data_sigma)/2e2]
 
-    if args.logdet_weight == None: # weight on q_theta
+    if args.logdet_weight is None: # weight on q_theta
         args.logdet_weight = (1/args.data_sigma)/1e2
 
-    if args.prior_phi_weight == None: # weights for priors on Mstep: list, [L1, L2, TV]
+    if args.prior_phi_weight is None: # weights for priors on Mstep: list, [L1, L2, TV]
         args.prior_phi_weight = [(1/args.data_sigma)/6e3, (1/args.data_sigma)/4e4, (1/args.data_sigma)/4e4]
 
-    if args.egf_norm_weight == None:
+    if args.egf_norm_weight is None:
         args.egf_norm_weight = (1/args.data_sigma)/1e6
 
     if args.num_egf > 1:
-        if args.egf_multi_weight == None:
+        if args.egf_multi_weight is None:
             args.egf_multi_weight = (1/args.data_sigma)/4e4
-        if args.egf_qual_weight == None:
+        if args.egf_qual_weight is None:
             args.egf_qual_weight = np.ones(args.num_egf).tolist()
     else:
         args.egf_multi_weight = 0.
@@ -54,6 +52,7 @@ def main_function(args):
         gf0 = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
         # Order in stream is: all traces E, all traces N, all traces Z
         gf0 = gf0.reshape(gf0.shape[0]//3, 3, gf0.shape[1], order='F')
+        args.samp_rate = 1 / st_gf[0].stats['delta']
     except TypeError:
         st_gf = None
         gf0 = np.load("{}".format(args.egf0))
@@ -62,6 +61,10 @@ def main_function(args):
     # STF
     if args.stf_dur is not None and st_gf is not None:
         len_stf = int(args.stf_dur / st_gf[0].stats['delta'])
+        args.stf_size = len_stf
+    elif args.stf_dur is not None and args.samp_rate is not None:
+        len_stf = int(args.stf_dur * args.samp_rate)
+        args.stf_size = len_stf
     else:
         len_stf = args.stf_size
 
@@ -117,6 +120,10 @@ def main_function(args):
 
 
     ################################################ MODEL SETUP ################################################
+    
+    n_flow = 32
+    affine = True
+    seqfrac = args.seqfrac
 
     # EGF initialization
     gf_network = [GFNetwork(gf0[i],
@@ -239,6 +246,8 @@ def main_function(args):
 
 
     ############################################# RUN ###########################################################
+    
+    print("Starting iterations")
 
     for k in range(args.num_epochs):
 
@@ -382,6 +391,11 @@ def main_function(args):
     y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
     inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
     learned_gf_np = np.array([learned_gf[i].cpu().numpy()[0] for i in range(args.num_egf)])
+    
+    # Scale stf area with M0
+    if args.samp_rate is not None and args.M0 is not None:
+        stf_np /= np.trapz(y=stf_np, dx=1/args.samp_rate)
+        stf_np *= args.M0
 
     np.save("{}/Data/reconSTF.npy".format(args.PATH), stf_np)
 
@@ -404,6 +418,11 @@ def main_function(args):
     np.save("{}/Data/outGF.npy".format(args.PATH), learned_gf_np)
 
     # Plot
+    plot_seploss(args,
+                 Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list,
+                 Mloss_list, Mloss_mse_list, Mloss_phiprior_list, Mloss_multi_list,
+                 k_egf)
+    
     if args.synthetics and st_trc is None:
         plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true, true_stf=stf_true)
         plot_trace(trc0, inferred_trace, args)
@@ -418,12 +437,19 @@ def main_function(args):
     else:
         plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args)
         plot_trace(trc0, inferred_trace, args)
+    
+    runtime = time.time() - start_time
+    print()
+    print("Runtime: {:0=2}h {:0=2}m {:02.0f}s".format(*[int(runtime//3600), int(runtime%3600//60), runtime%3600%60]))
+    print()
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='args')
+    
     # Configurations
+    
     parser.add_argument('--btsize', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 1024)')
     parser.add_argument('--num_epochs', type=int, default=20, metavar='N',
@@ -469,6 +495,8 @@ if __name__ == "__main__":
                         help='EGF seismic moment(s) M0, list if multiple EGFs')
     parser.add_argument('--num_egf', type=int, default=1, metavar='N',
                         help='number of EGF (default: 1)')
+    parser.add_argument('--samp_rate', type=float, default=None,
+                        help='Sampling rate (Hz) of traces, gf and stf.')
     parser.add_argument('--stf_dur', type=float, default=None,
                         help='STF duration in seconds')
     parser.add_argument('--stf_size', type=int, default=100, metavar='N',
@@ -508,6 +536,15 @@ if __name__ == "__main__":
                         help='if multiple EGFs, weights the Mstep MSE loss of each EGFs (default None = 1 for each). ')
 
     args = parser.parse_args()
+    
+    print()
+    print("############################################################")
+    print("#                                                          #")
+    print("#     DeepGEM: Generalized Expectation-Maximization        #")
+    print("#             for Empirical Green's Functions              #")
+    print("#                                                          #")
+    print("############################################################")
+    print()
 
     if args.dir is not None:
         args.PATH = args.dir
@@ -554,15 +591,14 @@ if __name__ == "__main__":
                                                                                     args.num_subepochsE,
                                                                                     args.num_subepochsM))
 
+    # Create target directories
     try:
-        # Create target Directory
         os.mkdir(args.PATH)
         print("Directory ", args.PATH, " Created ")
     except FileExistsError:
         print("Directory ", args.PATH, " already exists")
 
     try:
-        # Create target Directory
         os.mkdir(args.PATH + "/Data")
         print("Directory ", args.PATH + "/Data", " Created ")
     except FileExistsError:
