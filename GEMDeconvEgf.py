@@ -393,9 +393,13 @@ def main_function(args):
     inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
     learned_gf_np = np.array([learned_gf[i].cpu().numpy()[0] for i in range(args.num_egf)])
     
+    print(stf_np.shape)
+    
     # Scale stf area with M0
-    if args.samp_rate is not None and args.M0 is not None:
-        stf_np /= np.trapz(y=stf_np, dx=1/args.samp_rate)
+    if args.samp_rate is not None and args.M0 is not None:        
+        area = np.trapz(y=stf_np, dx=.1, axis=-1)[..., np.newaxis]
+        area = area.repeat(stf_np.shape[-1], axis=-1)
+        stf_np /= area
         stf_np *= args.M0
 
     np.save("{}/Data/reconSTF.npy".format(args.PATH), stf_np)
