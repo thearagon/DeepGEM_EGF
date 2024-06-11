@@ -59,11 +59,11 @@ def main_function(args):
         gf0 = gf0.reshape(gf0.shape[0]//3, 3, gf0.shape[1])
 
     # STF
-    if args.stf_dur is not None and st_gf is not None:
-        len_stf = int(args.stf_dur / st_gf[0].stats['delta'])
-        args.stf_size = len_stf
-    elif args.stf_dur is not None and args.samp_rate is not None:
+    if args.stf_dur is not None and args.samp_rate is not None:
         len_stf = int(args.stf_dur * args.samp_rate)
+        args.stf_size = len_stf
+    elif args.stf_dur is not None and st_gf is not None:
+        len_stf = int(args.stf_dur / st_gf[0].stats['delta'])
         args.stf_size = len_stf
     else:
         len_stf = args.stf_size
@@ -475,7 +475,7 @@ if __name__ == "__main__":
                         help='random seed (default: 1)')
     parser.add_argument('--Elr', type=float, default=1e-3,
                         help='learning rate(default: 1e-4)')
-    parser.add_argument('--Mlr', type=float, default=1e-3,
+    parser.add_argument('--Mlr', type=float, default=1e-5,
                         help='learning rate(default: 1e-4)')
 
     parser.add_argument('--dv', type=str, default='cpu',
