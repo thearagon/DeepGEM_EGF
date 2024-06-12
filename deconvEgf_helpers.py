@@ -133,8 +133,7 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
 
     ## prior on trace
     # TODO !!
-
-    meas_err = torch.stack([data_weight*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
+    meas_err = torch.stack([data_weight*args.egf_qual_weight[i]*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
