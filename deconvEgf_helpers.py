@@ -133,8 +133,8 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
 
     ## prior on trace
     # TODO !!
-    meas_err = torch.stack([torch.min(torch.as_tensor([data_weight*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])) for i in range(len(gf_network))])
-    # meas_err = torch.stack([data_weight*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
+
+    meas_err = torch.stack([data_weight*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
@@ -192,8 +192,8 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
     norm_k = [args.egf_norm_weight * gf_softl1(gf_network[i]) for i in range(args.num_egf)]
 
     # TODO !!
-    # meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)]
-    meas_err = [torch.min(torch.as_tensor([(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)])) for i in range(args.num_egf)]
+    meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)]
+    # meas_err = [torch.min(torch.as_tensor([(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)])) for i in range(args.num_egf)]
 
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:
