@@ -57,8 +57,8 @@ class GFNetwork(torch.nn.Module):
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
         # TODO MODIF!!!
-        return out / torch.amax(torch.abs(out))
-        # return out
+        # return out / torch.amax(torch.abs(out))
+        return out
 
 def trueForward(k, x, num_egf):
     # convolution STF*EGF=TRACES
@@ -66,8 +66,8 @@ def trueForward(k, x, num_egf):
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
     # TODO MODIF!!
-    return out / torch.amax(torch.abs(out))
-    # return out
+    # return out / torch.amax(torch.abs(out))
+    return out
 
 
 def makeInit(init, num_layers, device, noise_amp=.1):
