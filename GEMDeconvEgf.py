@@ -270,7 +270,7 @@ def main_function(args):
                 print(f"Estep ----- epoch {k:}, subepoch {k_sub:}")
                 print(f"Loss  ----- tot {Eloss_list[-1]:.2f}, prior {Eloss_prior_list[-1]:.2f}, q {Eloss_q_list[-1]:.2f}, mse {Eloss_mse_list[-1]:.2f}")
 
-            if args.output and (k % args.save_every == 0):
+            if args.output and (k % args.save_every == 0 and (k_sub % 100 == 0)):
                 z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
                 stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
                                     device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
@@ -336,7 +336,7 @@ def main_function(args):
                     print(f"Mstep ----- epoch {k:}, subepoch {k_sub:}, egf {k_egf:}")
                     print(f"Loss  ----- tot {Mloss_list[k_egf][-1]:.2f}, phi_prior {Mloss_phiprior_list[k_egf][-1]:.2f}, norm {Mloss_gfnorm_list[k_egf][-1]:.2f}, mse {Mloss_mse_list[k_egf][-1]:.2f}, multi {Mloss_multi_list[k_egf][-1]:.2f}")
 
-                if args.output and (k % args.save_every == 0):
+                if args.output and (k % args.save_every and (k_sub % 100 == 0)):
 
                     z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
                     stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
