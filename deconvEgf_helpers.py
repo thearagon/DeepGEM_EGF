@@ -57,8 +57,8 @@ class GFNetwork(torch.nn.Module):
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
         # TODO MODIF!!!
-        # return out / torch.amax(torch.abs(out))
-        return out
+        return out / torch.amax(torch.abs(out))
+        # return out
 
 def trueForward(k, x, num_egf):
     # convolution STF*EGF=TRACES
@@ -66,8 +66,8 @@ def trueForward(k, x, num_egf):
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
     # TODO MODIF!!
-    # return out / torch.amax(torch.abs(out))
-    return out
+    return out / torch.amax(torch.abs(out))
+    # return out
 
 
 def makeInit(init, num_layers, device, noise_amp=.1):
@@ -133,7 +133,9 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
 
     ## prior on trace
     # TODO !!
+    mse_weight = [F.mse_loss(y[i], ytrue) for i in range(len(gf_network))]
     meas_err = torch.stack([data_weight*args.egf_qual_weight[i]*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
+    meas_err = torch.stack([data_weight*mse_weight[i]*args.egf_qual_weight[i]*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
