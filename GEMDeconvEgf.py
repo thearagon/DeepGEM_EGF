@@ -232,12 +232,6 @@ def main_function(args):
         if len(args.device_ids) > 1 else [gf_network[i].generategf() for i in range(args.num_egf)]
 
     learned_gf_np = [learned_gf[i].detach().cpu().numpy()[0] for i in range(args.num_egf)]
-    
-    if args.output:
-        if args.synthetics:
-            plot_res(0, 0, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true, true_stf=stf_true)
-        else:
-            plot_res(0, 0, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args)
 
     trc_ext = torch.cat(args.btsize*[trc_ext.unsqueeze(0)])
 
@@ -271,14 +265,12 @@ def main_function(args):
             nn.utils.clip_grad_norm_(list(stf_gen.parameters()) + list(logscale_factor.parameters()), 1)
             Eoptimizer.step()
 
-            if (args.EMFull and (k_sub % args.print_every == 0)) or (not args.EMFull and (k % args.print_every == 0)):
-                
+            if k % args.print_every == 0:
                 print()
                 print(f"Estep ----- epoch {k:}, subepoch {k_sub:}")
                 print(f"Loss  ----- tot {Eloss_list[-1]:.2f}, prior {Eloss_prior_list[-1]:.2f}, q {Eloss_q_list[-1]:.2f}, mse {Eloss_mse_list[-1]:.2f}")
 
-            if args.output and ((args.EMFull and (k_sub % args.save_every == 0)) or (not args.EMFull and (k % args.save_every == 0))):
-
+            if args.output and (k % args.save_every == 0):
                 z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
                 stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
                                     device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
@@ -339,13 +331,12 @@ def main_function(args):
                 nn.utils.clip_grad_norm_(list(gf_network[k_egf].parameters()), 1)
                 Moptimizer[k_egf].step()
 
-                if (args.EMFull and (k_sub % args.print_every == 0)) or (not args.EMFull and (k % args.print_every == 0)):
-                    
+                if k % args.print_every == 0:
                     print()
                     print(f"Mstep ----- epoch {k:}, subepoch {k_sub:}, egf {k_egf:}")
                     print(f"Loss  ----- tot {Mloss_list[k_egf][-1]:.2f}, phi_prior {Mloss_phiprior_list[k_egf][-1]:.2f}, norm {Mloss_gfnorm_list[k_egf][-1]:.2f}, mse {Mloss_mse_list[k_egf][-1]:.2f}, multi {Mloss_multi_list[k_egf][-1]:.2f}")
 
-                if args.output and ((args.EMFull and (k_sub % args.save_every == 0)) or (not args.EMFull and (k % args.save_every == 0))):
+                if args.output and (k % args.save_every == 0):
 
                     z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
                     stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
