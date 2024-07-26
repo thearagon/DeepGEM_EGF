@@ -18,8 +18,6 @@ from scipy import signal
 import obspy
 from pytorch_softdtw_cuda import soft_dtw_cuda_wojit as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
 from generative_model import realnvpfc_model
-import time
-
     
 class GFNetwork(torch.nn.Module):
 
@@ -56,18 +54,14 @@ class GFNetwork(torch.nn.Module):
         out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
-        # TODO MODIF!!!
-        return out / torch.amax(torch.abs(out))
-        # return out
+        return out
 
 def trueForward(k, x, num_egf):
     # convolution STF*EGF=TRACES
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
-    # TODO MODIF!!
-    return out / torch.amax(torch.abs(out))
-    # return out
+    return out
 
 
 def makeInit(init, num_layers, device, noise_amp=.1):
@@ -493,7 +487,7 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
         plt.close()
 
 
-def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init_trc):
+def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
     mean_stf = np.mean(inferred_stf, axis=0)
     stdev_stf = np.std(inferred_stf, axis=0)
     mean_trc = np.mean(inferred_trace, axis=0)
@@ -505,7 +499,6 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
     # Norm stream
     gf0 /= np.amax(np.abs(gf0))
     trc0 /= np.amax(np.abs(trc0))
-    # trc0 *= np.amax(np.abs(init_trc.detach().cpu().numpy()))
 
     if args.num_egf == 1:
         rap = [np.amax(st_trc[i].data) / np.amax(st_gf[i].data) for i in range(3)]
@@ -516,10 +509,10 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
         ax.spines['left'].set_visible(False)
         ax.get_yaxis().set_visible(False)
         plt.tick_params(
-            axis='x',  # changes apply to the x-axis
-            which='both',  # both major and minor ticks are affected
-            bottom=True,  # ticks along the bottom edge are off
-            top=False,  # ticks along the top edge are off
+            axis='x',
+            which='both',
+            bottom=True,
+            top=False,
             labelbottom=True)
         chan = ['E', 'N', 'Z']
         for i in range(3):
@@ -546,10 +539,10 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
         ax.spines['left'].set_visible(False)
         ax.get_yaxis().set_visible(False)
         plt.tick_params(
-            axis='x',  # changes apply to the x-axis
-            which='both',  # both major and minor ticks are affected
-            bottom=True,  # ticks along the bottom edge are off
-            top=False,  # ticks along the top edge are off
+            axis='x',
+            which='both',
+            bottom=True,
+            top=False,
             labelbottom=True)
         for i in range(3):
             tmax = np.amax(st_gf[0].times())
@@ -565,10 +558,10 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
         ax.spines['left'].set_visible(False)
         ax.get_yaxis().set_visible(False)
         plt.tick_params(
-            axis='x',  # changes apply to the x-axis
-            which='both',  # both major and minor ticks are affected
-            bottom=True,  # ticks along the bottom edge are off
-            top=False,  # ticks along the top edge are off
+            axis='x',
+            which='both',
+            bottom=True,
+            top=False,
             labelbottom=True)
         ax.fill_between(np.arange(len(mean_stf[0])) / st_gf[0].stats.sampling_rate, mean_stf[0] - stdev_stf[0],
                         mean_stf[0] + stdev_stf[0],
@@ -576,118 +569,107 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args, init
         ax.plot(np.arange(len(mean_stf[0])) / st_gf[0].stats.sampling_rate, mean_stf[0], lw=0.8, color=myorange)
 
     else:
-        fig = plt.figure(figsize=(4,(args.num_egf+1)*1.2))
-        plt.subplots_adjust(wspace=0.15)
+        subfig = 1
+        fig = plt.figure(figsize=(6, (args.num_egf + 1) * 1.2))
+        plt.subplots_adjust(wspace=0.2, hspace=0.35)
 
         ax = plt.subplot(args.num_egf+1, 2, 1)
+        ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
+                horizontalalignment='left', verticalalignment='top',
+                transform=ax.transAxes, weight='bold')
+        subfig += 1
         ax.spines['left'].set_visible(False)
         ax.get_yaxis().set_visible(False)
-        plt.tick_params(
-            axis='x',  # changes apply to the x-axis
-            which='both',  # both major and minor ticks are affected
-            bottom=True,  # ticks along the bottom edge are off
-            top=False,  # ticks along the top edge are off
-            labelbottom=True)
+        plt.tick_params(bottom=True, top=False, labelbottom=True)
+
         ax.fill_between(np.arange(len(mean_stf[0]))/st_gf[0].stats.sampling_rate, mean_stf[0] - stdev_stf[0], mean_stf[0] + stdev_stf[0],
                          facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation')
         ax.plot(np.arange(len(mean_stf[0]))/st_gf[0].stats.sampling_rate, mean_stf[0], lw=0.8, color=myorange)
         plt.xlabel('Time (s)', labelpad=2, loc='left')
-        tmax=np.amax(np.arange(len(mean_stf[0]))/st_gf[0].stats.sampling_rate)
-        ticklab = ax.xaxis.get_ticklabels()[0]
-        trans = ticklab.get_transform()
-        ax.xaxis.set_label_coords(-.35*tmax, 0, transform=trans)
-        ax.text(1.1, .75, 'data', horizontalalignment='left', verticalalignment='top', color='k', transform=ax.transAxes)
-        ax.text(1.1, 0.9, 'predictions', horizontalalignment='left', verticalalignment='top', color=myorange,
+        ax.text(0, .4, 'Data', horizontalalignment='left', verticalalignment='top', color='k', transform=ax.transAxes)
+        ax.text(0,0.2, 'Predictions', horizontalalignment='left', verticalalignment='top', color=myorange,
                 transform=ax.transAxes)
 
-        for k in range(args.num_egf):
-            rap = [np.amax(st_trc[i].data) / np.amax(st_gf[k+args.num_egf*i].data) for i in range(3)]
-            ax = plt.subplot(args.num_egf+1, 2, k*2+3)
-            ax.spines['left'].set_visible(False)
-            ax.get_yaxis().set_visible(False)
-            plt.tick_params(
-                axis='x',  # changes apply to the x-axis
-                which='both',  # both major and minor ticks are affected
-                bottom=True,  # ticks along the bottom edge are off
-                top=False,  # ticks along the top edge are off
-                labelbottom=True)
-            chan = ['E', 'N', 'Z']
-            for i in range(3):
-                tmax = np.amax(st_trc[0].times())
-                ax.fill_between(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i] - stdev_trc[k,i]+(2-i)*0.6, mean_trc[k,i] + stdev_trc[k,i]+(2-i)*0.6,
-                                 facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
-                l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc0[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
-                l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
-                ax.text(np.amin(st_trc[0].times()-(2-i)*tmax//5)-tmax//7, np.mean(trc0[i]+(2-i)*0.6), chan[i],
-                         horizontalalignment='right',
-                         verticalalignment='top',weight='bold')
-                ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) , (2 - i) * 0.6+0.3, 'x '+str(int(rap[i])),
-                        horizontalalignment='left', verticalalignment='top', fontsize='small')
-            plt.xlim(np.amin(st_trc[0].times()-(2)*tmax//5)+10, tmax-5)
-            plt.xlabel('Time (s)', labelpad=2, loc='left')
+        chan = ['E', 'N', 'Z']
+
+        ## mean egf
+        ax = plt.subplot(args.num_egf + 1, 2, 2)
+        ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
+                horizontalalignment='left', verticalalignment='top',
+                transform=ax.transAxes, weight='bold')
+        subfig += 1
+        ax.spines['left'].set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.tick_params(bottom=True, top=False, labelbottom=False)
+
+        mean_egf = np.mean(inferred_gf, axis=0)[0]
+        std_egf = np.std(inferred_gf, axis=0)[0]
+        tmax = np.amax(st_gf[0].times())
+        for i in range(3):
+            ax.fill_between(st_gf[0].times() - (2 - i) * tmax // 5, mean_egf[i] - std_egf[i] + (2 - i) * 0.6,
+                            mean_egf[i] + std_egf[i] + (2 - i) * 0.6,
+                            facecolor='#632f48', alpha=0.25, zorder=0, label='Standard deviation')
+            ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, mean_egf[i] + (2 - i) * 0.6, lw=0.5, color='#632f48',
+                    clip_on=False)
+            ax.text(np.amin(st_gf[0].times() - (2 - i) * tmax // 5) - tmax / 20, np.mean(mean_egf[i] + (2 - i) * 0.6),
+                    chan[i],
+                    horizontalalignment='right',
+                    verticalalignment='top')
+        ax.text(1.1, 0.9, 'Mean EGF', horizontalalignment='right', verticalalignment='top', color='#632f48',
+                transform=ax.transAxes)
+        plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
+
+
+
+    for k in range(args.num_egf):
+        rap = [np.amax(st_trc[i].data) / np.amax(st_gf[k+args.num_egf*i].data) for i in range(3)]
+        ax = plt.subplot(args.num_egf+1, 2, k*2+3)
+        ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
+                horizontalalignment='left', verticalalignment='top',
+                transform=ax.transAxes, weight='bold')
+        subfig += 1
+        ax.spines['left'].set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.tick_params(bottom=True, top=False, labelbottom=False)
+
+        tmax = np.amax(st_trc[0].times())
+        for i in range(3):
+            ax.fill_between(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i] - stdev_trc[k,i]+(2-i)*0.6, mean_trc[k,i] + stdev_trc[k,i]+(2-i)*0.6,
+                             facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
+            l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc0[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
+            l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
+            ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) -tmax/20, np.mean(trc0[i] + (2 - i) * 0.6), chan[i],
+                    horizontalalignment='right',
+                    verticalalignment='top')
+            # ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) , (2 - i) * 0.6+0.3, 'x '+str(int(rap[i])),
+            #         horizontalalignment='left', verticalalignment='top', fontsize='small')
+        plt.xlim(np.amin(st_trc[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
+        if k == args.num_egf - 1:
+            plt.xlabel('time (s)', labelpad=2, loc='left')
+            plt.tick_params(bottom=True, top=False, labelbottom=True)
             ticklab = ax.xaxis.get_ticklabels()[0]
             trans = ticklab.get_transform()
-            ax.xaxis.set_label_coords(-2*tmax//5, 0, transform=trans)
+            ax.xaxis.set_label_coords(-2 * tmax // 5, 0, transform=trans)
 
-            ax = plt.subplot(args.num_egf+1, 2, k*2+4)
-            ax.spines['left'].set_visible(False)
-            ax.get_yaxis().set_visible(False)
-            plt.tick_params(
-                axis='x',  # changes apply to the x-axis
-                which='both',  # both major and minor ticks are affected
-                bottom=True,  # ticks along the bottom edge are off
-                top=False,  # ticks along the top edge are off
-                labelbottom=True)
-            for i in range(3):
-                tmax = np.amax(st_gf[0].times())
-                ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf0[k,i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
-                ax.plot(st_gf[0].times()-(2-i)*tmax//5, inferred_gf[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
-            plt.xlim(np.amin(st_gf[0].times()-(2)*tmax//5)+10, tmax-5)
+        ax = plt.subplot(args.num_egf+1, 2, k*2+4)
+        ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
+                horizontalalignment='left', verticalalignment='top',
+                transform=ax.transAxes, weight='bold')
+        subfig += 1
+        ax.spines['left'].set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        plt.tick_params(bottom=True, top=False, labelbottom=False)
+        for i in range(3):
+            tmax = np.amax(st_gf[0].times())
+            ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf0[k,i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
+            ax.plot(st_gf[0].times()-(2-i)*tmax//5, inferred_gf[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
+        plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
 
-    fig.savefig("{}/out_{}.pdf".format(args.PATH, 'res'), bbox_inches="tight")
+        if k == args.num_egf - 1:
+            plt.tick_params(bottom=True, top=False, labelbottom=True)
+
+    figname = "{}/out_{}.pdf".format(args.PATH, 'res')
+    fig.savefig(figname, bbox_inches="tight")
     plt.close()
 
-
-def plot_trace(trc0, inferred_trace, args):
-
-    mean_trc = np.mean(inferred_trace, axis=(0,1))
-    stdev_trc = np.std(inferred_trace, axis=(0,1))
-    std_max = stdev_trc.max()
-    truetrc = trc0.detach().cpu().numpy()
-
-    fig = plt.figure(figsize=(8, 3))
-    ax1 = plt.subplot2grid((6, 4), (0, 0), colspan=3, rowspan=2)
-    ax2 = plt.subplot2grid((6, 4), (2, 0), colspan=3, rowspan=2)
-    ax3 = plt.subplot2grid((6, 4), (4, 0), colspan=3, rowspan=2)
-    ax1.plot(truetrc[0], lw=0.5, color=myblue)
-    ax1.plot(mean_trc[0], lw=0.5, color=myorange, zorder=2)
-    ax1.fill_between(np.arange(len(mean_trc[0])), mean_trc[0] - stdev_trc[0],
-                     mean_trc[0] + stdev_trc[0],
-                     facecolor=myorange, alpha=0.25, zorder=0)
-    ax1.text(0.03, 0.9, 'E',
-             horizontalalignment='right',
-             verticalalignment='top',
-             transform=ax1.transAxes)
-    ax2.plot(truetrc[1], lw=0.5, color=myblue)
-    ax2.plot(mean_trc[1], lw=0.5, color=myorange, zorder=2)
-    ax2.fill_between(np.arange(len(mean_trc[1])), mean_trc[1] - stdev_trc[1],
-                     mean_trc[1] + stdev_trc[1],
-                     facecolor=myorange, alpha=0.25, zorder=0)
-    ax2.text(0.03, 0.9, 'N',
-             horizontalalignment='right',
-             verticalalignment='top',
-             transform=ax2.transAxes)
-    ax3.plot(truetrc[2], lw=0.5, color=myblue)
-    ax3.plot(mean_trc[2], lw=0.5, color=myorange, zorder=2)
-    ax3.fill_between(np.arange(len(mean_trc[2])), mean_trc[2] - stdev_trc[2],
-                     mean_trc[2] + stdev_trc[2],
-                     facecolor=myorange, alpha=0.25, zorder=0)
-    ax3.text(0.03, 0.9, 'Z',
-             horizontalalignment='right',
-             verticalalignment='top',
-             transform=ax3.transAxes)
-    ax1.get_xaxis().set_visible(False)
-    ax2.get_xaxis().set_visible(False)
-    plt.tight_layout()
-    plt.savefig("{}/outTRC.pdf".format(args.PATH), format='pdf', bbox_inches="tight")
-    plt.close()
+    return figname

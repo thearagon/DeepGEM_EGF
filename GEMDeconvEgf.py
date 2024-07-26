@@ -4,8 +4,6 @@
 from deconvEgf_helpers import *
 
 def main_function(args):
-    
-    start_time = time.time()
 
     ################################################ SET UP WEIGHTS ################################################
 
@@ -383,9 +381,7 @@ def main_function(args):
     y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
     inferred_trace = [y[i].detach().cpu().numpy() for i in range(args.num_egf)]
     learned_gf_np = np.array([learned_gf[i].cpu().numpy()[0] for i in range(args.num_egf)])
-    
-    print(stf_np.shape)
-    
+
     # Scale stf area with M0
     if args.samp_rate is not None and args.M0 is not None:        
         area = np.trapz(y=stf_np, dx=.1, axis=-1)[..., np.newaxis]
@@ -414,46 +410,37 @@ def main_function(args):
     np.save("{}/Data/outGF.npy".format(args.PATH), learned_gf_np)
 
     # Plot
-    plot_seploss(args,
-                 Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list,
-                 Mloss_list, Mloss_mse_list, Mloss_phiprior_list, Mloss_multi_list,
-                 k_egf)
-    
     if args.synthetics and st_trc is None:
         plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true, true_stf=stf_true)
-        plot_trace(trc0, inferred_trace, args)
 
     elif args.synthetics and st_gf is not None and st_trc is not None:
         plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args, true_gf=gf_true, true_stf=stf_true)
-        plot_st(st_trc, st_gf, inferred_trace, learned_gf_np, stf_np, args, init_trc)
+        plot_st(st_trc, st_gf, inferred_trace, learned_gf_np, stf_np, args)
 
     elif st_gf is not None and st_trc is not None:
-        plot_st(st_trc, st_gf, inferred_trace, learned_gf_np, stf_np, args, init_trc)
+        plot_st(st_trc, st_gf, inferred_trace, learned_gf_np, stf_np, args)
 
     else:
         plot_res(k, k_sub, stf_np, learned_gf_np, inferred_trace, stf0, gf0, trc0, args)
-        plot_trace(trc0, inferred_trace, args)
-    
-    runtime = time.time() - start_time
-    print()
-    print("Runtime: {:0=2}h {:0=2}m {:02.0f}s".format(*[int(runtime//3600), int(runtime%3600//60), runtime%3600%60]))
-    print()
-
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='args')
     
     # Configurations
-    
+    parser.add_argument('-trc0', '--trc0', type=str, default='',
+                        help='Path or name of trace file, npy array or obspy stream')
+    parser.add_argument('-egf0', '--egf0', type=str, default='',
+                        help='Path or name of EGF file, npy array or obspy stream')
+
     parser.add_argument('--btsize', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 1024)')
-    parser.add_argument('--num_epochs', type=int, default=20, metavar='N',
-                        help='number of epochs to train (default: 3500)')
-    parser.add_argument('--num_subepochsE', type=int, default=400, metavar='N',
-                        help='number of epochs to train (default: 400)')
-    parser.add_argument('--num_subepochsM', type=int, default=400, metavar='N',
-                        help='number of epochs to train (default: 400)')
+    parser.add_argument('--num_epochs', type=int, default=10, metavar='N',
+                        help='number of epochs to train (default: 10)')
+    parser.add_argument('--num_subepochsE', type=int, default=100, metavar='N',
+                        help='number of epochs to train (default: 100)')
+    parser.add_argument('--num_subepochsM', type=int, default=100, metavar='N',
+                        help='number of epochs to train (default: 100)')
     parser.add_argument('--save_every', type=int, default=50, metavar='N',
                         help='checkpoint model (default: 50)')
     parser.add_argument('--print_every', type=int, default=50, metavar='N',
@@ -479,10 +466,6 @@ if __name__ == "__main__":
     # User configurations
     parser.add_argument('-dir', '--dir', type=str, default="results",
                         help='Output directory')
-    parser.add_argument('--trc0', type=str, default='',
-                        help='Path or name of trace file, npy array or obspy stream')
-    parser.add_argument('--egf0', type=str, default='',
-                        help='Path or name of EGF file, npy array or obspy stream')
     parser.add_argument('--stf0', type=str, default='',
                         help='init STF file name')
     parser.add_argument('--M0', type=float, default=None,
