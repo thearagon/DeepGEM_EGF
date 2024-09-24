@@ -9,20 +9,18 @@ def main_function(args):
 
     args.phi_weight = 1e-1
 
-    if args.stf_init_weight is None: # weight on init STF
-        args.stf_init_weight = (1/args.data_sigma)/2e1
+    if args.stf0_weight is None: # weight on init STF
+        args.stf0_weight = (1/args.data_sigma)/1e4
 
     if args.stf_weight is None: # weights for priors on Estep: list, [boundaries, TV, L1]
-        args.stf_weight = [(1/args.data_sigma)/2e2, (1/args.data_sigma)/4e1, (1/args.data_sigma)/2e2]
+        args.stf_weight = [(1/args.data_sigma)/2e3, (1/args.data_sigma)/4e2, (1/args.data_sigma)/2e3]
 
     if args.logdet_weight is None: # weight on q_theta
         args.logdet_weight = (1/args.data_sigma)/1e2
 
     if args.prior_phi_weight is None: # weights for priors on Mstep: list, [L1, L2, TV]
-        args.prior_phi_weight = [(1/args.data_sigma)/6e3, (1/args.data_sigma)/4e4, (1/args.data_sigma)/4e4]
-
-    if args.egf_norm_weight is None:
-        args.egf_norm_weight = (1/args.data_sigma)/1e6
+        # args.prior_phi_weight = [(1/args.data_sigma)/6e3, (1/args.data_sigma)/4e4, (1/args.data_sigma)/4e4]
+        args.prior_phi_weight = [(1/args.data_sigma)/6e3, (1/args.data_sigma)/4e4, 0]
 
     if args.num_egf > 1:
         if args.egf_multi_weight is None:
@@ -81,7 +79,7 @@ def main_function(args):
             len_stf = len(stf0)
             print('STF size set to length of STF0')
     else:
-        τc = len_stf // 30 ## TODO function of rate... M0 ?
+        τc = len_stf // 10 ## TODO function of rate... M0 ?
         stf0 = 0.01 * np.ones(len_stf) + 0.99 * np.exp(-(np.arange(len_stf) - len_stf//2)**2 / (2 * (τc/2)**2))
 
     # Synthetics
@@ -114,7 +112,7 @@ def main_function(args):
     init_trc = trueForward(gf0, stf0.view(1, 1, -1), args.num_egf)
     trc0 /= np.amax(np.abs(trc0))
     trc0 = torch.Tensor(trc0).to(device=args.device)
-    trc_ext = torch.Tensor(trc0).to(device=args.device) # will have a btsize format
+    trc_ext = torch.Tensor(trc0).to(device=args.device)
 
 
     ################################################ MODEL SETUP ################################################
@@ -154,11 +152,6 @@ def main_function(args):
             gf_network[i].to(args.device)
 
     # Priors on Mstep (EGF)
-    if len(args.device_ids) > 1:
-        gf_softl1 = lambda gf_network: torch.abs(1 - torch.sum(gf_network.module.generategf()))
-    else:
-        gf_softl1 = lambda gf_network: torch.abs(1 - torch.sum(gf_network.generategf()))
-
     f_phi_prior = lambda gf: priorPhi(gf, gf0)
 
     if args.num_egf == 1:
@@ -172,14 +165,18 @@ def main_function(args):
     # Priors on Estep (STF)
     stf_softl1 = lambda stf, weight: torch.abs(1 - torch.sum(stf))
     prior_boundary = lambda stf, weight: weight * torch.sum(torch.abs(stf[:, :, 0]) * torch.abs(stf[:, :, -1]))
-    prior_dtw = lambda stf, weight: weight * (Loss_L2(stf, stf0) + Loss_DTW(stf, stf0)) if weight > 0 else 0
     prior_TV_stf = lambda stf, weight: weight * Loss_TV(stf)
+    prior_stf = [prior_boundary, prior_TV_stf, stf_softl1]  # priors on STF, can be a list
+
+    ## TODO
+    stf0_gauss = np.abs(stf0 + np.random.normal(0, args.stf0_sigma, stf0.shape))
+    stf0_gauss_ext = torch.unsqueeze(torch.cat(args.btsize * [torch.unsqueeze(stf0_gauss, axis=0)], axis=0), axis=1)
+    prior_gauss = lambda stf: Loss_L2(stf, stf0_gauss_ext)/args.stf0_sigma**2
+    prior_x = prior_gauss
 
     flux = torch.abs(torch.sum(stf0))
     logscale_factor = stf_logscale(scale=flux/(0.8*stf0.shape[0]), device=args.device).to(args.device)
     logdet_weight = args.logdet_weight #flux/(len_stf*args.data_sigma)
-    prior_x = prior_dtw
-    prior_stf = [prior_boundary, prior_TV_stf, stf_softl1]  # prior on STF, can be a list
 
     # Optimizers (Adam)
     Eoptimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, list(stf_gen.parameters())
@@ -198,7 +195,6 @@ def main_function(args):
     Mloss_list = {}
     Mloss_mse_list = {}
     Mloss_multi_list = {}
-    Mloss_gfnorm_list = {}
     Mloss_phiprior_list = {}
     Mloss = {}
 
@@ -206,7 +202,6 @@ def main_function(args):
         Mloss_list[k_egf] = []
         Mloss_mse_list[k_egf] = []
         Mloss_multi_list[k_egf] = []
-        Mloss_gfnorm_list[k_egf] = []
         Mloss_phiprior_list[k_egf] = []
 
     ## Initialize
@@ -263,12 +258,12 @@ def main_function(args):
             nn.utils.clip_grad_norm_(list(stf_gen.parameters()) + list(logscale_factor.parameters()), 1)
             Eoptimizer.step()
 
-            if k % args.print_every == 0:
+            if (k % args.print_every == 0) and (k != 0):
                 print()
                 print(f"Estep ----- epoch {k:}, subepoch {k_sub:}")
                 print(f"Loss  ----- tot {Eloss_list[-1]:.2f}, prior {Eloss_prior_list[-1]:.2f}, q {Eloss_q_list[-1]:.2f}, mse {Eloss_mse_list[-1]:.2f}")
 
-            if args.output and (k % args.save_every == 0 and (k_sub % 100 == 0)):
+            if args.output and (k % args.save_every == 0 and (k_sub % 100 == 0 and (k!=0))):
                 z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
                 stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
                                     device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
@@ -310,12 +305,11 @@ def main_function(args):
             z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
             x_sample = torch.randn(args.btsize, len_stf).to(device=args.device).reshape((-1, 1, len_stf))
 
-            Mloss, mse, gfnorm, priorphi, multiloss = MStep(z_sample, x_sample, len_stf,
+            Mloss, mse, priorphi, multiloss = MStep(z_sample, x_sample, len_stf,
                                                             trc_ext,
                                                             stf_gen, gf_network,
                                                             FTrue, logscale_factor,
-                                                            phi_priors, gf_softl1,
-                                                            args)
+                                                            phi_priors, args)
 
             for k_egf in range(args.num_egf):
 
@@ -323,18 +317,17 @@ def main_function(args):
                 Mloss_mse_list[k_egf].append(mse[k_egf].detach().cpu().numpy())
                 Mloss_multi_list[k_egf].append(multiloss.detach().cpu().numpy())
                 Mloss_phiprior_list[k_egf].append(priorphi[k_egf].detach().cpu().numpy())
-                Mloss_gfnorm_list[k_egf].append(gfnorm[k_egf].detach().cpu().numpy())
                 Moptimizer[k_egf].zero_grad()
                 Mloss[k_egf].backward(retain_graph=True)
                 nn.utils.clip_grad_norm_(list(gf_network[k_egf].parameters()), 1)
                 Moptimizer[k_egf].step()
 
-                if k % args.print_every == 0:
+                if (k % args.print_every == 0) and (k!=0):
                     print()
                     print(f"Mstep ----- epoch {k:}, subepoch {k_sub:}, egf {k_egf:}")
-                    print(f"Loss  ----- tot {Mloss_list[k_egf][-1]:.2f}, phi_prior {Mloss_phiprior_list[k_egf][-1]:.2f}, norm {Mloss_gfnorm_list[k_egf][-1]:.2f}, mse {Mloss_mse_list[k_egf][-1]:.2f}, multi {Mloss_multi_list[k_egf][-1]:.2f}")
+                    print(f"Loss  ----- tot {Mloss_list[k_egf][-1]:.2f}, phi_prior {Mloss_phiprior_list[k_egf][-1]:.2f}, mse {Mloss_mse_list[k_egf][-1]:.2f}, multi {Mloss_multi_list[k_egf][-1]:.2f}")
 
-                if args.output and (k % args.save_every and (k_sub % 100 == 0)):
+                if args.output and (k % args.save_every == 0 and ( k!=0 and (k_sub % 100 == 0))):
 
                     z_sample = torch.randn(args.btsize, len_stf).to(device=args.device)
                     stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
@@ -499,14 +492,14 @@ if __name__ == "__main__":
     # Weight parameters
     parser.add_argument('--data_sigma', type=float, default=5e-5,
                         help='data sigma (default: 5e-5)')
-    parser.add_argument('--stf_init_weight', type=float, default=None,
-                        help='weight on init STF on E step prior, default 0')
+    parser.add_argument('--stf0_sigma', type=float, default=2e-1,
+                        help='sigma for init STF on E step prior, default 2e-1')
+    parser.add_argument('--stf0_weight', type=float, default=None,
+                        help='weight for init STF on E step prior (default None = function of data_sigma)')
     parser.add_argument('--stf_weight', type=float, nargs='+', default=None,
                         help='weight on E step priors, list (default None = function of data_sigma)')
     parser.add_argument('--logdet_weight', type=float, default=None,
                         help='β, controls entropy, E step prior (default None = function of data_sigma)')
-    parser.add_argument('--egf_norm_weight', type=float, default=None,
-                        help='EGF norm weight, M step (default None = function of data_sigma)')
     parser.add_argument('--prior_phi_weight', type=float, default=None,
                         help='weight on init GF on M step (default None = function of data_sigma)')
     parser.add_argument('--egf_multi_weight', type=float, default=None,

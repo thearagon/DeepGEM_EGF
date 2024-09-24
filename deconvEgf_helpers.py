@@ -125,7 +125,7 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
     ## log likelihood
     logqtheta = - logdet_weight * torch.mean(logdet)
 
-    ## prior on trace
+    ## Loss
     # TODO !!
     mse_weight = [F.mse_loss(y[i], ytrue) for i in range(len(gf_network))]
     meas_err = torch.stack([data_weight*args.egf_qual_weight[i]*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
@@ -133,7 +133,7 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
-    priorx = torch.mean(prior_x(stf, args.stf_init_weight))
+    priorx = torch.sum(prior_x(stf)) * args.stf0_weight  # logp(x) w/ gaussian assumption sum||x-x_mu||/sigma**2
 
     if isinstance(prior_stf, list):
         if isinstance(args.stf_weight, list):
@@ -148,18 +148,7 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
 
 
 def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_network,
-          logscale_factor, prior_phi, gf_softl1, args):
-
-    device_ids = args.device_ids if len(args.device_ids) > 1 else None
-
-    # inferred STF
-    # stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor, device=args.device, device_ids=device_ids)
-    # # TRC from inferred STF
-    # y = FForward(stf, gf_network, args.data_sigma, args.device)
-    # # TRC from random STF
-    # y_x = FForward(x_sample, gf_network, args.data_sigma, args.device)
-    # # TRC from random STF but init GF
-    # fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
+          logscale_factor, prior_phi, args):
 
     stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor,
                            device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
@@ -183,9 +172,6 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
             for k in range(1,len(prior_phi)):
              prior[i] += prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k], i)
 
-    ## Soft L1
-    norm_k = [args.egf_norm_weight * gf_softl1(gf_network[i]) for i in range(args.num_egf)]
-
     # TODO !!
     meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)]
     # meas_err = [torch.min(torch.as_tensor([(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)])) for i in range(args.num_egf)]
@@ -201,9 +187,9 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
 
     loss = {}
     for i in range(args.num_egf):
-        loss[i] = torch.Tensor(meas_err[i] + norm_k[i] + prior[i] + pphi[i] + multi_loss)
+        loss[i] = torch.Tensor(meas_err[i] + prior[i] + pphi[i] + multi_loss)
 
-    return loss, meas_err, norm_k, prior, multi_loss
+    return loss, meas_err, prior, multi_loss
 
 
 ######################################################################################################################
@@ -313,9 +299,7 @@ def dtw_classic(x, y, dist='absolute'):
     return dtw_dist
 
 def priorPhi(k, k0):
-    gf = k - k0
-    out = gf
-    return torch.mean(torch.abs(out))
+    return torch.mean(torch.abs(k - k0))
 
 def Loss_TSV(z, z0):
     return torch.mean((z - z0)**2)
@@ -619,54 +603,52 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
                 transform=ax.transAxes)
         plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
 
+        for k in range(args.num_egf):
+            rap = [np.amax(st_trc[i].data) / np.amax(st_gf[k+args.num_egf*i].data) for i in range(3)]
+            ax = plt.subplot(args.num_egf+1, 2, k*2+3)
+            ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
+                    horizontalalignment='left', verticalalignment='top',
+                    transform=ax.transAxes, weight='bold')
+            subfig += 1
+            ax.spines['left'].set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            plt.tick_params(bottom=True, top=False, labelbottom=False)
 
+            tmax = np.amax(st_trc[0].times())
+            for i in range(3):
+                ax.fill_between(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i] - stdev_trc[k,i]+(2-i)*0.6, mean_trc[k,i] + stdev_trc[k,i]+(2-i)*0.6,
+                                facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
+                l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc0[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
+                l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
+                ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) -tmax/20, np.mean(trc0[i] + (2 - i) * 0.6), chan[i],
+                        horizontalalignment='right',
+                        verticalalignment='top')
+                # ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) , (2 - i) * 0.6+0.3, 'x '+str(int(rap[i])),
+                #         horizontalalignment='left', verticalalignment='top', fontsize='small')
+            plt.xlim(np.amin(st_trc[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
+            if k == args.num_egf - 1:
+                plt.xlabel('time (s)', labelpad=2, loc='left')
+                plt.tick_params(bottom=True, top=False, labelbottom=True)
+                ticklab = ax.xaxis.get_ticklabels()[0]
+                trans = ticklab.get_transform()
+                ax.xaxis.set_label_coords(-2 * tmax // 5, 0, transform=trans)
 
-    for k in range(args.num_egf):
-        rap = [np.amax(st_trc[i].data) / np.amax(st_gf[k+args.num_egf*i].data) for i in range(3)]
-        ax = plt.subplot(args.num_egf+1, 2, k*2+3)
-        ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
-                horizontalalignment='left', verticalalignment='top',
-                transform=ax.transAxes, weight='bold')
-        subfig += 1
-        ax.spines['left'].set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        plt.tick_params(bottom=True, top=False, labelbottom=False)
+            ax = plt.subplot(args.num_egf+1, 2, k*2+4)
+            ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
+                    horizontalalignment='left', verticalalignment='top',
+                    transform=ax.transAxes, weight='bold')
+            subfig += 1
+            ax.spines['left'].set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            plt.tick_params(bottom=True, top=False, labelbottom=False)
+            for i in range(3):
+                tmax = np.amax(st_gf[0].times())
+                ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf0[k,i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
+                ax.plot(st_gf[0].times()-(2-i)*tmax//5, inferred_gf[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
+            plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
 
-        tmax = np.amax(st_trc[0].times())
-        for i in range(3):
-            ax.fill_between(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i] - stdev_trc[k,i]+(2-i)*0.6, mean_trc[k,i] + stdev_trc[k,i]+(2-i)*0.6,
-                             facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
-            l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc0[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
-            l2 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
-            ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) -tmax/20, np.mean(trc0[i] + (2 - i) * 0.6), chan[i],
-                    horizontalalignment='right',
-                    verticalalignment='top')
-            # ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) , (2 - i) * 0.6+0.3, 'x '+str(int(rap[i])),
-            #         horizontalalignment='left', verticalalignment='top', fontsize='small')
-        plt.xlim(np.amin(st_trc[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
-        if k == args.num_egf - 1:
-            plt.xlabel('time (s)', labelpad=2, loc='left')
-            plt.tick_params(bottom=True, top=False, labelbottom=True)
-            ticklab = ax.xaxis.get_ticklabels()[0]
-            trans = ticklab.get_transform()
-            ax.xaxis.set_label_coords(-2 * tmax // 5, 0, transform=trans)
-
-        ax = plt.subplot(args.num_egf+1, 2, k*2+4)
-        ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
-                horizontalalignment='left', verticalalignment='top',
-                transform=ax.transAxes, weight='bold')
-        subfig += 1
-        ax.spines['left'].set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        plt.tick_params(bottom=True, top=False, labelbottom=False)
-        for i in range(3):
-            tmax = np.amax(st_gf[0].times())
-            ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf0[k,i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
-            ax.plot(st_gf[0].times()-(2-i)*tmax//5, inferred_gf[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
-        plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
-
-        if k == args.num_egf - 1:
-            plt.tick_params(bottom=True, top=False, labelbottom=True)
+            if k == args.num_egf - 1:
+                plt.tick_params(bottom=True, top=False, labelbottom=True)
 
     figname = "{}/out_{}.pdf".format(args.PATH, 'res')
     fig.savefig(figname, bbox_inches="tight")
