@@ -167,7 +167,7 @@ def main_function(args):
     prior_stf = [prior_boundary, prior_TV_stf, stf_softl1]  # priors on STF, can be a list
 
     ## TODO
-    stf0_gauss = torch.abs(stf0 + torch.random.normal(0, args.stf0_sigma, stf0.shape))
+    stf0_gauss = np.abs(stf0 + np.random.normal(0, args.stf0_sigma, stf0.shape))
     stf0 = torch.Tensor(stf0).to(device=args.device)
     stf0_gauss = torch.Tensor(stf0_gauss).to(device=args.device)
     stf0_gauss_ext = torch.unsqueeze(torch.cat(args.btsize * [torch.unsqueeze(stf0_gauss, axis=0)], axis=0), axis=1)
