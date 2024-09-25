@@ -107,7 +107,6 @@ def main_function(args):
     gf0 = torch.Tensor(gf0).to(device=args.device)
 
     stf0 = stf0 / np.amax(stf0)
-    stf0 = torch.Tensor(stf0).to(device=args.device)
 
     init_trc = trueForward(gf0, stf0.view(1, 1, -1), args.num_egf)
     trc0 /= np.amax(np.abs(trc0))
@@ -170,6 +169,7 @@ def main_function(args):
 
     ## TODO
     stf0_gauss = np.abs(stf0 + np.random.normal(0, args.stf0_sigma, stf0.shape))
+    stf0 = torch.Tensor(stf0).to(device=args.device)
     stf0_gauss_ext = torch.unsqueeze(torch.cat(args.btsize * [torch.unsqueeze(stf0_gauss, axis=0)], axis=0), axis=1)
     prior_gauss = lambda stf: Loss_L2(stf, stf0_gauss_ext)/args.stf0_sigma**2
     prior_x = prior_gauss
