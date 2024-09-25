@@ -108,7 +108,6 @@ def main_function(args):
 
     stf0 = stf0 / np.amax(stf0)
 
-    init_trc = trueForward(gf0, stf0.view(1, 1, -1), args.num_egf)
     trc0 /= np.amax(np.abs(trc0))
     trc0 = torch.Tensor(trc0).to(device=args.device)
     trc_ext = torch.Tensor(trc0).to(device=args.device)
