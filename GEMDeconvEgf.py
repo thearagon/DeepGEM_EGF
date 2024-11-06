@@ -29,7 +29,7 @@ def main_function(args):
             args.egf_qual_weight = np.ones(args.num_egf).tolist()
     else:
         args.egf_multi_weight = 0.
-        args.egf_qual_weight = [1]
+        args.egf_qual_weight = [1.]
 
 
     ################################################ SET UP DATA ################################################
@@ -166,7 +166,6 @@ def main_function(args):
     prior_TV_stf = lambda stf, weight: weight * Loss_TV(stf)
     prior_stf = [prior_boundary, prior_TV_stf, stf_softl1]  # priors on STF, can be a list
 
-    ## TODO
     stf0_gauss = np.abs(stf0 + np.random.normal(0, args.stf0_sigma, stf0.shape))
     stf0 = torch.Tensor(stf0).to(device=args.device)
     stf0_gauss = torch.Tensor(stf0_gauss).to(device=args.device)
@@ -455,7 +454,7 @@ if __name__ == "__main__":
     parser.add_argument('--multidv', type=int, nargs='+', default=None,
                         help="use multiple gpus (default: 1) use -1 for all")
     parser.add_argument('--output', action='store_true', default=False,
-                        help='Plot figures, store output')
+                        help='Plot figures, store output at each step')
 
     # User configurations
     parser.add_argument('-dir', '--dir', type=str, default="results",
