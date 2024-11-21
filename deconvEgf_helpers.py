@@ -5,6 +5,7 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+torch.set_warn_always(False)
 import os
 import numpy as np
 import matplotlib
@@ -18,7 +19,10 @@ from scipy import signal
 import obspy
 from pytorch_softdtw_cuda import soft_dtw_cuda_wojit as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
 from generative_model import realnvpfc_model
-    
+import warnings
+warnings.filterwarnings("ignore")
+from datetime import datetime
+
 class GFNetwork(torch.nn.Module):
 
     def __init__(self, ini, device, num_layers=3, num_egf=1):
@@ -54,19 +58,18 @@ class GFNetwork(torch.nn.Module):
         out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
-        return out / torch.amax(torch.abs(out))
+        # return out / torch.amax(torch.abs(out))
+        return out
 
 def trueForward(k, x, num_egf):
-    # convolution STF*EGF=TRACES
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
-    return out / torch.amax(torch.abs(out))
+    # return out / torch.amax(torch.abs(out))
+    return out
 
 
 def makeInit(init, num_layers, device, noise_amp=.1):
-    """
-    """
     l0 = torch.zeros(init.shape, device=device)
     l0[:, init.shape[1]//2] = 1.
 
@@ -92,30 +95,27 @@ def GForward(z_sample, stf_generator, len_stf, logscale_factor, device=None, stf
             stf_samp, logdet = stf_generator.reverse(z_sample)
         stf_samp = stf_samp.reshape((-1, 1, len_stf))
     else:
-        ini = 0.05*torch.randn(stfinit.shape) + 0.95*stfinit
-        stf_samp = torch.repeat(ini, [len(z_sample)], axis=0)
-        stf_samp = stf_samp.reshape((-1, 1, len_stf))
-        stf_samp = torch.Tensor(stf_samp).to(device=device)
-        logdet = 0
+        ini = 0.05 * torch.randn_like(stfinit) + 0.95 * stfinit
+        stf_samp = ini.repeat(len(z_sample), 1, 1).reshape((-1, 1, len_stf))
+        stf_samp = stf_samp.to(device)
+        logdet = torch.tensor(0.0, device=device)
 
     # apply scale factor
     logscale_factor_value = logscale_factor.forward()
     scale_factor = torch.exp(logscale_factor_value)
-    stf = stf_samp
+    stf = stf_samp * scale_factor ## TODO?
     det_scale = logscale_factor_value * len_stf
-    logdet = logdet + det_scale
+    logdet += det_scale
     return stf, logdet
 
 def FForward(x, gf_network, sigma, device):
     y = gf_network(x)
     noise = torch.randn(y.shape)*sigma
-    y += noise.to(device)
-    return y
+    return y + noise.to(device)
 
 
-def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet_weight,
+def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf,
           len_stf, logscale_factor, args):
-
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
     data_weight = 1 / args.data_sigma ** 2
 
@@ -123,29 +123,28 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf, logdet
     y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(len(gf_network))]
 
     ## log likelihood
-    logqtheta = - logdet_weight * torch.mean(logdet)
+    logqtheta = - args.logdet_weight * torch.mean(logdet)
 
     ## Loss
     # TODO !!
-    mse_weight = [F.mse_loss(y[i], ytrue) for i in range(len(gf_network))]
-    meas_err = torch.stack([data_weight*args.egf_qual_weight[i]*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
-    meas_err = torch.stack([data_weight*mse_weight[i]*args.egf_qual_weight[i]*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
+    # mse_weight = [F.mse_loss(y[i], ytrue) for i in range(len(gf_network))]
+    # meas_err = torch.stack([data_weight*args.egf_qual_weight[i]*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
+    meas_err = torch.stack([data_weight * args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
     priorx = torch.sum(prior_x(stf)) * args.stf0_weight  # logp(x) w/ gaussian assumption sum||x-x_mu||/sigma**2
 
     if isinstance(prior_stf, list):
-        if isinstance(args.stf_weight, list):
-            priorstf = torch.mean( torch.Tensor( [torch.mean(prior_stf[i](stf, args.stf_weight[i])) for i in range(len(prior_stf))] ))
-        else:
-            priorstf = torch.mean( torch.Tensor( [torch.mean(prior_stf[i](stf, args.stf_weight)) for i in range(len(prior_stf))] ))
+        priorstf = torch.mean(torch.tensor([
+            prior_stf[i](stf, args.stf_weight[i] if isinstance(args.stf_weight, list) else args.stf_weight)
+            for i in range(len(prior_stf))
+        ]))
     else:
         priorstf = torch.mean(prior_stf(stf, args.stf_weight))
 
     loss = logqtheta + priorx + smoothmin_meas_err + priorstf
     return loss, logqtheta, priorx+priorstf, smoothmin_meas_err
-
 
 def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_network,
           logscale_factor, prior_phi, args):
@@ -156,40 +155,36 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
     y_x = [FForward(x_sample, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
     fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
 
-    pphi = [args.phi_weight * nn.MSELoss()(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
+    pphi = [args.phi_weight * F.mse_loss(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
 
     # gf = gf_network.module.generategf() if device_ids is not None else gf_network.generategf()
     gf = [gf_network[i].module.generategf().detach() for i in range(args.num_egf)] \
         if len(args.device_ids) > 1 else [gf_network[i].generategf().detach() for i in range(args.num_egf)]
 
     ## Priors on init GF
-    prior = [args.prior_phi_weight[0]*prior_phi[0](gf[i].squeeze(0)) for i in range(args.num_egf)]
-    for i in range(args.num_egf):
-        if args.num_egf == 1:
-            for k in range(1,len(prior_phi)):
-                prior[i] += prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k])
-        else:
-            for k in range(1,len(prior_phi)):
-             prior[i] += prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k], i)
+    prior = [args.prior_phi_weight[0] * prior_phi[0](gf[i].squeeze(0)) + sum(
+        prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k], i) for k in range(1, len(prior_phi))) for i in range(args.num_egf)]
 
     # TODO !!
-    meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)]
+    meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * F.mse_loss(y[i], ytrue) for i in range(args.num_egf)]
     # meas_err = [torch.min(torch.as_tensor([(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)])) for i in range(args.num_egf)]
 
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:
         idx_best = torch.argmin(torch.stack(meas_err))
-        α = [Loss_L2(y[i], ytrue)  / torch.sum( torch.Tensor([ Loss_L2(y[k], ytrue)  for k in range(args.num_egf)]) ) for i in range(args.num_egf)] # Goodness of fit for EGF i
+        α = [F.mse_loss(y[i], ytrue) / sum(F.mse_loss(y[k], ytrue) for k in range(args.num_egf))
+             for i in range(args.num_egf)]  # Goodness of fit for EGF i
         sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
-        multi_loss = args.egf_multi_weight * torch.sum( torch.Tensor([ α[i]*( Loss_L2(gf[i].squeeze(0), gf[idx_best].squeeze(0)) + 0.35*torch.abs(sdtw(gf[i].squeeze(0), gf[idx_best].squeeze(0))[0]) ) for i in range(args.num_egf) ]) ) # Closeness to best EGF (idx_best)
+        multi_loss = args.egf_multi_weight * sum( torch.Tensor([ α[i]*( Loss_L2(gf[i].squeeze(0), gf[idx_best].squeeze(0)) + 0.35*torch.abs(sdtw(gf[i].squeeze(0), gf[idx_best].squeeze(0))[0]) ) for i in range(args.num_egf) ]) ) # Closeness to best EGF (idx_best)
     else:
-        multi_loss = torch.tensor(0.)
+        multi_loss = torch.tensor(0.0, device=args.device)
 
     loss = {}
     for i in range(args.num_egf):
         loss[i] = torch.Tensor(meas_err[i] + prior[i] + pphi[i] + multi_loss)
 
     return loss, meas_err, prior, multi_loss
+
 
 
 ######################################################################################################################
@@ -366,12 +361,9 @@ def plot_seploss(args, Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_lis
     plt.close()
 
 
-def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, args, true_stf=None, true_gf=None, step=''):
+def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, gf0_np, trc0, args, true_stf=None, true_gf=None, step=''):
     mean_stf = np.mean(inferred_stf, axis=0)
     stdev_stf = np.std(inferred_stf, axis=0)
-    gf0_np = gf0.detach().cpu().numpy()
-    stf0 = stf0.detach().cpu().numpy()
-    trc0 = trc0.detach().cpu().numpy()
     mean_trc = [np.mean(learned_trc[i], axis=0) for i in range(len(learned_trc))]
     stdev_trc = [np.std(learned_trc[i], axis=0) for i in range(len(learned_trc))]
 
@@ -397,8 +389,6 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, stf0, gf0, trc0, a
             ax1.plot(x, true_gf[0], lw=0.5, color=myred, label='Target')
         ax1.plot(x, gf0[0], lw=0.5, color=myblue, label='Prior')
         ax1.plot(x, inferred_gf[0], lw=0.5, color=myorange, zorder=2, label='Inferred')
-        ax1.fill_between(x, inferred_gf[0], inferred_gf[0],
-                         facecolor=myorange, alpha=0.35, zorder=0, label='2σ')
         ax1.text(0.03, 0.9, 'E',
                  horizontalalignment='right',
                  verticalalignment='top',
