@@ -58,15 +58,15 @@ class GFNetwork(torch.nn.Module):
         out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
-        return out / torch.amax(torch.abs(out))
-        # return out
+        # return out / torch.amax(torch.abs(out))
+        return out
 
 def trueForward(k, x, num_egf):
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
-    return out / torch.amax(torch.abs(out))
-    # return out
+    # return out / torch.amax(torch.abs(out))
+    return out
 
 
 def makeInit(init, num_layers, device, noise_amp=.1):
@@ -103,7 +103,7 @@ def GForward(z_sample, stf_generator, len_stf, logscale_factor, device=None, stf
     # apply scale factor
     logscale_factor_value = logscale_factor.forward()
     scale_factor = torch.exp(logscale_factor_value)
-    stf = stf_samp # * scale_factor ## TODO?
+    stf = stf_samp  * scale_factor ## TODO?
     det_scale = logscale_factor_value * len_stf
     logdet += det_scale
     return stf, logdet
@@ -126,9 +126,6 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf,
     logqtheta = - args.logdet_weight * torch.mean(logdet)
 
     ## Loss
-    # TODO !!
-    # mse_weight = [F.mse_loss(y[i], ytrue) for i in range(len(gf_network))]
-    # meas_err = torch.stack([data_weight*args.egf_qual_weight[i]*nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
     meas_err = torch.stack([data_weight * args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue)**2 for i in range(len(gf_network))])
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
