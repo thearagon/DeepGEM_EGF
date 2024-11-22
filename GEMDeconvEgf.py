@@ -278,6 +278,7 @@ def main_function(args):
 
     ############################################# GENERATE OUTPUT FIGURES ###########################################################
 
+    print("Done, printing results")
     learned_gf = torch.stack(
         [gf_network[i].module.generategf().detach() if len(args.device_ids) > 1 else gf_network[i].generategf().detach()
          for i in range(args.num_egf)], dim=0)
