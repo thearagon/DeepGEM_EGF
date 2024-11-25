@@ -120,7 +120,7 @@ def main_function(args):
 
     # Priors on Estep (STF)
     prior_stf = [
-        lambda stf, weight: weight * torch.sum(torch.abs(stf[:, :, 0]) * torch.abs(stf[:, :, -1])), # Boundary
+        lambda stf, weight: weight * torch.sum(torch.abs(stf[:, :, 0]) + torch.abs(stf[:, :, -1])), # Boundary
         lambda stf, weight: weight * Loss_TV(stf), # TV
         lambda stf, weight: torch.abs(1 - torch.sum(stf))] # soft L1
 

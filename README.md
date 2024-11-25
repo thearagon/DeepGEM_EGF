@@ -1,17 +1,21 @@
 # DeepGEM-egf: Generalized Expectation Maximization for Empirical Green's Functions approach
 
+Please refer to this publication when using this code:
+```
+Théa Ragon, Angela Gao, Zachary Ross (xxx). xxxxx
+```
+A permanent repository is available at:
+```
+zenodo xxx
+```
+
+DeepGEM-egf is a Bayesian inversion framework that aims at providing reliable and probabilistic estimates of source time functions, and their posterior uncertainty, while jointly solving for the best Empirical Green's functions (EGF) using one or a few events as prior EGFs. Our approach is based on DeepGEM, an unsupervised generalized expectation-maximization framework for blind inversion (Gao et al., 2021). 
+
+*Angela Gao, Jorge Castellanos, Yisong Yue, Zachary Ross, Katherine Bouman (2021). DeepGEM: Generalized Expectation-Maximization for Blind Inversion. Part of [Advances in Neural Information Processing Systems 34 (NeurIPS 2021)](https://proceedings.neurips.cc/paper_files/paper/2021)*
+
+
 <!--- ![overview image](https://github.com/angelafgao/DeepGEM/blob/main/teaser.jpg) -->
 
-<!-- ## Citation
-```
-@inproceedings{gao2021deepgem,
- author = {Gao, Angela F and Castillo, Jorge C and Yue, Yisong and Ross, Zachary E and Bouman, Katherine L},
- booktitle = {Advances in Neural Information Processing Systems},
- title = {DeepGEM: Generalized Expectation-Maximization for Blind Inversion},
- volume = {35},
- year = {2021}
-}
-``` -->
 
 
 ## Requirements and environment setup
@@ -115,14 +119,14 @@ There are two examples. One a very simple toy model example, the other runs with
 
 ### Run on CPU
 ```
-cd /home/your-path-to-deepgem/docs/examples/toy_model/
+cd /home/your-path-to-deepgem/examples/toy_model/
 conda activate gem
 ./EGF_ex_cpu.sh /home/your-path-to-deepgem/
 ```
 
 ### Run on GPU
 ```
-cd /home/your-path-to-deepgem/docs/examples/toy_model/
+cd /home/your-path-to-deepgem/examples/toy_model/
 # source necessary modules
 conda activate gem
 ./EGF_ex_gpu.sh /home/your-path-to-deepgem/  # this will run on GPU cuda:0
