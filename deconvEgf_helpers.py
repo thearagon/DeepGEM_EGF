@@ -126,7 +126,7 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf,
     logqtheta = - args.logdet_weight * torch.mean(logdet)
 
     ## Loss
-    meas_err = torch.stack([data_weight * args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(len(gf_network))])
+    meas_err = torch.stack([data_weight * args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue)**2 for i in range(len(gf_network))])
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
     ## prior on STF
@@ -154,7 +154,6 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
 
     pphi = [args.phi_weight * F.mse_loss(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
 
-    # gf = gf_network.module.generategf() if device_ids is not None else gf_network.generategf()
     gf = [gf_network[i].module.generategf().detach() for i in range(args.num_egf)] \
         if len(args.device_ids) > 1 else [gf_network[i].generategf().detach() for i in range(args.num_egf)]
 
@@ -162,9 +161,7 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
     prior = [args.prior_phi_weight[0] * prior_phi[0](gf[i].squeeze(0)) + sum(
         prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k], i) for k in range(1, len(prior_phi))) for i in range(args.num_egf)]
 
-    # TODO !!
     meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * F.mse_loss(y[i], ytrue) for i in range(args.num_egf)]
-    # meas_err = [torch.min(torch.as_tensor([(1e-1/args.data_sigma)* args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue) for i in range(args.num_egf)])) for i in range(args.num_egf)]
 
     # Multi M-steps for multiple EGFs
     if args.num_egf > 1:

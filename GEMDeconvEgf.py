@@ -180,12 +180,12 @@ def main_function(args):
             )
             Eoptimizer.step()
 
-            if (k % args.print_every == 0) and (k_sub % 20 == 0 and (k != 0)):
+            if (k % args.print_every == 0) and (k_sub % 100 == 0 and (k != 0)):
                 print(f"\nEstep ----- Epoch {k}, Subepoch {k_sub}")
                 print(f"Loss ----- Total: {Eloss_list[-1]:.2f}, Prior: {Eloss_prior_list[-1]:.2f}, "
                       f"Q: {Eloss_q_list[-1]:.2f}, MSE: {Eloss_mse_list[-1]:.2f}")
 
-            if args.output and (k % args.save_every == 0 and (k_sub % 20 == 0 and (k != 0))):
+            if args.output and (k % args.save_every == 0 and (k_sub % 100 == 0 and (k != 0))):
                 with torch.no_grad():
                     z_sample = torch.randn_like(z_sample_template)
                     stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor, device=args.device)
@@ -235,13 +235,13 @@ def main_function(args):
                 nn.utils.clip_grad_norm_(gf_network[k_egf].parameters(), max_norm=1.0)
                 Moptimizer[k_egf].step()
 
-                if (k % args.print_every == 0) and (k != 0 and (k_sub % 20 == 0)):
+                if (k % args.print_every == 0) and (k != 0 and (k_sub % 100 == 0)):
                     print(f"\nMstep ----- Epoch {k}, Subepoch {k_sub}, EGF {k_egf}")
                     print(
                         f"Loss ----- Total: {Mloss_list[k_egf][-1]:.2f}, Phi_Prior: {Mloss_phiprior_list[k_egf][-1]:.2f}, "
                         f"MSE: {Mloss_mse_list[k_egf][-1]:.2f}, Multi: {Mloss_multi_list[k_egf][-1]:.2f}")
 
-                if args.output and (k % args.save_every == 0 and (k != 0 and (k_sub % 20 == 0))):
+                if args.output and (k % args.save_every == 0 and (k != 0 and (k_sub % 100 == 0))):
                     with torch.no_grad():
                         z_sample = torch.randn_like(z_sample_template)
                         stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor, device=args.device,
