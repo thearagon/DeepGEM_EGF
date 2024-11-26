@@ -1,0 +1,66 @@
+<?xml version='1.0' encoding='utf-8'?>
+<q:quakeml xmlns:q="http://quakeml.org/xmlns/quakeml/1.2" xmlns="http://quakeml.org/xmlns/bed/1.2" xmlns:catalog="http://anss.org/xmlns/catalog/0.1">
+  <eventParameters publicID="quakeml:service.scedc.caltech.edu/fdsnws/event/1/query?eventid=38245496">
+    <creationInfo>
+      <agencyID>CI</agencyID>
+      <agencyURI>quakeml:doi.org/10.7909/C3WD3xH1</agencyURI>
+      <creationTime>2024-11-22T15:55:22.830000Z</creationTime>
+    </creationInfo>
+    <event publicID="quakeml:service.scedc.caltech.edu/fdsnws/event/1/query?eventid=38245496" catalog:datasource="ci" catalog:dataid="ci38245496" catalog:eventsource="ci" catalog:eventid="38245496">
+      <preferredOriginID>quakeml:service.scedc.caltech.edu/fdsnws/event/1/query?originid=105162325</preferredOriginID>
+      <preferredMagnitudeID>quakeml:service.scedc.caltech.edu/fdsnws/event/1/query?magnitudeid=108573565</preferredMagnitudeID>
+      <type>earthquake</type>
+      <creationInfo>
+        <agencyID>CI</agencyID>
+        <agencyURI>quakeml:doi.org/10.7909/C3WD3xH1</agencyURI>
+        <creationTime>2019-01-16T18:33:05.000000Z</creationTime>
+        <version>7</version>
+      </creationInfo>
+      <origin publicID="quakeml:service.scedc.caltech.edu/fdsnws/event/1/query?originid=105162325" catalog:datasource="ci" catalog:dataid="ci38245496" catalog:eventsource="ci" catalog:eventid="38245496">
+        <time>
+          <value>2018-08-15T01:24:26.310000Z</value>
+        </time>
+        <latitude>
+          <value>33.4771667</value>
+        </latitude>
+        <longitude>
+          <value>-116.8033333</value>
+        </longitude>
+        <depth>
+          <value>1890.0</value>
+          <uncertainty>300.0</uncertainty>
+        </depth>
+        <depthType>from location</depthType>
+        <timeFixed>false</timeFixed>
+        <epicenterFixed>false</epicenterFixed>
+        <methodID>smi:ci.anss.org/origin/HYP2000</methodID>
+        <type>hypocenter</type>
+        <evaluationMode>manual</evaluationMode>
+        <evaluationStatus>final</evaluationStatus>
+        <creationInfo>
+          <agencyID>CI</agencyID>
+          <creationTime>2018-08-15T02:19:04.000000Z</creationTime>
+        </creationInfo>
+        <originUncertainty>
+          <preferredDescription>horizontal uncertainty</preferredDescription>
+          <horizontalUncertainty>100.0</horizontalUncertainty>
+        </originUncertainty>
+      </origin>
+      <magnitude publicID="quakeml:service.scedc.caltech.edu/fdsnws/event/1/query?magnitudeid=108573565">
+        <mag>
+          <value>4.41</value>
+        </mag>
+        <type>Mw</type>
+        <originID>quakeml:service.scedc.caltech.edu/fdsnws/event/1/query?originid=105162325</originID>
+        <methodID>smi:ci.anss.org/magnitude/TMTS</methodID>
+        <stationCount>6</stationCount>
+        <evaluationMode>manual</evaluationMode>
+        <evaluationStatus>reviewed</evaluationStatus>
+        <creationInfo>
+          <agencyID>CI</agencyID>
+          <creationTime>2019-01-16T18:33:05.000000Z</creationTime>
+        </creationInfo>
+      </magnitude>
+    </event>
+  </eventParameters>
+</q:quakeml>

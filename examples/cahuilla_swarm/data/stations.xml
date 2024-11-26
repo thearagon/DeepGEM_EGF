@@ -1,0 +1,2839 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<FDSNStationXML xmlns="http://www.fdsn.org/xml/station/1" schemaVersion="1.2">
+  <Source>SCEDC</Source>
+  <Sender>SCEDC</Sender>
+  <Module>SCEDC WEB SERVICE: fdsnws-station | version: 1.1</Module>
+  <ModuleURI>http://service.scedc.caltech.edu/fdsnws/station/1/query?net=CI&amp;startbefore=2016-01-01T00:00:00.000-08:00&amp;endafter=2019-12-31T00:00:00.000-08:00&amp;minlat=31.0&amp;maxlat=36.0&amp;minlon=-119.0&amp;maxlon=-114.0&amp;level=sta</ModuleURI>
+  <Created>2024-11-22T15:55:27.000000Z</Created>
+  <Network code="CI" startDate="1900-01-01T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+    <Description>Southern California Seismic Network</Description>
+    <TotalNumberStations>928</TotalNumberStations>
+    <SelectedNumberStations>7792</SelectedNumberStations>
+    <Station code="ADO" startDate="2000-08-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.55046</Latitude>
+      <Longitude unit="DEGREES">-117.43391</Longitude>
+      <Elevation>908.0</Elevation>
+      <Site>
+        <Name>Adelanto Receiving</Name>
+      </Site>
+      <CreationDate>2000-08-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="AGO" startDate="1995-10-24T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.14647</Latitude>
+      <Longitude unit="DEGREES">-118.76699</Longitude>
+      <Elevation>259.0</Elevation>
+      <Site>
+        <Name>Agoura</Name>
+      </Site>
+      <CreationDate>1995-10-24T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="ALP" startDate="1999-10-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.68708</Latitude>
+      <Longitude unit="DEGREES">-118.29946</Longitude>
+      <Elevation>753.0</Elevation>
+      <Site>
+        <Name>Antelope</Name>
+      </Site>
+      <CreationDate>1999-10-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="ARV" startDate="1983-09-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.1269</Latitude>
+      <Longitude unit="DEGREES">-118.83009</Longitude>
+      <Elevation>258.0</Elevation>
+      <Site>
+        <Name>Arvin</Name>
+      </Site>
+      <CreationDate>1983-09-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BAC" startDate="1993-12-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.6122</Latitude>
+      <Longitude unit="DEGREES">-117.0406</Longitude>
+      <Elevation>551.0</Elevation>
+      <Site>
+        <Name>Bachelor Mountain</Name>
+      </Site>
+      <CreationDate>1993-12-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BAI" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.77695</Latitude>
+      <Longitude unit="DEGREES">-118.77335</Longitude>
+      <Elevation>1035.0</Elevation>
+      <Site>
+        <Name>Bailey</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BAR" startDate="1932-09-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.68005</Latitude>
+      <Longitude unit="DEGREES">-116.67215</Longitude>
+      <Elevation>529.0</Elevation>
+      <Site>
+        <Name>Barrett</Name>
+      </Site>
+      <CreationDate>1932-09-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BBR" startDate="2000-06-14T22:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.2623</Latitude>
+      <Longitude unit="DEGREES">-116.92075</Longitude>
+      <Elevation>2069.0</Elevation>
+      <Site>
+        <Name>Big Bear Solar Observatory</Name>
+      </Site>
+      <CreationDate>2000-06-14T22:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BBS" startDate="2000-09-13T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.92139</Latitude>
+      <Longitude unit="DEGREES">-116.98058</Longitude>
+      <Elevation>785.0</Elevation>
+      <Site>
+        <Name>Beaumont Base</Name>
+      </Site>
+      <CreationDate>2000-09-13T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BC3" startDate="1991-05-08T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.65515</Latitude>
+      <Longitude unit="DEGREES">-115.45366</Longitude>
+      <Elevation>1137.0</Elevation>
+      <Site>
+        <Name>Big Chuckawalla Mtns</Name>
+      </Site>
+      <CreationDate>1991-05-08T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BEL" startDate="2001-03-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.0006</Latitude>
+      <Longitude unit="DEGREES">-115.9982</Longitude>
+      <Elevation>1388.0</Elevation>
+      <Site>
+        <Name>Belle Mountain Joshua Tree</Name>
+      </Site>
+      <CreationDate>2001-03-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BFS" startDate="2001-07-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.23883</Latitude>
+      <Longitude unit="DEGREES">-117.65853</Longitude>
+      <Elevation>1312.0</Elevation>
+      <Site>
+        <Name>Mt. Baldy Ranger Station</Name>
+      </Site>
+      <CreationDate>2001-07-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BHP" startDate="2009-05-20T19:45:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.99053</Latitude>
+      <Longitude unit="DEGREES">-118.36171</Longitude>
+      <Elevation>81.0</Elevation>
+      <Site>
+        <Name>Baldwin Hills</Name>
+      </Site>
+      <CreationDate>2009-05-20T19:45:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BLA2" startDate="2009-08-05T18:11:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.06931</Latitude>
+      <Longitude unit="DEGREES">-116.38993</Longitude>
+      <Elevation>1247.0</Elevation>
+      <Site>
+        <Name>Black Rock Canyon Campground 2</Name>
+      </Site>
+      <CreationDate>2009-08-05T18:11:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BLC" startDate="1994-02-01T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.24356</Latitude>
+      <Longitude unit="DEGREES">-118.67312</Longitude>
+      <Elevation>607.0</Elevation>
+      <Site>
+        <Name>Black Canyon</Name>
+      </Site>
+      <CreationDate>1994-02-01T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BLY" startDate="2004-11-08T19:18:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.7503</Latitude>
+      <Longitude unit="DEGREES">-114.52375</Longitude>
+      <Elevation>201.0</Elevation>
+      <Site>
+        <Name>Blythe</Name>
+      </Site>
+      <CreationDate>2004-11-08T19:18:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BOM" startDate="2009-02-10T19:10:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.36465</Latitude>
+      <Longitude unit="DEGREES">-115.72963</Longitude>
+      <Elevation>-54.0</Elevation>
+      <Site>
+        <Name>Bombay Beach</Name>
+      </Site>
+      <CreationDate>2009-02-10T19:10:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BOR" startDate="2000-06-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.2682</Latitude>
+      <Longitude unit="DEGREES">-116.41716</Longitude>
+      <Elevation>252.0</Elevation>
+      <Site>
+        <Name>Borrego Springs</Name>
+      </Site>
+      <CreationDate>2000-06-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BRE" startDate="2000-02-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.80776</Latitude>
+      <Longitude unit="DEGREES">-117.98116</Longitude>
+      <Elevation>24.0</Elevation>
+      <Site>
+        <Name>Barre</Name>
+      </Site>
+      <CreationDate>2000-02-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="BTP" startDate="1997-12-03T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.68224</Latitude>
+      <Longitude unit="DEGREES">-118.57398</Longitude>
+      <Elevation>1702.0</Elevation>
+      <Site>
+        <Name>Burnt Peak</Name>
+      </Site>
+      <CreationDate>1997-12-03T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CAC" startDate="2003-03-07T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.13678</Latitude>
+      <Longitude unit="DEGREES">-118.12199</Longitude>
+      <Elevation>230.0</Elevation>
+      <Site>
+        <Name>Caltech Athenaeum Cellar</Name>
+      </Site>
+      <CreationDate>2003-03-07T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CBC" startDate="2003-01-28T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.14011</Latitude>
+      <Longitude unit="DEGREES">-118.1275</Longitude>
+      <Elevation>239.0</Elevation>
+      <Site>
+        <Name>Caltech Broad Center</Name>
+      </Site>
+      <CreationDate>2003-01-28T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CCA" startDate="2002-04-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.15252</Latitude>
+      <Longitude unit="DEGREES">-118.01649</Longitude>
+      <Elevation>710.0</Elevation>
+      <Site>
+        <Name>California City Airport</Name>
+      </Site>
+      <CreationDate>2002-04-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CCC" startDate="2001-06-22T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.52495</Latitude>
+      <Longitude unit="DEGREES">-117.36453</Longitude>
+      <Elevation>670.0</Elevation>
+      <Site>
+        <Name>Christmas Canyon China Lake</Name>
+      </Site>
+      <CreationDate>2001-06-22T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CFS" startDate="2002-05-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.10539</Latitude>
+      <Longitude unit="DEGREES">-117.28287</Longitude>
+      <Elevation>312.0</Elevation>
+      <Site>
+        <Name>Central Fire Station</Name>
+      </Site>
+      <CreationDate>2002-05-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CFT" startDate="1975-01-06T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.03547</Latitude>
+      <Longitude unit="DEGREES">-117.11241</Longitude>
+      <Elevation>682.0</Elevation>
+      <Site>
+        <Name>Crafton Hills</Name>
+      </Site>
+      <CreationDate>1975-01-06T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CHF" startDate="1998-11-03T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.33341</Latitude>
+      <Longitude unit="DEGREES">-118.02585</Longitude>
+      <Elevation>1594.0</Elevation>
+      <Site>
+        <Name>Chilao Flat Rngr Sta</Name>
+      </Site>
+      <CreationDate>1998-11-03T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CHN" startDate="1999-10-12T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.99879</Latitude>
+      <Longitude unit="DEGREES">-117.68044</Longitude>
+      <Elevation>208.0</Elevation>
+      <Site>
+        <Name>Chino</Name>
+      </Site>
+      <CreationDate>1999-10-12T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CIA" startDate="1998-09-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.401898</Latitude>
+      <Longitude unit="DEGREES">-118.415021</Longitude>
+      <Elevation>477.0</Elevation>
+      <Site>
+        <Name>Catalina Island Airport</Name>
+      </Site>
+      <CreationDate>1998-09-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CJM" startDate="2011-11-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.27117</Latitude>
+      <Longitude unit="DEGREES">-117.42448</Longitude>
+      <Elevation>1616.0</Elevation>
+      <Site>
+        <Name>Cajon Mountain</Name>
+      </Site>
+      <CreationDate>2011-11-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CJV2" startDate="2013-11-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.52978</Latitude>
+      <Longitude unit="DEGREES">-118.1445</Longitude>
+      <Elevation>1296.0</Elevation>
+      <Site>
+        <Name>Casa Juvan 2</Name>
+      </Site>
+      <CreationDate>2013-11-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CLC" startDate="1948-07-08T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.81574</Latitude>
+      <Longitude unit="DEGREES">-117.59751</Longitude>
+      <Elevation>775.0</Elevation>
+      <Site>
+        <Name>China Lake</Name>
+      </Site>
+      <CreationDate>1948-07-08T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CLT" startDate="1999-10-28T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.09284</Latitude>
+      <Longitude unit="DEGREES">-117.31687</Longitude>
+      <Elevation>325.0</Elevation>
+      <Site>
+        <Name>Calectric</Name>
+      </Site>
+      <CreationDate>1999-10-28T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="COA" startDate="1973-03-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.86341</Latitude>
+      <Longitude unit="DEGREES">-115.12339</Longitude>
+      <Elevation>36.0</Elevation>
+      <Site>
+        <Name>Coachella</Name>
+      </Site>
+      <CreationDate>1973-03-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="COK2" startDate="2013-02-13T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.85053</Latitude>
+      <Longitude unit="DEGREES">-115.7284</Longitude>
+      <Elevation>-14.0</Elevation>
+      <Site>
+        <Name>Cook Ranch 2</Name>
+      </Site>
+      <CreationDate>2013-02-13T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CRF" startDate="2015-11-06T20:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.873521</Latitude>
+      <Longitude unit="DEGREES">-118.039376</Longitude>
+      <Elevation>18.1</Elevation>
+      <Site>
+        <Name>Cerritos Fire Station aka LACoFD Station 35</Name>
+      </Site>
+      <CreationDate>2015-11-06T20:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CRN" startDate="1995-08-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.87574</Latitude>
+      <Longitude unit="DEGREES">-117.56106</Longitude>
+      <Elevation>204.8</Elevation>
+      <Site>
+        <Name>Corona</Name>
+      </Site>
+      <CreationDate>1995-08-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CRR" startDate="1950-04-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.88682</Latitude>
+      <Longitude unit="DEGREES">-115.96918</Longitude>
+      <Elevation>66.0</Elevation>
+      <Site>
+        <Name>Carrizo</Name>
+      </Site>
+      <CreationDate>1950-04-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CSL" startDate="2015-09-08T12:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.496513</Latitude>
+      <Longitude unit="DEGREES">-118.616208</Longitude>
+      <Elevation>353.9</Elevation>
+      <Site>
+        <Name>Castaic Lake aka  LACoFD Station 149</Name>
+      </Site>
+      <CreationDate>2015-09-08T12:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CTC" startDate="2000-04-27T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.65516</Latitude>
+      <Longitude unit="DEGREES">-115.99006</Longitude>
+      <Elevation>538.0</Elevation>
+      <Site>
+        <Name>Cactus City</Name>
+      </Site>
+      <CreationDate>2000-04-27T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CTW" startDate="1977-08-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.67728</Latitude>
+      <Longitude unit="DEGREES">-115.87214</Longitude>
+      <Elevation>504.0</Elevation>
+      <Site>
+        <Name>Cottonwood Mtns</Name>
+      </Site>
+      <CreationDate>1977-08-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CVW" startDate="2011-09-22T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.92217</Latitude>
+      <Longitude unit="DEGREES">-118.93913</Longitude>
+      <Elevation>804.8</Elevation>
+      <Site>
+        <Name>Castaic Valley West</Name>
+      </Site>
+      <CreationDate>2011-09-22T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="CZN" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.91375</Latitude>
+      <Longitude unit="DEGREES">-116.78409</Longitude>
+      <Elevation>538.0</Elevation>
+      <Site>
+        <Name>Cabazon</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DAN" startDate="1998-09-22T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.63745</Latitude>
+      <Longitude unit="DEGREES">-115.38115</Longitude>
+      <Elevation>428.0</Elevation>
+      <Site>
+        <Name>Danby</Name>
+      </Site>
+      <CreationDate>1998-09-22T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DEC" startDate="2000-08-10T20:30:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.25353</Latitude>
+      <Longitude unit="DEGREES">-118.33383</Longitude>
+      <Elevation>519.0</Elevation>
+      <Site>
+        <Name>Green Verdugo Site</Name>
+      </Site>
+      <CreationDate>2000-08-10T20:30:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DEV" startDate="1997-11-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.93597</Latitude>
+      <Longitude unit="DEGREES">-116.57794</Longitude>
+      <Elevation>337.0</Elevation>
+      <Site>
+        <Name>Devers</Name>
+      </Site>
+      <CreationDate>1997-11-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DGR" startDate="1993-06-22T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.65001</Latitude>
+      <Longitude unit="DEGREES">-117.00947</Longitude>
+      <Elevation>650.0</Elevation>
+      <Site>
+        <Name>Domenigoni</Name>
+      </Site>
+      <CreationDate>1993-06-22T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DJJ" startDate="1998-11-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.10618</Latitude>
+      <Longitude unit="DEGREES">-118.45505</Longitude>
+      <Elevation>268.0</Elevation>
+      <Site>
+        <Name>Donna Jones Jenkins</Name>
+      </Site>
+      <CreationDate>1998-11-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DJJB" startDate="1999-07-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.10618</Latitude>
+      <Longitude unit="DEGREES">-118.45505</Longitude>
+      <Elevation>268.0</Elevation>
+      <Site>
+        <Name>Donna Jenkins Borehole</Name>
+      </Site>
+      <CreationDate>1999-07-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DLA" startDate="2000-05-04T23:59:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.84822</Latitude>
+      <Longitude unit="DEGREES">-118.09624</Longitude>
+      <Elevation>14.0</Elevation>
+      <Site>
+        <Name>Del Amo</Name>
+      </Site>
+      <CreationDate>2000-05-04T23:59:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DNR" startDate="2001-10-22T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.56667</Latitude>
+      <Longitude unit="DEGREES">-116.63056</Longitude>
+      <Elevation>1274.0</Elevation>
+      <Site>
+        <Name>Dunn Ranch</Name>
+      </Site>
+      <CreationDate>2001-10-22T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DPP" startDate="2000-10-24T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.99889</Latitude>
+      <Longitude unit="DEGREES">-116.94187</Longitude>
+      <Elevation>463.0</Elevation>
+      <Site>
+        <Name>Dos Picos County Park</Name>
+      </Site>
+      <CreationDate>2000-10-24T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DRE" startDate="2002-07-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.80532</Latitude>
+      <Longitude unit="DEGREES">-115.44679</Longitude>
+      <Elevation>-13.0</Elevation>
+      <Site>
+        <Name>Desert Research Extended Center</Name>
+      </Site>
+      <CreationDate>2002-07-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DSC" startDate="2002-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.14255</Latitude>
+      <Longitude unit="DEGREES">-116.10395</Longitude>
+      <Elevation>283.0</Elevation>
+      <Site>
+        <Name>Desert Studies Center</Name>
+      </Site>
+      <CreationDate>2002-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DSN5" startDate="2010-03-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.17141</Latitude>
+      <Longitude unit="DEGREES">-118.18523</Longitude>
+      <Elevation>341.0</Elevation>
+      <Site>
+        <Name>CI DSN5 test vault - 1st datalogger</Name>
+      </Site>
+      <CreationDate>2010-03-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DSN6" startDate="2010-03-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.17141</Latitude>
+      <Longitude unit="DEGREES">-118.18523</Longitude>
+      <Elevation>341.0</Elevation>
+      <Site>
+        <Name>CI DSN6 test vault - 2nd datalogger</Name>
+      </Site>
+      <CreationDate>2010-03-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DTC" startDate="2015-09-17T12:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.424157</Latitude>
+      <Longitude unit="DEGREES">-118.661913</Longitude>
+      <Elevation>382.7</Elevation>
+      <Site>
+        <Name>Del Valle - LACoFD Regional Training Center</Name>
+      </Site>
+      <CreationDate>2015-09-17T12:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="DTP" startDate="1981-05-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.26742</Latitude>
+      <Longitude unit="DEGREES">-117.84581</Longitude>
+      <Elevation>908.0</Elevation>
+      <Site>
+        <Name>Desert Tortoise Park</Name>
+      </Site>
+      <CreationDate>1981-05-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="EDW2" startDate="2004-05-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.8811</Latitude>
+      <Longitude unit="DEGREES">-117.99388</Longitude>
+      <Elevation>772.0</Elevation>
+      <Site>
+        <Name>Edwards 2</Name>
+      </Site>
+      <CreationDate>2004-05-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="ELS2" startDate="2013-05-21T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.64907</Latitude>
+      <Longitude unit="DEGREES">-117.42604</Longitude>
+      <Elevation>844.0</Elevation>
+      <Site>
+        <Name>Elsinore 2</Name>
+      </Site>
+      <CreationDate>2013-05-21T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="EML" startDate="2000-10-26T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.89083</Latitude>
+      <Longitude unit="DEGREES">-116.84566</Longitude>
+      <Elevation>161.0</Elevation>
+      <Site>
+        <Name>El Monte County Park</Name>
+      </Site>
+      <CreationDate>2000-10-26T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="EMS" startDate="1982-05-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.73921</Latitude>
+      <Longitude unit="DEGREES">-114.98521</Longitude>
+      <Elevation>11.0</Elevation>
+      <Site>
+        <Name>East Mesa</Name>
+      </Site>
+      <CreationDate>1982-05-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="ERR" startDate="2014-03-24T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.11652</Latitude>
+      <Longitude unit="DEGREES">-115.82273</Longitude>
+      <Elevation>-56.0</Elevation>
+      <Site>
+        <Name>Elmore's Ranch</Name>
+      </Site>
+      <CreationDate>2000-01-13T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="FHO" startDate="2009-08-04T19:20:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.09355</Latitude>
+      <Longitude unit="DEGREES">-116.93588</Longitude>
+      <Elevation>1614.0</Elevation>
+      <Site>
+        <Name>Forest Home - SOSAF Station</Name>
+      </Site>
+      <CreationDate>2009-08-04T19:20:00.000000Z</CreationDate>
+    </Station>
+    <Station code="FMO" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.409286</Latitude>
+      <Longitude unit="DEGREES">-118.920887</Longitude>
+      <Elevation>137.0</Elevation>
+      <Site>
+        <Name>Fillmore</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="FMP" startDate="2000-08-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.71264</Latitude>
+      <Longitude unit="DEGREES">-118.29381</Longitude>
+      <Elevation>89.0</Elevation>
+      <Site>
+        <Name>Fort Macarthur Park</Name>
+      </Site>
+      <CreationDate>2000-08-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="FON" startDate="1995-08-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.09957</Latitude>
+      <Longitude unit="DEGREES">-117.43876</Longitude>
+      <Elevation>388.8</Elevation>
+      <Site>
+        <Name>Fontana</Name>
+      </Site>
+      <CreationDate>1995-08-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="FOX2" startDate="2013-07-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.7339</Latitude>
+      <Longitude unit="DEGREES">-118.24046</Longitude>
+      <Elevation>719.7</Elevation>
+      <Site>
+        <Name>Fox Airport 2</Name>
+      </Site>
+      <CreationDate>2013-07-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="FRM" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.77518</Latitude>
+      <Longitude unit="DEGREES">-118.96935</Longitude>
+      <Elevation>2443.0</Elevation>
+      <Site>
+        <Name>Frazier Mountain</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="FUL" startDate="1995-08-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.8717</Latitude>
+      <Longitude unit="DEGREES">-117.92251</Longitude>
+      <Elevation>51.0</Elevation>
+      <Site>
+        <Name>Fullerton</Name>
+      </Site>
+      <CreationDate>1995-08-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GLA" startDate="1966-12-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.05149</Latitude>
+      <Longitude unit="DEGREES">-114.82706</Longitude>
+      <Elevation>610.0</Elevation>
+      <Site>
+        <Name>Glamis</Name>
+      </Site>
+      <CreationDate>1966-12-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GMA" startDate="2013-12-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.29148</Latitude>
+      <Longitude unit="DEGREES">-116.38256</Longitude>
+      <Elevation>848.0</Elevation>
+      <Site>
+        <Name>Goat Mountain Astronomical Research Station</Name>
+      </Site>
+      <CreationDate>2013-12-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GMR" startDate="2006-04-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.78457</Latitude>
+      <Longitude unit="DEGREES">-115.65994</Longitude>
+      <Elevation>1326.0</Elevation>
+      <Site>
+        <Name>Granite Mountains Research Center</Name>
+      </Site>
+      <CreationDate>2006-04-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GOR" startDate="1999-06-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.1537</Latitude>
+      <Longitude unit="DEGREES">-117.22921</Longitude>
+      <Elevation>138.0</Elevation>
+      <Site>
+        <Name>Green Oak Ranch</Name>
+      </Site>
+      <CreationDate>1999-06-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GOU" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.22119</Latitude>
+      <Longitude unit="DEGREES">-118.18834</Longitude>
+      <Elevation>587.0</Elevation>
+      <Site>
+        <Name>Gould</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GR2" startDate="1998-03-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.11816</Latitude>
+      <Longitude unit="DEGREES">-118.30024</Longitude>
+      <Elevation>342.0</Elevation>
+      <Site>
+        <Name>Griffith Observatory</Name>
+      </Site>
+      <CreationDate>1998-03-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GSA" startDate="1987-01-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.13677</Latitude>
+      <Longitude unit="DEGREES">-118.1283</Longitude>
+      <Elevation>234.0</Elevation>
+      <Site>
+        <Name>525 S Wilson Basement, Pasadena</Name>
+      </Site>
+      <CreationDate>1987-01-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GSC" startDate="1961-11-07T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.30177</Latitude>
+      <Longitude unit="DEGREES">-116.80574</Longitude>
+      <Elevation>1000.0</Elevation>
+      <Site>
+        <Name>Goldstone</Name>
+      </Site>
+      <CreationDate>1961-11-07T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="GVR" startDate="1987-10-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.04972</Latitude>
+      <Longitude unit="DEGREES">-118.11995</Longitude>
+      <Elevation>141.0</Elevation>
+      <Site>
+        <Name>Garvey</Name>
+      </Site>
+      <CreationDate>1987-10-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HAR" startDate="2013-12-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.0114</Latitude>
+      <Longitude unit="DEGREES">-117.29909</Longitude>
+      <Elevation>620.0</Elevation>
+      <Site>
+        <Name>Harper Dry Lake bed</Name>
+      </Site>
+      <CreationDate>2013-12-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HAY" startDate="2014-07-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.70734</Latitude>
+      <Longitude unit="DEGREES">-115.63889</Longitude>
+      <Elevation>458.0</Elevation>
+      <Site>
+        <Name>Hayfield</Name>
+      </Site>
+      <CreationDate>1956-06-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HDH" startDate="2015-06-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.77529</Latitude>
+      <Longitude unit="DEGREES">-118.63999</Longitude>
+      <Elevation>964.6</Elevation>
+      <Site>
+        <Name>High Desert Hunt Club - Tejon Ranch</Name>
+      </Site>
+      <CreationDate>2015-06-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HEC" startDate="1997-08-01T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.8294</Latitude>
+      <Longitude unit="DEGREES">-116.335</Longitude>
+      <Elevation>920.0</Elevation>
+      <Site>
+        <Name>Hector</Name>
+      </Site>
+      <CreationDate>1997-08-01T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HLL" startDate="2000-03-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.17643</Latitude>
+      <Longitude unit="DEGREES">-118.35967</Longitude>
+      <Elevation>193.0</Elevation>
+      <Site>
+        <Name>North Hollywood</Name>
+      </Site>
+      <CreationDate>2000-03-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HLN" startDate="1995-08-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.12128</Latitude>
+      <Longitude unit="DEGREES">-117.21897</Longitude>
+      <Elevation>358.9</Elevation>
+      <Site>
+        <Name>Highland</Name>
+      </Site>
+      <CreationDate>1995-08-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HMT2" startDate="2013-05-21T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.708115</Latitude>
+      <Longitude unit="DEGREES">-117.001524</Longitude>
+      <Elevation>593.0</Elevation>
+      <Site>
+        <Name>Hemet 2</Name>
+      </Site>
+      <CreationDate>2013-05-21T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HOL" startDate="2014-07-22T19:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.45831</Latitude>
+      <Longitude unit="DEGREES">-117.84539</Longitude>
+      <Elevation>1267.0</Elevation>
+      <Site>
+        <Name>Holcomb Ridge</Name>
+      </Site>
+      <CreationDate>1997-05-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="HYS" startDate="1983-09-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.86532</Latitude>
+      <Longitude unit="DEGREES">-117.56975</Longitude>
+      <Elevation>833.0</Elevation>
+      <Site>
+        <Name>Haystack Butte</Name>
+      </Site>
+      <CreationDate>1983-09-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IDO" startDate="2010-05-04T16:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.79678</Latitude>
+      <Longitude unit="DEGREES">-116.22152</Longitude>
+      <Elevation>469.0</Elevation>
+      <Site>
+        <Name>Indio Hill</Name>
+      </Site>
+      <CreationDate>2010-05-04T16:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IDQ" startDate="2010-09-28T20:09:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.76795</Latitude>
+      <Longitude unit="DEGREES">-116.23897</Longitude>
+      <Elevation>29.0</Elevation>
+      <Site>
+        <Name>Indio Quarry</Name>
+      </Site>
+      <CreationDate>2010-09-28T20:09:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IDY" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.74642</Latitude>
+      <Longitude unit="DEGREES">-116.71536</Longitude>
+      <Elevation>1632.0</Elevation>
+      <Site>
+        <Name>Idyllwild</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IKP" startDate="1972-03-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.65012</Latitude>
+      <Longitude unit="DEGREES">-116.10948</Longitude>
+      <Elevation>906.0</Elevation>
+      <Site>
+        <Name>In-Ko-Pah</Name>
+      </Site>
+      <CreationDate>1972-03-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IMP" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.90147</Latitude>
+      <Longitude unit="DEGREES">-115.56071</Longitude>
+      <Elevation>-27.0</Elevation>
+      <Site>
+        <Name>Imperial</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IPT" startDate="2012-01-04T00:00:00.000000Z" endDate="2021-03-15T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.19701</Latitude>
+      <Longitude unit="DEGREES">-117.28498</Longitude>
+      <Elevation>943.0</Elevation>
+      <Site>
+        <Name>Inspiration point</Name>
+      </Site>
+      <CreationDate>2012-01-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IRG5" startDate="2001-05-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.9408</Latitude>
+      <Longitude unit="DEGREES">-115.7958</Longitude>
+      <Elevation>108.0</Elevation>
+      <Site>
+        <Name>Time Code</Name>
+      </Site>
+      <CreationDate>2001-05-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IRM" startDate="2001-12-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.15738</Latitude>
+      <Longitude unit="DEGREES">-115.14513</Longitude>
+      <Elevation>567.0</Elevation>
+      <Site>
+        <Name>Iron Mountain</Name>
+      </Site>
+      <CreationDate>2001-12-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="ISA" startDate="1946-03-16T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.66278</Latitude>
+      <Longitude unit="DEGREES">-118.47403</Longitude>
+      <Elevation>873.0</Elevation>
+      <Site>
+        <Name>Isabella</Name>
+      </Site>
+      <CreationDate>1946-03-16T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="IVY" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.76025</Latitude>
+      <Longitude unit="DEGREES">-117.47678</Longitude>
+      <Elevation>330.0</Elevation>
+      <Site>
+        <Name>Ivy Glen</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="JEM" startDate="2008-05-01T21:42:40.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.08098</Latitude>
+      <Longitude unit="DEGREES">-116.59755</Longitude>
+      <Elevation>1308.0</Elevation>
+      <Site>
+        <Name>Julian Eagle Mine</Name>
+      </Site>
+      <CreationDate>2008-05-01T21:42:40.000000Z</CreationDate>
+    </Station>
+    <Station code="JNH2" startDate="2013-07-26T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.448941</Latitude>
+      <Longitude unit="DEGREES">-117.95541</Longitude>
+      <Elevation>1305.0</Elevation>
+      <Site>
+        <Name>Juniper Hills 2</Name>
+      </Site>
+      <CreationDate>2013-07-26T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="JRC2" startDate="2004-01-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.98249</Latitude>
+      <Longitude unit="DEGREES">-117.80885</Longitude>
+      <Elevation>1469.0</Elevation>
+      <Site>
+        <Name>Joshua Ridge: China Lake</Name>
+      </Site>
+      <CreationDate>2004-01-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="JVA" startDate="2001-04-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.36622</Latitude>
+      <Longitude unit="DEGREES">-116.61266</Longitude>
+      <Elevation>904.0</Elevation>
+      <Site>
+        <Name>Johnson Valley</Name>
+      </Site>
+      <CreationDate>2001-04-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="KIK" startDate="1995-07-12T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.15037</Latitude>
+      <Longitude unit="DEGREES">-118.10156</Longitude>
+      <Elevation>237.2</Elevation>
+      <Site>
+        <Name>Kinemetrics</Name>
+      </Site>
+      <CreationDate>1995-07-12T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="KML" startDate="2003-07-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.59738</Latitude>
+      <Longitude unit="DEGREES">-117.87909</Longitude>
+      <Elevation>9.0</Elevation>
+      <Site>
+        <Name>Kerckhoff Marine Laboratory</Name>
+      </Site>
+      <CreationDate>2003-07-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="KYV" startDate="2013-11-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.92545</Latitude>
+      <Longitude unit="DEGREES">-116.1734</Longitude>
+      <Elevation>1498.2</Elevation>
+      <Site>
+        <Name>Keys View</Name>
+      </Site>
+      <CreationDate>2013-11-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LAF" startDate="1999-10-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.86889</Latitude>
+      <Longitude unit="DEGREES">-118.33143</Longitude>
+      <Elevation>20.0</Elevation>
+      <Site>
+        <Name>La Fresa</Name>
+      </Site>
+      <CreationDate>1999-10-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LAT" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.04449</Latitude>
+      <Longitude unit="DEGREES">-118.77643</Longitude>
+      <Elevation>351.0</Elevation>
+      <Site>
+        <Name>Latigo</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LBW1" startDate="2001-11-08T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.798</Latitude>
+      <Longitude unit="DEGREES">-118.08837</Longitude>
+      <Elevation>-16.3</Elevation>
+      <Site>
+        <Name>Long Beach 1</Name>
+      </Site>
+      <CreationDate>2001-11-08T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LBW2" startDate="2001-11-08T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.798</Latitude>
+      <Longitude unit="DEGREES">-118.08837</Longitude>
+      <Elevation>-16.3</Elevation>
+      <Site>
+        <Name>Long Beach 2</Name>
+      </Site>
+      <CreationDate>2001-11-08T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LCG" startDate="1999-10-27T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.00033</Latitude>
+      <Longitude unit="DEGREES">-118.37794</Longitude>
+      <Elevation>108.0</Elevation>
+      <Site>
+        <Name>La Cienega</Name>
+      </Site>
+      <CreationDate>1999-10-27T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LDF" startDate="1999-11-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.13066</Latitude>
+      <Longitude unit="DEGREES">-115.18416</Longitude>
+      <Elevation>1239.0</Elevation>
+      <Site>
+        <Name>Lanfair</Name>
+      </Site>
+      <CreationDate>1999-11-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LDR" startDate="2001-10-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.9906</Latitude>
+      <Longitude unit="DEGREES">-118.34156</Longitude>
+      <Elevation>1121.0</Elevation>
+      <Site>
+        <Name>Leduc Ranch</Name>
+      </Site>
+      <CreationDate>2001-10-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LEO" startDate="1981-03-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.63064</Latitude>
+      <Longitude unit="DEGREES">-118.30505</Longitude>
+      <Elevation>1025.0</Elevation>
+      <Site>
+        <Name>Leona Valley</Name>
+      </Site>
+      <CreationDate>1981-03-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LFP" startDate="2000-01-24T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.305103</Latitude>
+      <Longitude unit="DEGREES">-118.487967</Longitude>
+      <Elevation>368.0</Elevation>
+      <Site>
+        <Name>Los Angeles</Name>
+      </Site>
+      <CreationDate>2000-01-24T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LGB" startDate="2000-04-06T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.9753</Latitude>
+      <Longitude unit="DEGREES">-118.14918</Longitude>
+      <Elevation>42.0</Elevation>
+      <Site>
+        <Name>Laguna Bell</Name>
+      </Site>
+      <CreationDate>2000-04-06T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LJR" startDate="2002-11-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.80762</Latitude>
+      <Longitude unit="DEGREES">-118.86775</Longitude>
+      <Elevation>1443.0</Elevation>
+      <Site>
+        <Name>Lone Juniper Ranch</Name>
+      </Site>
+      <CreationDate>2002-11-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LKH" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.23598</Latitude>
+      <Longitude unit="DEGREES">-116.75876</Longitude>
+      <Elevation>847.0</Elevation>
+      <Site>
+        <Name>Lake Henshaw</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LLS" startDate="2000-02-01T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.68447</Latitude>
+      <Longitude unit="DEGREES">-117.94304</Longitude>
+      <Elevation>8.0</Elevation>
+      <Site>
+        <Name>Ellis</Name>
+      </Site>
+      <CreationDate>2000-02-01T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LMH" startDate="2013-05-21T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.74418</Latitude>
+      <Longitude unit="DEGREES">-117.39135</Longitude>
+      <Elevation>496.0</Elevation>
+      <Site>
+        <Name>Lake Mathews Hills</Name>
+      </Site>
+      <CreationDate>2013-05-21T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LMR2" startDate="2003-09-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.93439</Latitude>
+      <Longitude unit="DEGREES">-117.69629</Longitude>
+      <Elevation>964.0</Elevation>
+      <Site>
+        <Name>Leuhmann Ridge Extension</Name>
+      </Site>
+      <CreationDate>2003-09-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LMS" startDate="2013-05-21T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.81744</Latitude>
+      <Longitude unit="DEGREES">-117.445</Longitude>
+      <Elevation>443.0</Elevation>
+      <Site>
+        <Name>Lake Mathews Shore</Name>
+      </Site>
+      <CreationDate>2013-05-21T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LPC" startDate="2009-05-28T19:00:00.000000Z" endDate="2021-09-23T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.31478</Latitude>
+      <Longitude unit="DEGREES">-117.54642</Longitude>
+      <Elevation>1351.0</Elevation>
+      <Site>
+        <Name>Lone Pine Canyon</Name>
+      </Site>
+      <CreationDate>2009-05-28T19:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LRL" startDate="1992-07-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.47954</Latitude>
+      <Longitude unit="DEGREES">-117.68212</Longitude>
+      <Elevation>1340.0</Elevation>
+      <Site>
+        <Name>Laurel Mtn</Name>
+      </Site>
+      <CreationDate>1992-07-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LRR2" startDate="2013-05-13T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.52706</Latitude>
+      <Longitude unit="DEGREES">-118.02998</Longitude>
+      <Elevation>906.0</Elevation>
+      <Site>
+        <Name>Little Rock Reservoir 2</Name>
+      </Site>
+      <CreationDate>2013-05-13T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LTP" startDate="2000-07-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.8811</Latitude>
+      <Longitude unit="DEGREES">-118.17568</Longitude>
+      <Elevation>20.0</Elevation>
+      <Site>
+        <Name>Lighthipe</Name>
+      </Site>
+      <CreationDate>2000-07-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LUC2" startDate="2012-06-26T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.45638</Latitude>
+      <Longitude unit="DEGREES">-116.96423</Longitude>
+      <Elevation>886.0</Elevation>
+      <Site>
+        <Name>Lucerne Valley 2</Name>
+      </Site>
+      <CreationDate>2012-06-26T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="LUG" startDate="1998-01-28T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.3656</Latitude>
+      <Longitude unit="DEGREES">-117.36683</Longitude>
+      <Elevation>1140.0</Elevation>
+      <Site>
+        <Name>Lugo</Name>
+      </Site>
+      <CreationDate>1998-01-28T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MAG" startDate="2001-01-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.36165</Latitude>
+      <Longitude unit="DEGREES">-118.92282</Longitude>
+      <Elevation>135.0</Elevation>
+      <Site>
+        <Name>Magundon</Name>
+      </Site>
+      <CreationDate>2001-01-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MCT" startDate="2001-01-24T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.22645</Latitude>
+      <Longitude unit="DEGREES">-116.04073</Longitude>
+      <Elevation>661.0</Elevation>
+      <Site>
+        <Name>MCC 29palms</Name>
+      </Site>
+      <CreationDate>2001-01-24T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MGE" startDate="1999-10-16T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.81841</Latitude>
+      <Longitude unit="DEGREES">-116.36874</Longitude>
+      <Elevation>68.0</Elevation>
+      <Site>
+        <Name>Mirage</Name>
+      </Site>
+      <CreationDate>1999-10-16T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MIK" startDate="2001-04-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.13688</Latitude>
+      <Longitude unit="DEGREES">-118.12601</Longitude>
+      <Elevation>275.0</Elevation>
+      <Site>
+        <Name>Caltech Hall</Name>
+      </Site>
+      <CreationDate>2001-04-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MIKB" startDate="2008-08-25T21:30:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.13688</Latitude>
+      <Longitude unit="DEGREES">-118.12601</Longitude>
+      <Elevation>231.0</Elevation>
+      <Site>
+        <Name>Caltech Hall Basement</Name>
+      </Site>
+      <CreationDate>2008-08-25T21:30:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MIS" startDate="1999-07-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.7403</Latitude>
+      <Longitude unit="DEGREES">-118.33517</Longitude>
+      <Elevation>299.0</Elevation>
+      <Site>
+        <Name>Mira Catalina School</Name>
+      </Site>
+      <CreationDate>1999-07-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MLS" startDate="1998-03-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.0046</Latitude>
+      <Longitude unit="DEGREES">-117.56162</Longitude>
+      <Elevation>230.0</Elevation>
+      <Site>
+        <Name>Mira Loma</Name>
+      </Site>
+      <CreationDate>1998-03-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MMC" startDate="2015-10-29T12:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.57304</Latitude>
+      <Longitude unit="DEGREES">-117.76258</Longitude>
+      <Elevation>55.1</Elevation>
+      <Site>
+        <Name>Pacific Marine Mammal Center</Name>
+      </Site>
+      <CreationDate>2015-10-29T12:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MNO" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.94738</Latitude>
+      <Longitude unit="DEGREES">-117.17278</Longitude>
+      <Elevation>564.0</Elevation>
+      <Site>
+        <Name>Moreno</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MOP" startDate="1999-09-16T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.28096</Latitude>
+      <Longitude unit="DEGREES">-118.90469</Longitude>
+      <Elevation>141.0</Elevation>
+      <Site>
+        <Name>Moorpark</Name>
+      </Site>
+      <CreationDate>1999-09-16T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MOR" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.50388</Latitude>
+      <Longitude unit="DEGREES">-117.13993</Longitude>
+      <Elevation>331.0</Elevation>
+      <Site>
+        <Name>Moraga</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MSC" startDate="2009-04-22T20:30:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.03852</Latitude>
+      <Longitude unit="DEGREES">-116.64795</Longitude>
+      <Elevation>938.0</Elevation>
+      <Site>
+        <Name>Mission Creek</Name>
+      </Site>
+      <CreationDate>2009-04-22T20:30:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MSJ" startDate="1999-07-27T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.80801</Latitude>
+      <Longitude unit="DEGREES">-116.96789</Longitude>
+      <Elevation>466.0</Elevation>
+      <Site>
+        <Name>Mt. San Jacinto Campus</Name>
+      </Site>
+      <CreationDate>1999-07-27T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MTG" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.19915</Latitude>
+      <Longitude unit="DEGREES">-116.64727</Longitude>
+      <Elevation>1092.0</Elevation>
+      <Site>
+        <Name>Mataguay Scout Camp</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MTP" startDate="1996-09-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.48434</Latitude>
+      <Longitude unit="DEGREES">-115.5532</Longitude>
+      <Elevation>1588.0</Elevation>
+      <Site>
+        <Name>Mountain Pass</Name>
+      </Site>
+      <CreationDate>1996-09-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MUR" startDate="2005-07-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.59999</Latitude>
+      <Longitude unit="DEGREES">-117.19543</Longitude>
+      <Elevation>562.0</Elevation>
+      <Site>
+        <Name>Murrieta</Name>
+      </Site>
+      <CreationDate>2005-07-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="MWC" startDate="1928-04-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.22362</Latitude>
+      <Longitude unit="DEGREES">-118.05832</Longitude>
+      <Elevation>1725.0</Elevation>
+      <Site>
+        <Name>Mount Wilson Obsv</Name>
+      </Site>
+      <CreationDate>1928-04-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="NBS" startDate="2001-12-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.78035</Latitude>
+      <Longitude unit="DEGREES">-116.55798</Longitude>
+      <Elevation>590.0</Elevation>
+      <Site>
+        <Name>Newberry Springs</Name>
+      </Site>
+      <CreationDate>2001-12-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="NEE2" startDate="2006-07-27T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.76759</Latitude>
+      <Longitude unit="DEGREES">-114.61881</Longitude>
+      <Elevation>271.0</Elevation>
+      <Site>
+        <Name>Needles Airport</Name>
+      </Site>
+      <CreationDate>2006-07-27T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="NEN" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.77539</Latitude>
+      <Longitude unit="DEGREES">-118.50099</Longitude>
+      <Elevation>859.0</Elevation>
+      <Site>
+        <Name>Neenach</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="NOT" startDate="1995-10-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.22869</Latitude>
+      <Longitude unit="DEGREES">-118.55829</Longitude>
+      <Elevation>247.5</Elevation>
+      <Site>
+        <Name>Northridge</Name>
+      </Site>
+      <CreationDate>1995-10-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="NSS2" startDate="2004-03-17T11:50:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.55553</Latitude>
+      <Longitude unit="DEGREES">-115.94586</Longitude>
+      <Elevation>17.0</Elevation>
+      <Site>
+        <Name>North Shore Salton Sea 2</Name>
+      </Site>
+      <CreationDate>2004-03-17T11:50:00.000000Z</CreationDate>
+    </Station>
+    <Station code="NWH" startDate="2015-10-28T19:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.733138</Latitude>
+      <Longitude unit="DEGREES">-117.751087</Longitude>
+      <Elevation>95.8</Elevation>
+      <Site>
+        <Name>Irvine USD, Northwood High</Name>
+      </Site>
+      <CreationDate>2015-10-28T19:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="OAT" startDate="1999-03-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.34361</Latitude>
+      <Longitude unit="DEGREES">-118.61442</Longitude>
+      <Elevation>1089.0</Elevation>
+      <Site>
+        <Name>Oat Mountain</Name>
+      </Site>
+      <CreationDate>1999-03-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="OGC" startDate="1995-10-16T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.78816</Latitude>
+      <Longitude unit="DEGREES">-117.844</Longitude>
+      <Elevation>64.0</Elevation>
+      <Site>
+        <Name>Orange (Chapman)</Name>
+      </Site>
+      <CreationDate>1995-10-16T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="OLI" startDate="1999-11-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.94539</Latitude>
+      <Longitude unit="DEGREES">-117.92372</Longitude>
+      <Elevation>162.0</Elevation>
+      <Site>
+        <Name>Olinda</Name>
+      </Site>
+      <CreationDate>1999-11-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="OLP" startDate="2001-01-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.60771</Latitude>
+      <Longitude unit="DEGREES">-116.93019</Longitude>
+      <Elevation>159.0</Elevation>
+      <Site>
+        <Name>Otay Lakes Park</Name>
+      </Site>
+      <CreationDate>2001-01-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="OSI" startDate="1995-06-28T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.6145</Latitude>
+      <Longitude unit="DEGREES">-118.7235</Longitude>
+      <Elevation>718.0</Elevation>
+      <Site>
+        <Name>Osito Audit: Castaic Lake</Name>
+      </Site>
+      <CreationDate>1995-06-28T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PALA" startDate="2014-01-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.38905</Latitude>
+      <Longitude unit="DEGREES">-117.03182</Longitude>
+      <Elevation>552.0</Elevation>
+      <Site>
+        <Name>Pala</Name>
+      </Site>
+      <CreationDate>2014-01-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PASC" startDate="2006-10-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.17141</Latitude>
+      <Longitude unit="DEGREES">-118.18523</Longitude>
+      <Elevation>341.0</Elevation>
+      <Site>
+        <Name>Art Center College of Design (GSN-affiliate)</Name>
+      </Site>
+      <CreationDate>2006-10-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PDE" startDate="1999-09-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.44199</Latitude>
+      <Longitude unit="DEGREES">-118.58215</Longitude>
+      <Elevation>328.0</Elevation>
+      <Site>
+        <Name>Pardee</Name>
+      </Site>
+      <CreationDate>1999-09-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PDM" startDate="2001-09-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.30336</Latitude>
+      <Longitude unit="DEGREES">-114.14152</Longitude>
+      <Elevation>144.0</Elevation>
+      <Site>
+        <Name>Parker</Name>
+      </Site>
+      <CreationDate>2001-09-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PDR" startDate="2001-02-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.96273</Latitude>
+      <Longitude unit="DEGREES">-118.43702</Longitude>
+      <Elevation>45.0</Elevation>
+      <Site>
+        <Name>Playa Del Rey</Name>
+      </Site>
+      <CreationDate>2001-02-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PDU" startDate="1999-10-16T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.1207</Latitude>
+      <Longitude unit="DEGREES">-117.63808</Longitude>
+      <Elevation>445.0</Elevation>
+      <Site>
+        <Name>Padua</Name>
+      </Site>
+      <CreationDate>1999-10-16T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PDW" startDate="2015-05-01T16:45:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.92397</Latitude>
+      <Longitude unit="DEGREES">-117.61713</Longitude>
+      <Elevation>166.0</Elevation>
+      <Site>
+        <Name>Prado Wetlands</Name>
+      </Site>
+      <CreationDate>2015-05-01T16:45:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PER" startDate="2003-05-21T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.86164</Latitude>
+      <Longitude unit="DEGREES">-117.20529</Longitude>
+      <Elevation>468.0</Elevation>
+      <Site>
+        <Name>Lake Perris</Name>
+      </Site>
+      <CreationDate>2003-05-21T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PGA" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.4914</Latitude>
+      <Longitude unit="DEGREES">-117.0635</Longitude>
+      <Elevation>351.5</Elevation>
+      <Site>
+        <Name>Pechanga</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PLM" startDate="1939-09-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.35361</Latitude>
+      <Longitude unit="DEGREES">-116.86265</Longitude>
+      <Elevation>1691.0</Elevation>
+      <Site>
+        <Name>Palomar</Name>
+      </Site>
+      <CreationDate>1939-09-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PLS" startDate="1990-05-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.7953</Latitude>
+      <Longitude unit="DEGREES">-117.60906</Longitude>
+      <Elevation>1199.0</Elevation>
+      <Site>
+        <Name>Pleasants Peak</Name>
+      </Site>
+      <CreationDate>1990-05-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PMD" startDate="2005-05-07T00:45:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.64785</Latitude>
+      <Longitude unit="DEGREES">-116.37769</Longitude>
+      <Elevation>296.0</Elevation>
+      <Site>
+        <Name>Palm Desert</Name>
+      </Site>
+      <CreationDate>2005-05-07T00:45:00.000000Z</CreationDate>
+    </Station>
+    <Station code="POB2" startDate="2014-03-20T19:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.68708</Latitude>
+      <Longitude unit="DEGREES">-116.92382</Longitude>
+      <Elevation>999.0</Elevation>
+      <Site>
+        <Name>Polly Butte 2</Name>
+      </Site>
+      <CreationDate>2014-03-20T19:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PSD" startDate="2005-04-13T23:13:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.82393</Latitude>
+      <Longitude unit="DEGREES">-116.55026</Longitude>
+      <Elevation>144.0</Elevation>
+      <Site>
+        <Name>Palm Springs Desert Museum</Name>
+      </Site>
+      <CreationDate>2005-04-13T23:13:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PSR" startDate="2005-09-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.09181</Latitude>
+      <Longitude unit="DEGREES">-117.80709</Longitude>
+      <Elevation>305.0</Elevation>
+      <Site>
+        <Name>Puddingstone</Name>
+      </Site>
+      <CreationDate>2005-09-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PTD" startDate="1973-06-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.00443</Latitude>
+      <Longitude unit="DEGREES">-118.80686</Longitude>
+      <Elevation>7.0</Elevation>
+      <Site>
+        <Name>Point Dume</Name>
+      </Site>
+      <CreationDate>1973-06-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="PUT" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.69115</Latitude>
+      <Longitude unit="DEGREES">-117.96919</Longitude>
+      <Elevation>747.0</Elevation>
+      <Site>
+        <Name>Piute</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0000" startDate="2012-04-02T21:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.187906</Latitude>
+      <Longitude unit="DEGREES">-118.115167</Longitude>
+      <Elevation>398.9</Elevation>
+      <Site>
+        <Name>Altadena 1</Name>
+      </Site>
+      <CreationDate>2012-04-02T21:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0001" startDate="2010-11-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.149406</Latitude>
+      <Longitude unit="DEGREES">-118.030375</Longitude>
+      <Elevation>161.0</Elevation>
+      <Site>
+        <Name>Arcadia</Name>
+      </Site>
+      <CreationDate>2010-11-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0002" startDate="2010-12-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.072488</Latitude>
+      <Longitude unit="DEGREES">-118.399114</Longitude>
+      <Elevation>76.3</Elevation>
+      <Site>
+        <Name>Beverly Hills</Name>
+      </Site>
+      <CreationDate>2010-12-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0005" startDate="2011-01-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.527951</Latitude>
+      <Longitude unit="DEGREES">-117.768082</Longitude>
+      <Elevation>22.0</Elevation>
+      <Site>
+        <Name>Laguna Beach</Name>
+      </Site>
+      <CreationDate>2011-01-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0008" startDate="2011-02-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.384931</Latitude>
+      <Longitude unit="DEGREES">-117.24667</Longitude>
+      <Elevation>227.0</Elevation>
+      <Site>
+        <Name>E Mission Rd, Fallbrook</Name>
+      </Site>
+      <CreationDate>2011-02-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0009" startDate="2011-02-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.604579</Latitude>
+      <Longitude unit="DEGREES">-117.704768</Longitude>
+      <Elevation>101.0</Elevation>
+      <Site>
+        <Name>Avenida Majorca Laguna Hill</Name>
+      </Site>
+      <CreationDate>2011-02-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0010" startDate="2011-02-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.445568</Latitude>
+      <Longitude unit="DEGREES">-117.63833</Longitude>
+      <Elevation>42.0</Elevation>
+      <Site>
+        <Name>Via Santo Tomas, San Clemente</Name>
+      </Site>
+      <CreationDate>2011-02-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0011" startDate="2011-02-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.840247</Latitude>
+      <Longitude unit="DEGREES">-118.015366</Longitude>
+      <Elevation>17.0</Elevation>
+      <Site>
+        <Name>San Pasqual Cir, Buena Park</Name>
+      </Site>
+      <CreationDate>2011-02-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0013" startDate="2011-02-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.539514</Latitude>
+      <Longitude unit="DEGREES">-118.060347</Longitude>
+      <Elevation>857.0</Elevation>
+      <Site>
+        <Name>East Avenue T4, Palmdale</Name>
+      </Site>
+      <CreationDate>2011-02-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0014" startDate="2011-02-24T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.277041</Latitude>
+      <Longitude unit="DEGREES">-118.396789</Longitude>
+      <Elevation>342.0</Elevation>
+      <Site>
+        <Name>Foothill Blvd, Lake View Terrace</Name>
+      </Site>
+      <CreationDate>2011-02-24T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0015" startDate="2011-02-24T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.374681</Latitude>
+      <Longitude unit="DEGREES">-118.548834</Longitude>
+      <Elevation>376.0</Elevation>
+      <Site>
+        <Name>Green Mill Ave, Newhall</Name>
+      </Site>
+      <CreationDate>2011-02-24T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0017" startDate="2011-03-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.573037</Latitude>
+      <Longitude unit="DEGREES">-117.116803</Longitude>
+      <Elevation>9.0</Elevation>
+      <Site>
+        <Name>Grove Avenue, Imperial Beach</Name>
+      </Site>
+      <CreationDate>2011-03-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0018" startDate="2011-03-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.696149</Latitude>
+      <Longitude unit="DEGREES">-117.952791</Longitude>
+      <Elevation>4.0</Elevation>
+      <Site>
+        <Name>Whippoorwill Ave, Fountain Valley</Name>
+      </Site>
+      <CreationDate>2011-03-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0020" startDate="2011-05-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.960243</Latitude>
+      <Longitude unit="DEGREES">-116.953328</Longitude>
+      <Elevation>852.0</Elevation>
+      <Site>
+        <Name>Maureen Dr.,  Cherry Valley</Name>
+      </Site>
+      <CreationDate>2011-05-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0022" startDate="2011-06-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.770167</Latitude>
+      <Longitude unit="DEGREES">-117.501187</Longitude>
+      <Elevation>358.0</Elevation>
+      <Site>
+        <Name>Wooded Hill Dr, Corona</Name>
+      </Site>
+      <CreationDate>2011-06-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0023" startDate="2011-06-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.954833</Latitude>
+      <Longitude unit="DEGREES">-117.576062</Longitude>
+      <Elevation>179.0</Elevation>
+      <Site>
+        <Name>Maplewood Court, Corona</Name>
+      </Site>
+      <CreationDate>2011-06-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0024" startDate="2011-07-12T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.767662</Latitude>
+      <Longitude unit="DEGREES">-118.736685</Longitude>
+      <Elevation>1017.0</Elevation>
+      <Site>
+        <Name>Lancaster Rd, Gorman</Name>
+      </Site>
+      <CreationDate>2011-07-12T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0025" startDate="2011-07-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.092083</Latitude>
+      <Longitude unit="DEGREES">-116.646993</Longitude>
+      <Elevation>1118.0</Elevation>
+      <Site>
+        <Name>4275 Highway 78 Santa Ysabel</Name>
+      </Site>
+      <CreationDate>2011-07-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0027" startDate="2011-08-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.766226</Latitude>
+      <Longitude unit="DEGREES">-115.621085</Longitude>
+      <Elevation>-3.0</Elevation>
+      <Site>
+        <Name>1001 West Kramer Road</Name>
+      </Site>
+      <CreationDate>2011-08-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0030" startDate="2011-09-13T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.979794</Latitude>
+      <Longitude unit="DEGREES">-117.753906</Longitude>
+      <Elevation>266.0</Elevation>
+      <Site>
+        <Name>Calle Bienvenida, Chino Hills CA</Name>
+      </Site>
+      <CreationDate>2011-09-13T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0031" startDate="2011-12-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.395342</Latitude>
+      <Longitude unit="DEGREES">-118.911625</Longitude>
+      <Elevation>134.7</Elevation>
+      <Site>
+        <Name>River Street, Fillmore CA 93015</Name>
+      </Site>
+      <CreationDate>2011-12-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0032" startDate="2012-02-08T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.280678</Latitude>
+      <Longitude unit="DEGREES">-117.291139</Longitude>
+      <Elevation>72.0</Elevation>
+      <Site>
+        <Name>Parrolette Cour, Oceanside CA 92057</Name>
+      </Site>
+      <CreationDate>2012-02-08T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0033" startDate="2012-02-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.09323</Latitude>
+      <Longitude unit="DEGREES">-118.866231</Longitude>
+      <Elevation>501.0</Elevation>
+      <Site>
+        <Name>Mulholland Highway, Malibu CA 90265</Name>
+      </Site>
+      <CreationDate>2012-02-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0034" startDate="2012-02-22T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.690211</Latitude>
+      <Longitude unit="DEGREES">-117.655247</Longitude>
+      <Elevation>332.0</Elevation>
+      <Site>
+        <Name>Viaggio Lane, Foothill Ranch CA 92610</Name>
+      </Site>
+      <CreationDate>2012-02-22T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0035" startDate="2012-02-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.46575</Latitude>
+      <Longitude unit="DEGREES">-118.204037</Longitude>
+      <Elevation>871.0</Elevation>
+      <Site>
+        <Name>Ninth Street, Acton CA 93510</Name>
+      </Site>
+      <CreationDate>2012-02-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0037" startDate="2012-02-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.030233</Latitude>
+      <Longitude unit="DEGREES">-117.091311</Longitude>
+      <Elevation>169.0</Elevation>
+      <Site>
+        <Name>Picaza Place, Rancho Bernardo CA 92127</Name>
+      </Site>
+      <CreationDate>2012-02-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0038" startDate="2012-03-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.730576</Latitude>
+      <Longitude unit="DEGREES">-117.427604</Longitude>
+      <Elevation>425.0</Elevation>
+      <Site>
+        <Name>Cloudburst Drive, Corona CA 92883</Name>
+      </Site>
+      <CreationDate>2012-03-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0039" startDate="2012-03-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.686927</Latitude>
+      <Longitude unit="DEGREES">-117.176117</Longitude>
+      <Elevation>7.0</Elevation>
+      <Site>
+        <Name>B Avenue, Coronado CA 92118</Name>
+      </Site>
+      <CreationDate>2012-03-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0040" startDate="2012-04-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.532324</Latitude>
+      <Longitude unit="DEGREES">-117.00832</Longitude>
+      <Elevation>502.0</Elevation>
+      <Site>
+        <Name>Chaparral Drive, Temecula CA 92592</Name>
+      </Site>
+      <CreationDate>2012-04-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0041" startDate="2012-05-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.17204</Latitude>
+      <Longitude unit="DEGREES">-117.427615</Longitude>
+      <Elevation>568.0</Elevation>
+      <Site>
+        <Name>Dove Tree Avenue, Rialto CA 92377</Name>
+      </Site>
+      <CreationDate>2012-05-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0042" startDate="2012-05-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.925955</Latitude>
+      <Longitude unit="DEGREES">-117.658232</Longitude>
+      <Elevation>172.0</Elevation>
+      <Site>
+        <Name>Cattle Creek Drive, Chino Hills CA 91709</Name>
+      </Site>
+      <CreationDate>2012-05-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0045" startDate="2012-06-22T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.439078</Latitude>
+      <Longitude unit="DEGREES">-118.407758</Longitude>
+      <Elevation>540.0</Elevation>
+      <Site>
+        <Name>Gary Drive Santa Clarita, CA 91387</Name>
+      </Site>
+      <CreationDate>2012-06-22T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0046" startDate="2012-10-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.145096</Latitude>
+      <Longitude unit="DEGREES">-117.65051</Longitude>
+      <Elevation>545.1</Elevation>
+      <Site>
+        <Name>Monterrey Street La Verne</Name>
+      </Site>
+      <CreationDate>2012-10-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0048" startDate="2012-10-03T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.772338</Latitude>
+      <Longitude unit="DEGREES">-117.80335</Longitude>
+      <Elevation>76.0</Elevation>
+      <Site>
+        <Name>Lariat Lane North Tustin</Name>
+      </Site>
+      <CreationDate>2012-10-03T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0049" startDate="2012-10-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.197059</Latitude>
+      <Longitude unit="DEGREES">-117.125648</Longitude>
+      <Elevation>1659.0</Elevation>
+      <Site>
+        <Name>Panorama Road Running Springs</Name>
+      </Site>
+      <CreationDate>2012-10-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0050" startDate="2012-10-12T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.191423</Latitude>
+      <Longitude unit="DEGREES">-118.958531</Longitude>
+      <Elevation>209.0</Elevation>
+      <Site>
+        <Name>Cayo Grande Court, Newbury Park</Name>
+      </Site>
+      <CreationDate>2012-10-12T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0055" startDate="2012-10-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.282228</Latitude>
+      <Longitude unit="DEGREES">-117.180949</Longitude>
+      <Elevation>102.0</Elevation>
+      <Site>
+        <Name>Via Mariposa Norte, Bonsall</Name>
+      </Site>
+      <CreationDate>2012-10-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0056" startDate="2012-10-24T00:00:00.000000Z" endDate="2023-03-16T20:00:00.000000Z">
+      <Latitude unit="DEGREES">34.839289</Latitude>
+      <Longitude unit="DEGREES">-117.149857</Longitude>
+      <Elevation>739.0</Elevation>
+      <Site>
+        <Name>Ivy Avenue, Barstow CA</Name>
+      </Site>
+      <CreationDate>2012-10-24T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0057" startDate="2012-10-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.187561</Latitude>
+      <Longitude unit="DEGREES">-118.477132</Longitude>
+      <Elevation>219.0</Elevation>
+      <Site>
+        <Name>Densmore Ave, Lake Balboa</Name>
+      </Site>
+      <CreationDate>2012-10-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0058" startDate="2012-10-26T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.062809</Latitude>
+      <Longitude unit="DEGREES">-116.854106</Longitude>
+      <Elevation>449.0</Elevation>
+      <Site>
+        <Name>Penn Street, Ramona CA</Name>
+      </Site>
+      <CreationDate>2012-10-26T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0059" startDate="2012-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.734145</Latitude>
+      <Longitude unit="DEGREES">-116.491675</Longitude>
+      <Elevation>953.0</Elevation>
+      <Site>
+        <Name>Buckman Springs Road, Pine Valley</Name>
+      </Site>
+      <CreationDate>2012-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0060" startDate="2012-11-01T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.746844</Latitude>
+      <Longitude unit="DEGREES">-116.761129</Longitude>
+      <Elevation>629.0</Elevation>
+      <Site>
+        <Name>Mark Lee Dr, Jamul CA</Name>
+      </Site>
+      <CreationDate>2012-11-01T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0061" startDate="2012-11-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.591908</Latitude>
+      <Longitude unit="DEGREES">-117.812984</Longitude>
+      <Elevation>831.0</Elevation>
+      <Site>
+        <Name>180th Street East Palmdale</Name>
+      </Site>
+      <CreationDate>2012-11-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0062" startDate="2012-11-12T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.686263</Latitude>
+      <Longitude unit="DEGREES">-116.753498</Longitude>
+      <Elevation>672.0</Elevation>
+      <Site>
+        <Name>Bratton Valley Road Jamul CA 91935</Name>
+      </Site>
+      <CreationDate>2012-11-12T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0064" startDate="2012-11-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.074789</Latitude>
+      <Longitude unit="DEGREES">-118.942449</Longitude>
+      <Elevation>493.0</Elevation>
+      <Site>
+        <Name>Yellow Hill Road, Malibu CA</Name>
+      </Site>
+      <CreationDate>2012-11-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0065" startDate="2013-01-07T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.141904</Latitude>
+      <Longitude unit="DEGREES">-118.484784</Longitude>
+      <Elevation>1192.0</Elevation>
+      <Site>
+        <Name>Gold Street, Tehachapi CA</Name>
+      </Site>
+      <CreationDate>2013-01-07T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0066" startDate="2013-01-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.898729</Latitude>
+      <Longitude unit="DEGREES">-117.776622</Longitude>
+      <Elevation>185.0</Elevation>
+      <Site>
+        <Name>Pepper Avenue Yorba Linda CA</Name>
+      </Site>
+      <CreationDate>2013-01-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0067" startDate="2013-01-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.947501</Latitude>
+      <Longitude unit="DEGREES">-117.99124</Longitude>
+      <Elevation>91.0</Elevation>
+      <Site>
+        <Name>Melgar Drive, Whittier CA</Name>
+      </Site>
+      <CreationDate>2013-01-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0068" startDate="2013-01-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.111675</Latitude>
+      <Longitude unit="DEGREES">-117.976655</Longitude>
+      <Elevation>729.0</Elevation>
+      <Site>
+        <Name>Redwood Blvd, California City CA</Name>
+      </Site>
+      <CreationDate>2013-01-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0069" startDate="2013-02-07T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.052226</Latitude>
+      <Longitude unit="DEGREES">-118.778937</Longitude>
+      <Elevation>314.0</Elevation>
+      <Site>
+        <Name>Old Chimney Road, Malibu CA</Name>
+      </Site>
+      <CreationDate>2013-02-07T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0070" startDate="2013-02-13T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.504861</Latitude>
+      <Longitude unit="DEGREES">-116.808816</Longitude>
+      <Elevation>1057.0</Elevation>
+      <Site>
+        <Name>Belmont Ct, Aguanga, CA</Name>
+      </Site>
+      <CreationDate>2013-02-13T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0071" startDate="2013-02-21T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.534644</Latitude>
+      <Longitude unit="DEGREES">-117.333872</Longitude>
+      <Elevation>602.0</Elevation>
+      <Site>
+        <Name>Hombre Lane, Murrieta CA</Name>
+      </Site>
+      <CreationDate>2013-02-21T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0072" startDate="2013-03-06T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.609617</Latitude>
+      <Longitude unit="DEGREES">-117.666721</Longitude>
+      <Elevation>695.0</Elevation>
+      <Site>
+        <Name>Lakeland Street, Ridgecrest CA</Name>
+      </Site>
+      <CreationDate>2013-03-06T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0073" startDate="2013-05-17T00:00:00.000000Z" endDate="2022-01-06T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.08356</Latitude>
+      <Longitude unit="DEGREES">-118.650871</Longitude>
+      <Elevation>643.0</Elevation>
+      <Site>
+        <Name>Stunt Road</Name>
+      </Site>
+      <CreationDate>2013-05-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0074" startDate="2013-06-26T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.886423</Latitude>
+      <Longitude unit="DEGREES">-118.373202</Longitude>
+      <Elevation>22.0</Elevation>
+      <Site>
+        <Name>Warfield Avenue</Name>
+      </Site>
+      <CreationDate>2013-06-26T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0075" startDate="2013-07-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.117756</Latitude>
+      <Longitude unit="DEGREES">-118.577497</Longitude>
+      <Elevation>315.3</Elevation>
+      <Site>
+        <Name>Paradise Lane</Name>
+      </Site>
+      <CreationDate>2013-07-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0078" startDate="2014-05-28T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.13358</Latitude>
+      <Longitude unit="DEGREES">-117.111</Longitude>
+      <Elevation>240.0</Elevation>
+      <Site>
+        <Name>Hillsboro Avenue</Name>
+      </Site>
+      <CreationDate>2014-05-28T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="Q0079" startDate="2014-11-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.724045</Latitude>
+      <Longitude unit="DEGREES">-118.05381</Longitude>
+      <Elevation>5.0</Elevation>
+      <Site>
+        <Name>Saybrook Lane, Huntington Beach</Name>
+      </Site>
+      <CreationDate>2014-11-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="QSD01" startDate="2012-02-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.91716</Latitude>
+      <Longitude unit="DEGREES">-117.03032</Longitude>
+      <Elevation>271.0</Elevation>
+      <Site>
+        <Name>Sycamore</Name>
+      </Site>
+      <CreationDate>2012-02-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="QSD02" startDate="2012-02-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.69485</Latitude>
+      <Longitude unit="DEGREES">-117.14392</Longitude>
+      <Elevation>7.0</Elevation>
+      <Site>
+        <Name>Sampson</Name>
+      </Site>
+      <CreationDate>2012-02-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="QSD03" startDate="2012-02-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.52641</Latitude>
+      <Longitude unit="DEGREES">-117.59882</Longitude>
+      <Elevation>94.0</Elevation>
+      <Site>
+        <Name>Rancho Mission Viejo</Name>
+      </Site>
+      <CreationDate>2012-02-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="QSD04" startDate="2012-02-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.2573</Latitude>
+      <Longitude unit="DEGREES">-116.3481</Longitude>
+      <Elevation>165.0</Elevation>
+      <Site>
+        <Name>Borrego Springs</Name>
+      </Site>
+      <CreationDate>2012-02-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="QSD05" startDate="2012-02-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.6797</Latitude>
+      <Longitude unit="DEGREES">-116.9854</Longitude>
+      <Elevation>88.0</Elevation>
+      <Site>
+        <Name>San Miguel Road</Name>
+      </Site>
+      <CreationDate>2012-02-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="QSD06" startDate="2012-02-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.1334</Latitude>
+      <Longitude unit="DEGREES">-117.3335</Longitude>
+      <Elevation>15.0</Elevation>
+      <Site>
+        <Name>Cannon Road</Name>
+      </Site>
+      <CreationDate>2012-02-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="QUG" startDate="2001-01-19T01:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.39558</Latitude>
+      <Longitude unit="DEGREES">-118.49837</Longitude>
+      <Elevation>515.0</Elevation>
+      <Site>
+        <Name>Quigley Station</Name>
+      </Site>
+      <CreationDate>2001-01-19T01:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RAG" startDate="1999-07-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.68289</Latitude>
+      <Longitude unit="DEGREES">-116.15139</Longitude>
+      <Elevation>722.0</Elevation>
+      <Site>
+        <Name>Ragtown</Name>
+      </Site>
+      <CreationDate>1999-07-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RCU" startDate="2015-04-24T16:40:00.000000Z" endDate="2024-04-16T17:35:00.000000Z">
+      <Latitude unit="DEGREES">34.08309</Latitude>
+      <Longitude unit="DEGREES">-117.52442</Longitude>
+      <Elevation>329.9</Elevation>
+      <Site>
+        <Name>Rancho Cucamonga</Name>
+      </Site>
+      <CreationDate>2015-04-24T16:40:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RHC2" startDate="2014-01-14T22:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.00095</Latitude>
+      <Longitude unit="DEGREES">-118.01333</Longitude>
+      <Elevation>362.0</Elevation>
+      <Site>
+        <Name>Rose Hills Cemetery 2</Name>
+      </Site>
+      <CreationDate>2014-01-14T22:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RIN" startDate="1999-08-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.28196</Latitude>
+      <Longitude unit="DEGREES">-118.47925</Longitude>
+      <Elevation>304.0</Elevation>
+      <Site>
+        <Name>Rinaldi</Name>
+      </Site>
+      <CreationDate>1999-08-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RINB" startDate="2003-01-03T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.28196</Latitude>
+      <Longitude unit="DEGREES">-118.47925</Longitude>
+      <Elevation>304.0</Elevation>
+      <Site>
+        <Name>Rinaldi Borehole</Name>
+      </Site>
+      <CreationDate>2003-01-03T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RIO" startDate="1999-10-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.10473</Latitude>
+      <Longitude unit="DEGREES">-117.97956</Longitude>
+      <Elevation>118.0</Elevation>
+      <Site>
+        <Name>Rio Hondo</Name>
+      </Site>
+      <CreationDate>1999-10-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RKMO" startDate="2013-11-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.67421</Latitude>
+      <Longitude unit="DEGREES">-117.60947</Longitude>
+      <Elevation>408.0</Elevation>
+      <Site>
+        <Name>Ramakrishna Monastery</Name>
+      </Site>
+      <CreationDate>2013-11-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RMM" startDate="1992-06-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.64384</Latitude>
+      <Longitude unit="DEGREES">-116.62438</Longitude>
+      <Elevation>1777.0</Elevation>
+      <Site>
+        <Name>Rodman Mountain</Name>
+      </Site>
+      <CreationDate>1992-06-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RPV" startDate="1993-05-12T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.74346</Latitude>
+      <Longitude unit="DEGREES">-118.40412</Longitude>
+      <Elevation>107.0</Elevation>
+      <Site>
+        <Name>Rancho Palos Verdes</Name>
+      </Site>
+      <CreationDate>1993-05-12T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RRX" startDate="2000-11-08T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.87499</Latitude>
+      <Longitude unit="DEGREES">-116.99681</Longitude>
+      <Elevation>676.2</Elevation>
+      <Site>
+        <Name>Barstow Service Center</Name>
+      </Site>
+      <CreationDate>2000-11-08T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RSB" startDate="2001-03-16T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.9731</Latitude>
+      <Longitude unit="DEGREES">-117.3272</Longitude>
+      <Elevation>297.0</Elevation>
+      <Site>
+        <Name>Riverside Borehole</Name>
+      </Site>
+      <CreationDate>2001-03-16T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RSS" startDate="1999-05-27T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.97327</Latitude>
+      <Longitude unit="DEGREES">-117.32674</Longitude>
+      <Elevation>298.0</Elevation>
+      <Site>
+        <Name>Riverside Surface</Name>
+      </Site>
+      <CreationDate>1999-05-27T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RUN" startDate="1973-03-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.97222</Latitude>
+      <Longitude unit="DEGREES">-114.97809</Longitude>
+      <Elevation>116.0</Elevation>
+      <Site>
+        <Name>Ruthven</Name>
+      </Site>
+      <CreationDate>1973-03-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RUS" startDate="1998-05-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.05075</Latitude>
+      <Longitude unit="DEGREES">-118.08078</Longitude>
+      <Elevation>70.0</Elevation>
+      <Site>
+        <Name>Rush</Name>
+      </Site>
+      <CreationDate>1998-05-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RVR" startDate="1926-10-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.99351</Latitude>
+      <Longitude unit="DEGREES">-117.37545</Longitude>
+      <Elevation>266.0</Elevation>
+      <Site>
+        <Name>Riverside</Name>
+      </Site>
+      <CreationDate>1926-10-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="RXH" startDate="2004-05-26T17:25:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.18313</Latitude>
+      <Longitude unit="DEGREES">-115.62257</Longitude>
+      <Elevation>-59.0</Elevation>
+      <Site>
+        <Name>Rock Hill</Name>
+      </Site>
+      <CreationDate>2004-05-26T17:25:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SAL" startDate="1999-05-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.2801</Latitude>
+      <Longitude unit="DEGREES">-115.98585</Longitude>
+      <Elevation>14.0</Elevation>
+      <Site>
+        <Name>Salton City</Name>
+      </Site>
+      <CreationDate>1999-05-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SAN" startDate="1995-08-16T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.70432</Latitude>
+      <Longitude unit="DEGREES">-117.88578</Longitude>
+      <Elevation>11.0</Elevation>
+      <Site>
+        <Name>Santa Ana</Name>
+      </Site>
+      <CreationDate>1995-08-16T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SBB2" startDate="2004-10-28T21:15:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.68844</Latitude>
+      <Longitude unit="DEGREES">-117.82424</Longitude>
+      <Elevation>825.0</Elevation>
+      <Site>
+        <Name>Saddleback Butte State Park</Name>
+      </Site>
+      <CreationDate>2004-10-28T21:15:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SBPX" startDate="1996-06-12T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.2324</Latitude>
+      <Longitude unit="DEGREES">-117.23484</Longitude>
+      <Elevation>1860.0</Elevation>
+      <Site>
+        <Name>Strawberry Peak</Name>
+      </Site>
+      <CreationDate>1996-06-12T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SCI2" startDate="2003-10-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.9799</Latitude>
+      <Longitude unit="DEGREES">-118.54697</Longitude>
+      <Elevation>199.0</Elevation>
+      <Site>
+        <Name>San Clemente Island 2</Name>
+      </Site>
+      <CreationDate>2003-10-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SDD" startDate="1999-04-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.55259</Latitude>
+      <Longitude unit="DEGREES">-117.66171</Longitude>
+      <Elevation>120.0</Elevation>
+      <Site>
+        <Name>Saddleback</Name>
+      </Site>
+      <CreationDate>1999-04-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SDG" startDate="2001-09-26T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.784</Latitude>
+      <Longitude unit="DEGREES">-117.13805</Longitude>
+      <Elevation>101.0</Elevation>
+      <Site>
+        <Name>San Diego Mission Control</Name>
+      </Site>
+      <CreationDate>2001-09-26T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SDR" startDate="2001-04-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.73561</Latitude>
+      <Longitude unit="DEGREES">-116.94241</Longitude>
+      <Elevation>113.0</Elevation>
+      <Site>
+        <Name>San Diego Road Dept</Name>
+      </Site>
+      <CreationDate>2001-04-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SGL" startDate="1973-03-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.64933</Latitude>
+      <Longitude unit="DEGREES">-115.72638</Longitude>
+      <Elevation>75.0</Elevation>
+      <Site>
+        <Name>Signal Mtn</Name>
+      </Site>
+      <CreationDate>1973-03-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SHO" startDate="1996-10-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.89953</Latitude>
+      <Longitude unit="DEGREES">-116.2753</Longitude>
+      <Elevation>451.0</Elevation>
+      <Site>
+        <Name>Shoshone</Name>
+      </Site>
+      <CreationDate>1996-10-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SHU" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.64279</Latitude>
+      <Longitude unit="DEGREES">-118.16454</Longitude>
+      <Elevation>774.0</Elevation>
+      <Site>
+        <Name>Shuttle</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SIL" startDate="1975-11-18T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.34803</Latitude>
+      <Longitude unit="DEGREES">-116.82747</Longitude>
+      <Elevation>1698.0</Elevation>
+      <Site>
+        <Name>Silver Peak</Name>
+      </Site>
+      <CreationDate>1975-11-18T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SLA" startDate="1999-03-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.89095</Latitude>
+      <Longitude unit="DEGREES">-117.28332</Longitude>
+      <Elevation>1174.0</Elevation>
+      <Site>
+        <Name>Slate Mountain</Name>
+      </Site>
+      <CreationDate>1999-03-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SLB" startDate="2009-02-06T17:55:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.48519</Latitude>
+      <Longitude unit="DEGREES">-115.86643</Longitude>
+      <Elevation>0.0</Elevation>
+      <Site>
+        <Name>Salton Beach</Name>
+      </Site>
+      <CreationDate>2009-02-06T17:55:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SLH" startDate="2013-03-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.19269</Latitude>
+      <Longitude unit="DEGREES">-116.25399</Longitude>
+      <Elevation>208.0</Elevation>
+      <Site>
+        <Name>Sleepy Hollow</Name>
+      </Site>
+      <CreationDate>2013-03-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SLM" startDate="2013-10-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.45227</Latitude>
+      <Longitude unit="DEGREES">-118.42267</Longitude>
+      <Elevation>523.0</Elevation>
+      <Site>
+        <Name>Solemint</Name>
+      </Site>
+      <CreationDate>2013-10-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SLR" startDate="2001-11-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.83359</Latitude>
+      <Longitude unit="DEGREES">-116.79737</Longitude>
+      <Elevation>1567.0</Elevation>
+      <Site>
+        <Name>Skyland Ranch</Name>
+      </Site>
+      <CreationDate>2001-11-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SMF2" startDate="2012-07-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.02201</Latitude>
+      <Longitude unit="DEGREES">-118.44627</Longitude>
+      <Elevation>52.2</Elevation>
+      <Site>
+        <Name>Santa Monica Field 2</Name>
+      </Site>
+      <CreationDate>2012-07-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SMV" startDate="1995-10-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.27091</Latitude>
+      <Longitude unit="DEGREES">-118.74407</Longitude>
+      <Elevation>276.0</Elevation>
+      <Site>
+        <Name>Simi Valley</Name>
+      </Site>
+      <CreationDate>1995-10-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SNO" startDate="2008-12-03T20:32:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.03515</Latitude>
+      <Longitude unit="DEGREES">-116.80778</Longitude>
+      <Elevation>2339.0</Elevation>
+      <Site>
+        <Name>Snow Peak</Name>
+      </Site>
+      <CreationDate>2008-12-03T20:32:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SNR" startDate="1973-05-01T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.86184</Latitude>
+      <Longitude unit="DEGREES">-115.43602</Longitude>
+      <Elevation>-63.0</Elevation>
+      <Site>
+        <Name>Schaffner Ranch</Name>
+      </Site>
+      <CreationDate>1973-05-01T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SPF" startDate="2000-10-19T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.05933</Latitude>
+      <Longitude unit="DEGREES">-118.64614</Longitude>
+      <Elevation>470.0</Elevation>
+      <Site>
+        <Name>Saddle Peak Fire Camp 8</Name>
+      </Site>
+      <CreationDate>2000-10-19T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SRN" startDate="1999-11-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.82854</Latitude>
+      <Longitude unit="DEGREES">-117.78938</Longitude>
+      <Elevation>208.0</Elevation>
+      <Site>
+        <Name>Serrano</Name>
+      </Site>
+      <CreationDate>1999-11-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SRT" startDate="1982-07-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.69235</Latitude>
+      <Longitude unit="DEGREES">-117.75051</Longitude>
+      <Elevation>667.0</Elevation>
+      <Site>
+        <Name>Snort</Name>
+      </Site>
+      <CreationDate>1982-07-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SSS" startDate="2015-11-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.03103</Latitude>
+      <Longitude unit="DEGREES">-117.45498</Longitude>
+      <Elevation>337.1</Elevation>
+      <Site>
+        <Name>Stringfellow Superfund Site Jurupa Mountains</Name>
+      </Site>
+      <CreationDate>2015-11-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="STG" startDate="2000-01-24T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.664</Latitude>
+      <Longitude unit="DEGREES">-117.76856</Longitude>
+      <Elevation>49.0</Elevation>
+      <Site>
+        <Name>Santiago</Name>
+      </Site>
+      <CreationDate>2000-01-24T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="STS" startDate="1999-05-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.79033</Latitude>
+      <Longitude unit="DEGREES">-118.19878</Longitude>
+      <Elevation>4.0</Elevation>
+      <Site>
+        <Name>State Street</Name>
+      </Site>
+      <CreationDate>1999-05-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SVD" startDate="1990-12-04T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.10647</Latitude>
+      <Longitude unit="DEGREES">-117.09822</Longitude>
+      <Elevation>605.0</Elevation>
+      <Site>
+        <Name>Seven Oaks</Name>
+      </Site>
+      <CreationDate>1990-12-04T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="SWS" startDate="1997-09-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.94508</Latitude>
+      <Longitude unit="DEGREES">-115.79988</Longitude>
+      <Elevation>140.0</Elevation>
+      <Site>
+        <Name>Sam W. Stewart</Name>
+      </Site>
+      <CreationDate>1997-09-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="TA2" startDate="1997-02-06T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.38203</Latitude>
+      <Longitude unit="DEGREES">-117.67822</Longitude>
+      <Elevation>2249.0</Elevation>
+      <Site>
+        <Name>Table Mountain</Name>
+      </Site>
+      <CreationDate>1997-02-06T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="TEH" startDate="2001-05-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.2913</Latitude>
+      <Longitude unit="DEGREES">-118.42079</Longitude>
+      <Elevation>846.0</Elevation>
+      <Site>
+        <Name>Cattani Ranch</Name>
+      </Site>
+      <CreationDate>2001-05-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="TEJ" startDate="1981-02-28T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.23107</Latitude>
+      <Longitude unit="DEGREES">-118.68878</Longitude>
+      <Elevation>650.0</Elevation>
+      <Site>
+        <Name>El Tejon</Name>
+      </Site>
+      <CreationDate>1981-02-28T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="THC" startDate="1981-03-31T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.90853</Latitude>
+      <Longitude unit="DEGREES">-118.66443</Longitude>
+      <Elevation>1688.0</Elevation>
+      <Site>
+        <Name>Tehachapi</Name>
+      </Site>
+      <CreationDate>1981-03-31T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="THM" startDate="2009-03-10T20:48:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.65066</Latitude>
+      <Longitude unit="DEGREES">-116.07734</Longitude>
+      <Elevation>60.0</Elevation>
+      <Site>
+        <Name>Thermal Canyon</Name>
+      </Site>
+      <CreationDate>2009-03-10T20:48:00.000000Z</CreationDate>
+    </Station>
+    <Station code="TJR" startDate="1981-02-28T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.02722</Latitude>
+      <Longitude unit="DEGREES">-118.74373</Longitude>
+      <Elevation>398.0</Elevation>
+      <Site>
+        <Name>Tejon Ranch</Name>
+      </Site>
+      <CreationDate>1981-02-28T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="TOR" startDate="2007-04-30T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.57526</Latitude>
+      <Longitude unit="DEGREES">-116.22584</Longitude>
+      <Elevation>4.0</Elevation>
+      <Site>
+        <Name>Toro Canyon</Name>
+      </Site>
+      <CreationDate>2007-04-30T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="TOW2" startDate="2014-07-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.80856</Latitude>
+      <Longitude unit="DEGREES">-117.76488</Longitude>
+      <Elevation>685.0</Elevation>
+      <Site>
+        <Name>Tower 2</Name>
+      </Site>
+      <CreationDate>2014-07-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="TPO" startDate="1976-05-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.87883</Latitude>
+      <Longitude unit="DEGREES">-118.22864</Longitude>
+      <Elevation>769.0</Elevation>
+      <Site>
+        <Name>Tropico Hills</Name>
+      </Site>
+      <CreationDate>1976-05-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="TUQ" startDate="2002-05-02T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.43584</Latitude>
+      <Longitude unit="DEGREES">-115.92389</Longitude>
+      <Elevation>1350.0</Elevation>
+      <Site>
+        <Name>Turquoise Mountain</Name>
+      </Site>
+      <CreationDate>2002-05-02T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="USC" startDate="1993-02-17T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.01919</Latitude>
+      <Longitude unit="DEGREES">-118.28631</Longitude>
+      <Elevation>58.0</Elevation>
+      <Site>
+        <Name>Univ Southern Ca</Name>
+      </Site>
+      <CreationDate>1993-02-17T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="VCS" startDate="1997-09-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.48372</Latitude>
+      <Longitude unit="DEGREES">-118.11781</Longitude>
+      <Elevation>992.0</Elevation>
+      <Site>
+        <Name>Vincent</Name>
+      </Site>
+      <CreationDate>1997-09-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="VLY" startDate="2013-10-29T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.736134</Latitude>
+      <Longitude unit="DEGREES">-117.156523</Longitude>
+      <Elevation>445.8</Elevation>
+      <Site>
+        <Name>Valley</Name>
+      </Site>
+      <CreationDate>2013-10-29T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="VTV" startDate="1993-04-14T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.56065</Latitude>
+      <Longitude unit="DEGREES">-117.3296</Longitude>
+      <Elevation>843.0</Elevation>
+      <Site>
+        <Name>Victorville</Name>
+      </Site>
+      <CreationDate>1993-04-14T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WAS2" startDate="2014-06-03T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.7377</Latitude>
+      <Longitude unit="DEGREES">-118.55743</Longitude>
+      <Elevation>1828.0</Elevation>
+      <Site>
+        <Name>Alta Sierra 2</Name>
+      </Site>
+      <CreationDate>2014-06-03T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WBS" startDate="1980-04-22T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.53664</Latitude>
+      <Longitude unit="DEGREES">-118.14035</Longitude>
+      <Elevation>1927.0</Elevation>
+      <Site>
+        <Name>Bird Springs</Name>
+      </Site>
+      <CreationDate>1980-04-22T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WES" startDate="2001-01-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.75904</Latitude>
+      <Longitude unit="DEGREES">-115.73161</Longitude>
+      <Elevation>-8.0</Elevation>
+      <Site>
+        <Name>Westside Elementary School</Name>
+      </Site>
+      <CreationDate>2001-01-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WHF" startDate="1979-05-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.69513</Latitude>
+      <Longitude unit="DEGREES">-118.35183</Longitude>
+      <Elevation>859.0</Elevation>
+      <Site>
+        <Name>Hanning Flat</Name>
+      </Site>
+      <CreationDate>1979-05-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WLS2" startDate="2015-09-18T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.578987</Latitude>
+      <Longitude unit="DEGREES">-117.719386</Longitude>
+      <Elevation>889.0</Elevation>
+      <Site>
+        <Name>Wilsona 2</Name>
+      </Site>
+      <CreationDate>2015-09-18T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WLT" startDate="1999-11-15T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.00948</Latitude>
+      <Longitude unit="DEGREES">-117.95077</Longitude>
+      <Elevation>107.0</Elevation>
+      <Site>
+        <Name>Walnut</Name>
+      </Site>
+      <CreationDate>1999-11-15T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WMD" startDate="2013-05-08T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.03826</Latitude>
+      <Longitude unit="DEGREES">-115.58191</Longitude>
+      <Elevation>-45.0</Elevation>
+      <Site>
+        <Name>Westmorland</Name>
+      </Site>
+      <CreationDate>2013-05-08T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WNM" startDate="1975-09-25T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.8422</Latitude>
+      <Longitude unit="DEGREES">-117.90616</Longitude>
+      <Elevation>974.3</Elevation>
+      <Site>
+        <Name>Nine Mile Canyon</Name>
+      </Site>
+      <CreationDate>1975-09-25T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WNS" startDate="1999-08-20T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.115</Latitude>
+      <Longitude unit="DEGREES">-118.38</Longitude>
+      <Elevation>306.1</Elevation>
+      <Site>
+        <Name>Wonderland Avenue School</Name>
+      </Site>
+      <CreationDate>1999-08-20T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WOR" startDate="1979-05-23T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.69563</Latitude>
+      <Longitude unit="DEGREES">-118.24246</Longitude>
+      <Elevation>795.0</Elevation>
+      <Site>
+        <Name>Onyx Ranch</Name>
+      </Site>
+      <CreationDate>1979-05-23T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WRC2" startDate="2014-07-09T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.9479</Latitude>
+      <Longitude unit="DEGREES">-117.65038</Longitude>
+      <Elevation>943.0</Elevation>
+      <Site>
+        <Name>Renegade Canyon</Name>
+      </Site>
+      <CreationDate>2014-07-09T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WSS" startDate="2000-11-21T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.1717</Latitude>
+      <Longitude unit="DEGREES">-118.64971</Longitude>
+      <Elevation>316.0</Elevation>
+      <Site>
+        <Name>West Side</Name>
+      </Site>
+      <CreationDate>2000-11-21T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WTT2" startDate="2011-01-05T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.94867</Latitude>
+      <Longitude unit="DEGREES">-118.25539</Longitude>
+      <Elevation>37.0</Elevation>
+      <Site>
+        <Name>Watts</Name>
+      </Site>
+      <CreationDate>2011-01-05T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WVP2" startDate="2014-07-11T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">35.94939</Latitude>
+      <Longitude unit="DEGREES">-117.81769</Longitude>
+      <Elevation>1465.0</Elevation>
+      <Site>
+        <Name>Volcano Peak 2</Name>
+      </Site>
+      <CreationDate>2014-07-11T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WWC" startDate="2009-04-01T20:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.94068</Latitude>
+      <Longitude unit="DEGREES">-116.40876</Longitude>
+      <Elevation>619.0</Elevation>
+      <Site>
+        <Name>West Wide Canyon</Name>
+      </Site>
+      <CreationDate>2009-04-01T20:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="WWF" startDate="2014-02-10T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">33.27884</Latitude>
+      <Longitude unit="DEGREES">-115.57888</Longitude>
+      <Elevation>-61.0</Elevation>
+      <Site>
+        <Name>Wister Waterfowl</Name>
+      </Site>
+      <CreationDate>2014-02-10T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="YUC" startDate="2013-04-16T00:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">34.19675</Latitude>
+      <Longitude unit="DEGREES">-116.40576</Longitude>
+      <Elevation>1077.0</Elevation>
+      <Site>
+        <Name>Yucca Valley</Name>
+      </Site>
+      <CreationDate>2013-04-16T00:00:00.000000Z</CreationDate>
+    </Station>
+    <Station code="YUH2" startDate="2014-04-29T18:00:00.000000Z" endDate="3000-01-01T00:00:00.000000Z">
+      <Latitude unit="DEGREES">32.64752</Latitude>
+      <Longitude unit="DEGREES">-115.92227</Longitude>
+      <Elevation>184.0</Elevation>
+      <Site>
+        <Name>Yuha Desert</Name>
+      </Site>
+      <CreationDate>2014-04-29T18:00:00.000000Z</CreationDate>
+    </Station>
+  </Network>
+</FDSNStationXML>

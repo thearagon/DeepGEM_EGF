@@ -13,9 +13,7 @@ DeepGEM-egf is a Bayesian inversion framework that aims at providing reliable an
 
 *Angela Gao, Jorge Castellanos, Yisong Yue, Zachary Ross, Katherine Bouman (2021). DeepGEM: Generalized Expectation-Maximization for Blind Inversion. Part of [Advances in Neural Information Processing Systems 34 (NeurIPS 2021)](https://proceedings.neurips.cc/paper_files/paper/2021)*
 
-
 <!--- ![overview image](https://github.com/angelafgao/DeepGEM/blob/main/teaser.jpg) -->
-
 
 
 ## Requirements and environment setup
@@ -37,7 +35,6 @@ conda env create -f environment_cpu.yml
 conda activate gem
 ```
 
-
 #### Create conda environment from scratch
  ```bash
 # Set anaconda path
@@ -51,7 +48,6 @@ conda create -c conda-forge -n gem python=3.9 pytorch torchvision torchaudio xar
 conda activate gem 
 conda clean --tarballs
 ```
-
 
 ### B) On a cluster with access to GPU
 
@@ -88,7 +84,6 @@ conda install -c conda-forge matplotlib scipy obspy
 ```
 And then `exit` to quit the job.
 
-  
 ## Clone git repository
 ```bash
 mkdir /home/your-path-to-deepgem/
@@ -116,7 +111,15 @@ conda activate gem
 ```
 
 ## Cahuilla swarm example
-To run the default version of the example:
+To do a test run on real data at station BOR:
+```bash
+cd /home/your-path-to-deepgem/examples/cahuilla_swarm/
+# set up environment
+conda activate gem
+# Run deepGEM-egf
+./EGF_ex_BOR.sh /home/your-path-to-deepgem/
+```
+To run the full default version of the example:
 ```bash
 cd /home/your-path-to-deepgem/examples/cahuilla_swarm/
 # set up environment
