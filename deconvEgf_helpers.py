@@ -8,13 +8,11 @@ import torch.nn.functional as F
 torch.set_warn_always(False)
 import os
 import numpy as np
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-import seaborn as sns
 import random
 import json
 import itertools
-import scipy
 from scipy import signal
 import obspy
 from pytorch_softdtw_cuda import soft_dtw_cuda_wojit as soft_dtw_cuda # from https://github.com/Maghoumi/pytorch-softdtw-cuda
@@ -58,15 +56,15 @@ class GFNetwork(torch.nn.Module):
         out = F.conv1d(k.reshape(3,1,k.shape[-1]),x, padding='same' )
         out = torch.transpose(out, 0, 1)
         out = out.reshape(x.shape[0], 3, out.shape[-1])
-        # return out / torch.amax(torch.abs(out))
-        return out
+        return out / torch.amax(torch.abs(out))
+        # return out
 
 def trueForward(k, x, num_egf):
     out = F.conv1d(k.reshape(3*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
     out = torch.transpose(out, 0, 1)
     out = out.reshape(x.shape[0], num_egf, 3, out.shape[-1])
-    # return out / torch.amax(torch.abs(out))
-    return out
+    return out / torch.amax(torch.abs(out))
+    # return out
 
 
 def makeInit(init, num_layers, device, noise_amp=.1):
@@ -77,7 +75,7 @@ def makeInit(init, num_layers, device, noise_amp=.1):
     for i in range(num_layers - 1):
         out[i] = l0 + (torch.randn(1, device=device)[0] * noise_amp / 100.) * torch.randn(l0.shape, device=device)
     out[-1] = init + (2 * noise_amp / 100.) * torch.randn(l0.shape, device=device)
-    return out
+    return out / torch.amax(torch.abs(out))
 
 
 ######################################################################################################################
@@ -103,7 +101,7 @@ def GForward(z_sample, stf_generator, len_stf, logscale_factor, device=None, stf
     # apply scale factor
     logscale_factor_value = logscale_factor.forward()
     scale_factor = torch.exp(logscale_factor_value)
-    stf = stf_samp  * scale_factor ## TODO?
+    stf = stf_samp # * scale_factor
     det_scale = logscale_factor_value * len_stf
     logdet += det_scale
     return stf, logdet
@@ -119,18 +117,20 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf,
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
     data_weight = 1 / args.data_sigma ** 2
 
+    # generate STF
     stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor, device=args.device, device_ids=device_ids)
     y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(len(gf_network))]
 
-    ## log likelihood
+    # log likelihood
     logqtheta = - args.logdet_weight * torch.mean(logdet)
 
-    ## Loss
+    # MSE Loss
     meas_err = torch.stack([data_weight * args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue)**2 for i in range(len(gf_network))])
+    # sum meas_err for multiple EGFs case
     smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
 
-    ## prior on STF
-    priorx = torch.sum(prior_x(stf)) * args.stf0_weight  # logp(x) w/ gaussian assumption sum||x-x_mu||/sigma**2
+    # prior on STF, logp(x) w/ gaussian assumption sum||x-x_mu||/sigma**2
+    priorx = torch.sum(prior_x(stf)) * args.stf0_weight
 
     if isinstance(prior_stf, list):
         priorstf = torch.mean(torch.tensor([
@@ -146,10 +146,14 @@ def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf,
 def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_network,
           logscale_factor, prior_phi, args):
 
+    # sample STF
     stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor,
                            device=args.device, device_ids=args.device_ids if len(args.device_ids) > 1 else None)
+    # trace output from sampled STF
     y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    # trace from random STF with current EGFs
     y_x = [FForward(x_sample, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    # trace from random STF but prior EGFs
     fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
 
     pphi = [args.phi_weight * F.mse_loss(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
@@ -161,6 +165,7 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
     prior = [args.prior_phi_weight[0] * prior_phi[0](gf[i].squeeze(0)) + sum(
         prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k], i) for k in range(1, len(prior_phi))) for i in range(args.num_egf)]
 
+    # MSE loss
     meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * F.mse_loss(y[i], ytrue) for i in range(args.num_egf)]
 
     # Multi M-steps for multiple EGFs
@@ -323,9 +328,8 @@ def null(x, y):
 ######################################################################################################################
 
 
-sns.set_style("white", {'axes.edgecolor': 'darkgray',
-                        'axes.spines.right': False,
-                        'axes.spines.top': False})
+mpl.rcParams['axes.spines.right'] = False
+mpl.rcParams['axes.spines.top'] = False
 myblue = '#244c77ff'
 mycyan = '#3f7f93ff'
 myred = '#c3553aff'

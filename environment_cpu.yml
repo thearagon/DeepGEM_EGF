@@ -1,0 +1,21 @@
+name: gem
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pyproj
+  - pytorch
+  - pillow
+  - obspy
+  - xarray
+  - pandas
+  - scipy
+  - pyqt
+  - shapely
+  - numpy
+  - torchaudio
+  - torchvision
+  - python=3.9
+  - matplotlib
+  - cartopy
+  - ffmpeg

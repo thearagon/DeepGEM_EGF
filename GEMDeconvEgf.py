@@ -130,7 +130,7 @@ def main_function(args):
     prior_x = lambda stf: Loss_L2(stf, stf0_gauss_ext) / args.stf0_sigma ** 2
 
     flux = torch.abs(torch.sum(stf0))
-    logscale_factor = stf_logscale(scale=flux / (0.8 * stf0.shape[0]), device=args.device).to(args.device)
+    logscale_factor = stf_logscale(scale=flux / (0.5 * stf0.shape[0]), device=args.device).to(args.device)
 
     # Optimizers (Adam)
     Eoptimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, list(stf_gen.parameters())
