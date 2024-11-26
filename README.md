@@ -24,7 +24,7 @@ General requirements for PyTorch release:
 
 ### A) To run on CPU
 #### Create  conda environment from yml
-```
+```bash
 # Set anaconda path
 export PATH=/opt/conda/bin:$PATH
 
@@ -39,7 +39,7 @@ conda activate gem
 
 
 #### Create conda environment from scratch
- ```
+ ```bash
 # Set anaconda path
 export PATH=/opt/conda/bin:$PATH
 
@@ -56,7 +56,7 @@ conda clean --tarballs
 ### B) On a cluster with access to GPU
 
 #### Create conda environment from scratch
-```
+```bash
 # Set anaconda path
 export PATH=/opt/conda/bin:$PATH
 
@@ -74,7 +74,7 @@ pip install nvidia-ml-py3
 ```
 
 #### Example on an OAR cluster
-```
+```bash
 # use oarsub because otherwise uses too much ressources
 oarsub -I -t devel -l /nodes=1/gpu=1/migdevice=1
 source /applis/environments/conda.sh
@@ -90,7 +90,7 @@ And then `exit` to quit the job.
 
   
 ## Clone git repository
-```
+```bash
 mkdir /home/your-path-to-deepgem/
 cd /home/your-path-to-deepgem/
 git clone https://github.com/thearagon/DeepGEM_EGF.git
@@ -100,7 +100,7 @@ git clone https://github.com/thearagon/DeepGEM_EGF.git
 There are two examples. One is a simple toy model with a perfectly known forward model. The other runs with data from the Cahuilla swarm (see next section). For a test run, you can use the toy model example.
 
 ### Run on CPU
-```
+```bash
 cd /home/your-path-to-deepgem/examples/toy_model/
 conda activate gem
 ./EGF_ex_cpu.sh /home/your-path-to-deepgem/
@@ -138,7 +138,7 @@ dist_egf = 0.8 #km, maximum distance from mainshock to EGFs
 nbr_cc = 4 ## maximum number of EGFs to select
 ```
 and in l. 214, you can change the stations:
-```
+```python
 stations = ['BOR', 'CTW', 'BLA2', 'PSD']
 ```
 
