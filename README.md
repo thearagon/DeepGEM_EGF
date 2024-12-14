@@ -1,8 +1,6 @@
 # DeepGEM-egf: Generalized Expectation Maximization for Empirical Green's Functions approach
 
-```
 [![DOI](https://zenodo.org/badge/30348824.svg)](https://zenodo.org/badge/latestdoi/30348824)
-```
 
 Please refer to this publication when using this code:
 ```
