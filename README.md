@@ -14,7 +14,7 @@ DeepGEM-egf is a Bayesian inversion framework that aims at providing reliable an
 
 *Angela Gao, Jorge Castellanos, Yisong Yue, Zachary Ross, Katherine Bouman (2021). DeepGEM: Generalized Expectation-Maximization for Blind Inversion. Part of [Advances in Neural Information Processing Systems 34 (NeurIPS 2021)](https://proceedings.neurips.cc/paper_files/paper/2021)*
 
-[overview image](https://github.com/thearagon/DeepGEM_EGF/blob/main/deepgem-egf-github.png)
+![overview image](https://github.com/thearagon/DeepGEM_EGF/blob/main/deepgem-egf-github.png)
 
 
 ## Requirements and environment setup
