@@ -1,20 +1,20 @@
 # DeepGEM-egf: Generalized Expectation Maximization for Empirical Green's Functions approach
 
-
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 [![DOI](https://zenodo.org/badge/595772055.svg)](https://doi.org/10.5281/zenodo.14472786)
 
 
-Please refer to this publication when using this code:
+When using DeepGEM-EGF, please refer to:
 ```
-Théa Ragon, Angela Gao, Zachary Ross (xxx). xxxxx
+Théa Ragon, Angela Gao, Zachary Ross (xxx). DeepGEM-EGF: A Bayesian strategy for joint estimates of source time functions and empirical Green’s functions.
 ```
 
 DeepGEM-egf is a Bayesian inversion framework that aims at providing reliable and probabilistic estimates of source time functions, and their posterior uncertainty, while jointly solving for the best Empirical Green's functions (EGF) using one or a few events as prior EGFs. Our approach is based on DeepGEM, an unsupervised generalized expectation-maximization framework for blind inversion (Gao et al., 2021). 
 
 *Angela Gao, Jorge Castellanos, Yisong Yue, Zachary Ross, Katherine Bouman (2021). DeepGEM: Generalized Expectation-Maximization for Blind Inversion. Part of [Advances in Neural Information Processing Systems 34 (NeurIPS 2021)](https://proceedings.neurips.cc/paper_files/paper/2021)*
 
-<!--- ![overview image](https://github.com/angelafgao/DeepGEM/blob/main/teaser.jpg) -->
+[overview image](https://github.com/thearagon/DeepGEM_EGF/blob/main/deepgem-egf-github.png)
 
 
 ## Requirements and environment setup
