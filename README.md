@@ -4,7 +4,6 @@
 
 [![DOI](https://zenodo.org/badge/595772055.svg)](https://doi.org/10.5281/zenodo.14472786)
 
-
 When using DeepGEM-EGF, [please refer to](https://doi.org/10.1029/2025JB031260):
 ```
 Ragon, T., Gao, A. F., & Ross, Z. E. (2025). DeepGEM-EGF: A Bayesian strategy for joint estimates of source-time functions and Empirical Green's functions. *Journal of Geophysical Research: Solid Earth*, 130, e2025JB031260. <https://doi.org/10.1029/2025JB031260>

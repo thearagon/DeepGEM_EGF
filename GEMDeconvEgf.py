@@ -28,7 +28,8 @@ def main_function(args):
         args.egf_qual_weight = [1.0]
 
     ################################################ SET UP DATA ################################################
-
+    
+    
     def load_data(file_path, reshape_dims=None):
         try:
             data = obspy.read(file_path)
@@ -45,9 +46,10 @@ def main_function(args):
     # traces
     st_trc, trc0, _ = load_data(args.trc0)
     trc0 = torch.Tensor(trc0 / np.amax(np.abs(trc0))).to(args.device)
+    args.num_channels = trc0.shape[0]
 
     # EGF
-    st_gf, gf0, args.samp_rate = load_data(args.egf0, reshape_dims=(args.num_egf, 3, -1))
+    st_gf, gf0, args.samp_rate = load_data(args.egf0, reshape_dims=(args.num_egf, args.num_channels, -1))
     gf0 = torch.Tensor(gf0 / np.amax(np.abs(gf0))).to(args.device)
 
     # Determine STF length
@@ -69,7 +71,7 @@ def main_function(args):
 
     # Synthetics
     if args.synthetics == True:
-        st_gf_true, gf_true, _ = load_data(args.gf_true, reshape_dims=(3, gf0.shape[-1]))
+        st_gf_true, gf_true, _ = load_data(args.gf_true, reshape_dims=(args.num_channels, gf0.shape[-1]))
         gf_true = torch.Tensor(gf_true / np.amax(np.abs(gf_true))).to(args.device)
         stf_true = np.load("{}".format(args.stf_true))
         stf_true = stf_true / np.amax(stf_true)
@@ -85,11 +87,12 @@ def main_function(args):
     n_flow = 32
     affine = True
     seqfrac = args.seqfrac
-
+    
     # EGF initialization
     gf_network = [GFNetwork(gf0[i],
                             num_layers=args.num_layers,
                             num_egf=1,
+                            num_channels = args.num_channels,
                             device=args.device,
                             ).to(args.device) for i in range(args.num_egf)]
 
@@ -100,7 +103,7 @@ def main_function(args):
     stf_gen = stf_generator(realnvp).to(args.device)
 
     # True forward model (with init GF), used for priors
-    FTrue = lambda x: trueForward(torch.unsqueeze(gf0, dim=0), x, args.num_egf)
+    FTrue = lambda x: trueForward(torch.unsqueeze(gf0, dim=0), x, args.num_egf, args.num_channels)
 
     print("Models Initialized")
 
@@ -164,7 +167,7 @@ def main_function(args):
 
         for k_sub in range(args.num_subepochsE):
             z_sample = torch.randn_like(z_sample_template)
-
+            
             Eloss, qloss, priorloss, mseloss = EStep(z_sample, trc_ext_batched, stf_gen, gf_network,
                                                      prior_x, prior_stf, len_stf, logscale_factor, args)
 
@@ -307,7 +310,7 @@ def main_function(args):
         st_trc_mn, st_trc_sd = st_trc.copy(), st_trc.copy()
         inferred_trace_mean = np.mean(inferred_trace, axis=(0, 1))
         inferred_trace_std = np.std(inferred_trace, axis=(0, 1))
-        for i in range(3):
+        for i in range(args.num_channels):
             st_trc_mn[i].data = inferred_trace_mean[i]
             st_trc_sd[i].data = inferred_trace_std[i]
         st_trc_mn.write(f"{args.PATH}/{args.trc0.rsplit('/', 1)[1].rsplit('.', 1)[0]}_out_mean.mseed")
@@ -315,7 +318,7 @@ def main_function(args):
 
     if st_gf is not None:
         st_gf_out = st_gf.copy()
-        lk = learned_gf_detached.reshape(args.num_egf * 3, -1)
+        lk = learned_gf_detached.reshape(args.num_egf * args.num_channels, -1)
         for i in range(len(lk)):
             st_gf_out[i].data = lk[i, :]
         st_gf_out.write(f"{args.PATH}/{args.egf0.rsplit('/', 1)[1].rsplit('.', 1)[0]}_out.mseed")
@@ -415,7 +418,7 @@ if __name__ == "__main__":
                         help='weight on E step priors, list (default None = function of data_sigma)')
     parser.add_argument('--logdet_weight', type=float, default=None,
                         help='β, controls entropy, E step prior (default None = function of data_sigma)')
-    parser.add_argument('--prior_phi_weight', type=float, default=None,
+    parser.add_argument('--prior_phi_weight', type=float, default=None, nargs='+',
                         help='weight on init GF on M step (default None = function of data_sigma)')
     parser.add_argument('--egf_multi_weight', type=float, default=None,
                         help='if multiple EGFs, weight to closeness of EGFs to best EGF (the one that minimizes the fit to the data). ')
