@@ -5,9 +5,9 @@
 [![DOI](https://zenodo.org/badge/595772055.svg)](https://doi.org/10.5281/zenodo.14472786)
 
 
-When using DeepGEM-EGF, please refer to:
+When using DeepGEM-EGF, [please refer to](https://doi.org/10.1029/2025JB031260):
 ```
-Théa Ragon, Angela Gao, Zachary Ross (2025). DeepGEM-EGF: A Bayesian strategy for joint estimates of source time functions and empirical Green’s functions. JGR Solid Earth.
+Ragon, T., Gao, A. F., & Ross, Z. E. (2025). DeepGEM-EGF: A Bayesian strategy for joint estimates of source-time functions and Empirical Green's functions. *Journal of Geophysical Research: Solid Earth*, 130, e2025JB031260. <https://doi.org/10.1029/2025JB031260>
 ```
 
 DeepGEM-egf is a Bayesian inversion framework that aims at providing reliable and probabilistic estimates of source time functions, and their posterior uncertainty, while jointly solving for the best Empirical Green's functions (EGF) using one or a few events as prior EGFs. Our approach is based on DeepGEM, an unsupervised generalized expectation-maximization framework for blind inversion ([Gao et al., 2021](https://proceedings.neurips.cc/paper/2021/hash/606c90a06173d69682feb83037a68fec-Abstract.html)). 
@@ -151,3 +151,44 @@ stations = ['BOR', 'CTW', 'BLA2', 'PSD']
 ```
 
 If using phasenet API, you also need to do: `conda install conda-forge::gradio-client`
+
+
+## Common errors
+
+#### `seqfrac` < 0.5* `stf_size`
+If the following error appears:
+```bash
+Traceback (most recent call last):
+  File "~/code/DeepGEM/GEMDeconvEgf.py", line 497, in <module>
+    main_function(args)
+  File "~/code/DeepGEM/GEMDeconvEgf.py", line 171, in main_function
+    Eloss, qloss, priorloss, mseloss = EStep(z_sample, trc_ext_batched, stf_gen, gf_network,
+  File "~/code/DeepGEM/deconvEgf_helpers.py", line 123, in EStep
+    stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor, device=args.device, device_ids=device_ids)
+  File "~/code/DeepGEM/deconvEgf_helpers.py", line 95, in GForward
+    stf_samp, logdet = stf_generator.reverse(z_sample)
+  File "~/code/DeepGEM/deconvEgf_helpers.py", line 219, in reverse
+    stf, logdet = self.realnvp.reverse(input)
+  File "~/code/DeepGEM/generative_model/realnvpfc_model.py", line 272, in reverse
+    input, det = self.blocks[i].reverse(input)
+  File "~/code/DeepGEM/generative_model/realnvpfc_model.py", line 205, in reverse
+    input, det1 = self.coupling2.reverse(input)
+  File "~/code/DeepGEM/generative_model/realnvpfc_model.py", line 155, in reverse
+    log_s0, t = self.net(out_a).chunk(2, 1)
+  File "~/.conda/envs/gem/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "~/.conda/envs/gem/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "~/.conda/envs/gem/lib/python3.8/site-packages/torch/nn/modules/container.py", line 215, in forward
+    input = module(input)
+  File "~/.conda/envs/gem/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "~/.conda/envs/gem/lib/python3.8/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "~/.conda/envs/gem/lib/python3.8/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "~/.conda/envs/gem/lib/python3.8/site-packages/torch/nn/functional.py", line 2478, in batch_norm
+    return torch.batch_norm(
+IndexError: select(): index 0 out of range for tensor of size [0] at dimension 0
+```
+it means that your `seqfrac` **is not** lower than half of the `stf_size` (which is `stf_dur`*`rate`). You should lower it.
