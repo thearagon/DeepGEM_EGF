@@ -7,18 +7,17 @@ from deconvEgf_helpers import *
 def main_function(args):
     ################################################ SET UP WEIGHTS ################################################
 
-    args.phi_weight = 1e-1
-    # weight on init STF
-    args.stf0_weight = args.stf0_weight or (1 / args.data_sigma) / 1e4
-    # weights for priors on Estep: list, [boundaries, TV, L1]
-    args.stf_weight = args.stf_weight or [(1 / args.data_sigma) / 2e3,
-                                          (1 / args.data_sigma) / 4e2,
-                                          (1 / args.data_sigma) / 2e3]
     # weight on q_theta
-    args.logdet_weight = args.logdet_weight or (1 / args.data_sigma) / 1e2
-    # weights for priors on Mstep: list, [L1, L2, TV]
-    args.prior_phi_weight = args.prior_phi_weight or [(1 / args.data_sigma) / 6e3,
-                                                      (1 / args.data_sigma) / 4e4, 0]
+    args.logdet_weight = 1
+    
+    # weights for priors on Estep: list, [boundaries, TV]
+    args.stf_weight = args.stf_weight or [(1 / args.data_sigma) *5e-1,
+                                          (1 / args.data_sigma) * 1e-1]
+    
+    # weights for priors on Mstep: list, [L1, L2]
+    args.prior_phi_weight = args.prior_phi_weight or [(1 / args.data_sigma) *1e2,
+                                                      (1 / args.data_sigma) *1e2]
+    
     # if multiple EGFs
     if args.num_egf > 1:
         args.egf_multi_weight = args.egf_multi_weight or (1 / args.data_sigma) / 4e4
@@ -28,29 +27,30 @@ def main_function(args):
         args.egf_qual_weight = [1.0]
 
     ################################################ SET UP DATA ################################################
-    
-    
+
     def load_data(file_path, reshape_dims=None):
-        try:
-            data = obspy.read(file_path)
+        if file_path.endswith(".npy"):
+            data, array, sr = None, np.load(file_path), None
+        else:
+            data = obspy.read(file_path)  
             array = np.concatenate([trace.data[:, None] for trace in data], axis=1).T
-            if reshape_dims:
-                array = array.reshape(reshape_dims, order='F')
-            return data, array, 1 / data[0].stats['delta']
-        except TypeError:
-            array = np.load(file_path)
-            if reshape_dims:
-                array = array.reshape(reshape_dims, order='F')
-            return None, array, None
+            sr = 1 / data[0].stats['delta']
+        if reshape_dims:
+            array = array.reshape(reshape_dims, order='F')
+        return data, array, sr
 
     # traces
     st_trc, trc0, _ = load_data(args.trc0)
-    trc0 = torch.Tensor(trc0 / np.amax(np.abs(trc0))).to(args.device)
-    args.num_channels = trc0.shape[0]
+    args.c_trc = float(np.amax(np.abs(trc0)))  # amplitude factor
+    trc0 = torch.Tensor(trc0 / args.c_trc).to(args.device)
+    args.num_comp = trc0.shape[0]
 
     # EGF
-    st_gf, gf0, args.samp_rate = load_data(args.egf0, reshape_dims=(args.num_egf, args.num_channels, -1))
-    gf0 = torch.Tensor(gf0 / np.amax(np.abs(gf0))).to(args.device)
+    st_gf, gf0, sr = load_data(args.egf0, reshape_dims=(args.num_egf, args.num_comp, -1))
+    args.samp_rate = sr or args.samp_rate
+    c_gf = np.amax(np.abs(gf0), axis=(1, 2), keepdims=True)
+    args.c_gf = c_gf.ravel().tolist() # amplitude factor
+    gf0 = torch.Tensor(gf0 / args.c_gf[0]).to(args.device)
 
     # Determine STF length
     len_stf = int(args.stf_dur * args.samp_rate) if args.stf_dur and args.samp_rate else args.stf_size
@@ -58,12 +58,31 @@ def main_function(args):
 
     # STF
     if args.stf0:
-        _, stf0, _ = load_data(args.stf0)
-        stf0 = np.resize(stf0, len_stf) if len(stf0) != len_stf else stf0
+        _, stf0, sr0 = load_data(args.stf0)
+        stf0 = np.asarray(stf0, dtype=float).ravel()
+        if sr0 and args.samp_rate and sr0 != args.samp_rate:          
+            t0 = np.arange(len(stf0)) / sr0
+            stf0 = np.interp(np.arange(0, t0[-1], 1 / args.samp_rate), t0, stf0)
+        d = len_stf - len(stf0)                                      
+        if d > 0:
+            stf0 = np.pad(stf0, (d // 2, d - d // 2))
+        elif d < 0:
+            stf0 = stf0[(-d) // 2:(-d) // 2 + len_stf]
+    
     else:
         τc = len_stf // 10
         stf0 = 0.01 + 0.99 * np.exp(-(np.arange(len_stf) - len_stf // 2) ** 2 / (2 * (τc / 2) ** 2))
     stf0 = torch.Tensor(stf0 / np.amax(stf0)).to(args.device)
+
+    ## initial start for amplitude estimates
+    with torch.no_grad():
+        A, A_ls = [], []
+        for i in range(args.num_egf):
+            p = conv_same(gf0[i][:, None, :], stf0.view(1, 1, -1))[:, 0, :]        # (C, L)
+            A_ls.append(float((p * trc0).sum() / (p ** 2).sum()))                 # timing-sensitive, can be < 0
+            A.append(float(torch.sqrt((trc0 ** 2).sum() / (p ** 2).sum())))     # energy ratio, always > 0
+    args.amp = A
+    args.amp0 = A[0]    
 
     trc_ext = trc0.clone()
     gf0_detached = gf0.detach().cpu().numpy()
@@ -71,29 +90,33 @@ def main_function(args):
 
     # Synthetics
     if args.synthetics == True:
-        st_gf_true, gf_true, _ = load_data(args.gf_true, reshape_dims=(args.num_channels, gf0.shape[-1]))
+        st_gf_true, gf_true, _ = load_data(args.gf_true, reshape_dims=(args.num_comp, gf0.shape[-1]))
         gf_true = torch.Tensor(gf_true / np.amax(np.abs(gf_true))).to(args.device)
         stf_true = np.load("{}".format(args.stf_true))
-        stf_true = stf_true / np.amax(stf_true)
         if len_stf > len(stf_true):
             stf_rs = np.zeros(len_stf)
             stf_rs[(len(stf_rs) - len(stf_true)) // 2:-(len(stf_rs) - len(stf_true)) // 2] = stf_true
             stf_true = stf_rs
         elif len_stf < len(stf_true):
-            len_stf = len(stf_true)
+            c = (len(stf_true) - len_stf) // 2
+            stf_true = stf_true[c:c + len_stf]
 
     ################################################ MODEL SETUP ################################################
 
     n_flow = 32
     affine = True
     seqfrac = args.seqfrac
-    
+    args.sigma = [args.data_sigma] * args.num_comp
+
+
     # EGF initialization
     gf_network = [GFNetwork(gf0[i],
                             num_layers=args.num_layers,
                             num_egf=1,
-                            num_channels = args.num_channels,
+                            num_comp=args.num_comp,
                             device=args.device,
+                            log_amp=np.log(A[i] / A[0]),
+                            learn_amp=(i != 0)
                             ).to(args.device) for i in range(args.num_egf)]
 
     # STF initialization
@@ -101,9 +124,10 @@ def main_function(args):
     print(f"Generating {'Reverse' if args.reverse else 'Random'} RealNVP Network")
     realnvp = realnvpfc_model.RealNVP(len_stf, n_flow, seqfrac=seqfrac, affine=affine, permute=permute).to(args.device)
     stf_gen = stf_generator(realnvp).to(args.device)
+    
 
     # True forward model (with init GF), used for priors
-    FTrue = lambda x: trueForward(torch.unsqueeze(gf0, dim=0), x, args.num_egf, args.num_channels)
+    FTrue = lambda x, with_amp=True: trueForward(torch.unsqueeze(gf0, dim=0), x, args.num_egf, args.num_comp)
 
     print("Models Initialized")
 
@@ -113,27 +137,23 @@ def main_function(args):
         gf_network = [nn.DataParallel(network, device_ids=args.device_ids).to(args.device) for network in gf_network]
 
     # Priors on Mstep (EGF)
-    f_phi_prior = lambda gf: priorPhi(gf, gf0)
-    prior_L2 = lambda gf, weight, i: (
-        weight * (0.5 * Loss_DTW_Mstep(gf, gf0 if args.num_egf == 1 else gf0[i].unsqueeze(0)) +
-                  Loss_L2(gf, gf0 if args.num_egf == 1 else gf0[i].unsqueeze(0)))
-        if weight > 0 else 0)
-    prior_TV = lambda gf, weight, i: weight * Loss_TV(gf)
-    phi_priors = [f_phi_prior, prior_L2, prior_TV]  # norms on init GF
+    g0 = lambda i: gf0[i].unsqueeze(0)  
+    f_phi_prior = lambda gf, w, i: w * priorPhi(gf, g0(i))
+    prior_L2 = lambda gf, w, i: w * Loss_L2(gf, g0(i)) if w > 0 else 0
+    phi_priors = [f_phi_prior, prior_L2] # norms on init GF
 
     # Priors on Estep (STF)
-    prior_stf = [
-        lambda stf, weight: weight * torch.sum(torch.abs(stf[:, :, 0]) + torch.abs(stf[:, :, -1])), # Boundary
-        lambda stf, weight: weight * Loss_TV(stf), # TV
-        lambda stf, weight: torch.abs(1 - torch.sum(stf))] # soft L1
+    stf0_ext = (args.amp0 * stf0).view(1, 1, -1)
+    prior_x = lambda stf: 0.5 * torch.sum((stf - stf0_ext) ** 2, dim=(1, 2)) / (args.amp0 * args.stf0_sigma) ** 2 
 
-    # Gaussian prior for STF
-    stf0_gauss = stf0 + torch.randn_like(stf0) * args.stf0_sigma
-    stf0_gauss_ext = stf0_gauss.unsqueeze(0).expand(args.btsize, -1, -1).contiguous()
-    prior_x = lambda stf: Loss_L2(stf, stf0_gauss_ext) / args.stf0_sigma ** 2
+    prior_stf = [
+            lambda stf, w: w * torch.mean(torch.abs(stf[:, :, 0]) + torch.abs(stf[:, :, -1])) / args.amp0,              # boundary
+            lambda stf, w: w * torch.mean(torch.sum(torch.abs(stf[:, :, 1:] - stf[:, :, :-1]), dim=-1)) / args.amp0,   # TV
+        ]
+
 
     flux = torch.abs(torch.sum(stf0))
-    logscale_factor = stf_logscale(scale=flux / (0.5 * stf0.shape[0]), device=args.device).to(args.device)
+    logscale_factor = stf_logscale(scale=torch.tensor(args.amp0), device=args.device).to(args.device)
 
     # Optimizers (Adam)
     Eoptimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, list(stf_gen.parameters())
@@ -167,7 +187,7 @@ def main_function(args):
 
         for k_sub in range(args.num_subepochsE):
             z_sample = torch.randn_like(z_sample_template)
-            
+
             Eloss, qloss, priorloss, mseloss = EStep(z_sample, trc_ext_batched, stf_gen, gf_network,
                                                      prior_x, prior_stf, len_stf, logscale_factor, args)
 
@@ -204,7 +224,7 @@ def main_function(args):
                         'model_state_dict': stf_gen.state_dict(),
                         'optimizer_state_dict': Eoptimizer.state_dict(),
                     }, f'{args.PATH}/stf_gen_{str(k).zfill(5)}_E{str(k_sub).zfill(5)}.pt')
-                    np.save(f"{args.PATH}/Data/stf.npy", learned_gf_detached)
+                    np.save(f"{args.PATH}/Data/stf.npy", stf.cpu().numpy())
 
                     for k_egf in range(args.num_egf):
                         plot_seploss(args, Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list,
@@ -230,7 +250,7 @@ def main_function(args):
             for k_egf in range(args.num_egf):
                 Mloss_list[k_egf].append(Mloss[k_egf].item())
                 Mloss_mse_list[k_egf].append(mse[k_egf].item())
-                Mloss_multi_list[k_egf].append(multiloss.item())
+                Mloss_multi_list[k_egf].append(multiloss[k_egf].item())
                 Mloss_phiprior_list[k_egf].append(priorphi[k_egf].item())
 
                 Moptimizer[k_egf].zero_grad()
@@ -289,39 +309,41 @@ def main_function(args):
     stf, logdet = GForward(z_sample, stf_gen, len_stf, logscale_factor,
                        device=args.device, device_ids=(args.device_ids if len(args.device_ids) > 1 else None))
     stf_detached = stf.detach().cpu().numpy()
-    y = torch.stack([
-        FForward(stf, gf_network[i], args.data_sigma, args.device)
-        for i in range(args.num_egf)
-    ], dim=0)
-    inferred_trace = y.detach().cpu().numpy()
+    with torch.no_grad():
+        y = torch.stack([gf_network[i](stf) for i in range(args.num_egf)], dim=0)    # (E, B, C, L)
+    inferred_trace = y.cpu().numpy()
     learned_gf_detached = learned_gf.detach().cpu().numpy()[:, 0]
 
-    # Scale stf area with M0
-    if args.samp_rate is not None and args.M0 is not None:
-        area = np.trapz(y=stf_detached, dx=0.1, axis=-1)[..., np.newaxis]
-        stf_detached /= np.repeat(area, stf_detached.shape[-1], axis=-1)
-        stf_detached *= args.M0
+    # check against M0
+    stf_phys = stf_detached * args.c_trc / args.c_gf[0] # sum = M0 / M0_egf(ref), per posterior sample
+    np.save(f"{args.PATH}/Data/reconSTF_ratio.npy", stf_phys)
+    if args.M0_egf is not None:
+        mrf = stf_phys * args.M0_egf * args.samp_rate  # moment-rate function, N·m/s
+        M0_post = stf_phys.sum(axis=-1) * args.M0_egf                     # posterior samples of M0
+        np.save(f"{args.PATH}/Data/MRF.npy", mrf)
 
     np.save(f"{args.PATH}/Data/reconSTF.npy", stf_detached)
     np.save(f"{args.PATH}/Data/outTRC.npy", inferred_trace)
     np.save(f"{args.PATH}/Data/outGF.npy", learned_gf_detached)
 
     if st_trc is not None:
-        st_trc_mn, st_trc_sd = st_trc.copy(), st_trc.copy()
-        inferred_trace_mean = np.mean(inferred_trace, axis=(0, 1))
-        inferred_trace_std = np.std(inferred_trace, axis=(0, 1))
-        for i in range(args.num_channels):
-            st_trc_mn[i].data = inferred_trace_mean[i]
-            st_trc_sd[i].data = inferred_trace_std[i]
-        st_trc_mn.write(f"{args.PATH}/{args.trc0.rsplit('/', 1)[1].rsplit('.', 1)[0]}_out_mean.mseed")
-        st_trc_sd.write(f"{args.PATH}/{args.trc0.rsplit('/', 1)[1].rsplit('.', 1)[0]}_out_std.mseed")
-
+        base = os.path.splitext(os.path.basename(args.trc0))[0]
+        for e in range(args.num_egf):
+            st_mn, st_sd = st_trc.copy(), st_trc.copy()
+            for c in range(args.num_comp):
+                st_mn[c].data = inferred_trace[e, :, c].mean(axis=0) * args.c_trc
+                st_sd[c].data = inferred_trace[e, :, c].std(axis=0) * args.c_trc
+            tag = f"_egf{e}" if args.num_egf > 1 else ""
+            st_mn.write(f"{args.PATH}/{base}_out_mean{tag}.mseed")
+            st_sd.write(f"{args.PATH}/{base}_out_std{tag}.mseed")
+    
     if st_gf is not None:
         st_gf_out = st_gf.copy()
-        lk = learned_gf_detached.reshape(args.num_egf * args.num_channels, -1)
+        lk = learned_gf_detached[:, 0].transpose(1, 0, 2).reshape(args.num_egf * args.num_comp, -1)
         for i in range(len(lk)):
-            st_gf_out[i].data = lk[i, :]
-        st_gf_out.write(f"{args.PATH}/{args.egf0.rsplit('/', 1)[1].rsplit('.', 1)[0]}_out.mseed")
+            st_gf_out[i].data = lk[i] * args.c_gf[0]     
+        base_gf = os.path.splitext(os.path.basename(args.egf0))[0]
+        st_gf_out.write(f"{args.PATH}/{base_gf}_out.mseed")
 
     # Plot
     if st_gf is not None and st_trc is not None:
@@ -346,7 +368,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--btsize', type=int, default=1024, metavar='N',
                         help='input batch size for training (default: 1024)')
-    parser.add_argument('--num_epochs', type=int, default=10, metavar='N',
+    parser.add_argument('--num_epochs', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--num_subepochsE', type=int, default=100, metavar='N',
                         help='number of epochs to train (default: 100)')
@@ -364,7 +386,7 @@ if __name__ == "__main__":
                         help='random seed (default: 1)')
     parser.add_argument('--Elr', type=float, default=1e-3,
                         help='learning rate(default: 1e-4)')
-    parser.add_argument('--Mlr', type=float, default=1e-5,
+    parser.add_argument('--Mlr', type=float, default=5e-5,
                         help='learning rate(default: 1e-4)')
 
     parser.add_argument('--dv', type=str, default='cpu',
@@ -379,12 +401,12 @@ if __name__ == "__main__":
                         help='Output directory')
     parser.add_argument('--stf0', type=str, default='',
                         help='init STF file name')
-    parser.add_argument('--M0', type=float, default=None,
-                        help='Main event seismic moment M0')
     parser.add_argument('--M0_egf', type=float, default=None,
-                        help='EGF seismic moment(s) M0, list if multiple EGFs')
+                        help='Seismic moment of the reference EGF (N·m)')
     parser.add_argument('--num_egf', type=int, default=1, metavar='N',
                         help='number of EGF (default: 1)')
+    parser.add_argument('--num_comp', type=int, default=3, metavar='N',
+                        help='number of components (default: 3)')
     parser.add_argument('--samp_rate', type=float, default=None,
                         help='Sampling rate (Hz) of traces, gf and stf.')
     parser.add_argument('--stf_dur', type=float, default=None,
@@ -400,24 +422,20 @@ if __name__ == "__main__":
                         help='synthetic case, true gf filename')
 
     # network setup
-    parser.add_argument('--x_rand', action='store_true', default=True,
-                        help='random x or from a certain sample')
     parser.add_argument('--reverse', action='store_true', default=False,
                         help='permute parameter, if False, random, if True, reverse')
     parser.add_argument('--seqfrac', type=int, default=8,
                         help='seqfrac (default:2), should be < to stf length')
 
     # Weight parameters
-    parser.add_argument('--data_sigma', type=float, default=5e-5,
+    parser.add_argument('--data_sigma', type=float, default=5e-2,
                         help='data sigma (default: 5e-5)')
     parser.add_argument('--stf0_sigma', type=float, default=2e-1,
                         help='sigma for init STF on E step prior, default 2e-1')
-    parser.add_argument('--stf0_weight', type=float, default=None,
-                        help='weight for init STF on E step prior (default None = function of data_sigma)')
     parser.add_argument('--stf_weight', type=float, nargs='+', default=None,
                         help='weight on E step priors, list (default None = function of data_sigma)')
-    parser.add_argument('--logdet_weight', type=float, default=None,
-                        help='β, controls entropy, E step prior (default None = function of data_sigma)')
+    # parser.add_argument('--logdet_weight', type=float, default=1,
+    #                     help='β, controls entropy, E step prior (default 1)')
     parser.add_argument('--prior_phi_weight', type=float, default=None, nargs='+',
                         help='weight on init GF on M step (default None = function of data_sigma)')
     parser.add_argument('--egf_multi_weight', type=float, default=None,

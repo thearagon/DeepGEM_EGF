@@ -10,6 +10,9 @@ import os
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+GRAY = '#555555'
+mpl.rcParams.update({'text.color': GRAY, 'axes.labelcolor': GRAY, 'axes.edgecolor': GRAY,
+                     'xtick.color': GRAY, 'ytick.color': GRAY, 'font.size': 7})
 import random
 import json
 import itertools
@@ -21,20 +24,37 @@ import warnings
 warnings.filterwarnings("ignore")
 from datetime import datetime
 
+def conv_same(gf, stf):
+    """True convolution with np.convolve 'same' alignment. gf: (C,1,L), stf: (B,1,K) -> (C,B,L)."""
+    K = stf.shape[-1]
+    return F.conv1d(F.pad(gf, (K // 2, (K - 1) // 2)), stf.flip(-1))
+
+def gauss_nll(y, d, sigma):
+    """Gaussian negative log-likelihood per sample (constants dropped).
+    y, d : (B, C, L) predicted and observed traces, in normalized units
+    sigma: float or list/tensor of length C (noise std per component, same units)
+    returns (B,)"""
+    sigma = torch.as_tensor(sigma, dtype=y.dtype, device=y.device)
+    if sigma.dim() == 1:
+        sigma = sigma[:, None]                      # broadcast over time
+    return 0.5 * torch.sum(((y - d) / sigma) ** 2, dim=(-2, -1))
+
 class GFNetwork(torch.nn.Module):
 
-    def __init__(self, ini, device, num_layers=3, num_egf=1, num_channels=3):
+    def __init__(self, ini, device, num_layers=3, num_egf=1, num_comp=3, log_amp=0.0, learn_amp=False):
 
         super(GFNetwork, self).__init__()
         self.num_layers = num_layers
         self.num_egf = num_egf
         self.device = device
-        self.num_channels = num_channels
+        self.num_comp = num_comp
+        self.log_amp = nn.Parameter(torch.tensor(float(log_amp), device=device), requires_grad=learn_amp)
 
         ## initialize GF
-        init = makeInit(ini, self.num_layers, self.device).view(self.num_layers, 1, self.num_channels*self.num_egf, ini.shape[-1])
+        init = makeInit(ini, self.num_layers, self.device).view(self.num_layers, 1, self.num_comp*self.num_egf, ini.shape[-1])
 
         self.layers = torch.nn.Parameter(init, requires_grad=True)
+        self.register_buffer("gf_ref", ini.detach().clone().reshape(1, -1, ini.shape[-1]))   # prior EGF (1, C, L)
 
     def load(self, filepath, device):
         checkpoint = torch.load(filepath, map_location=device)
@@ -44,28 +64,23 @@ class GFNetwork(torch.nn.Module):
         if self.num_layers >= 2:
             gf = self.layers[0]
             for i in range(1, self.num_layers):
-                gf = F.conv1d(gf, self.layers[i].view(self.num_egf* self.num_channels, 1, self.layers[0].shape[-1]).flip(2),
-                               padding='same', groups=self.num_channels*self.num_egf)
+                gf = F.conv1d(gf, self.layers[i].view(self.num_egf* self.num_comp, 1, self.layers[0].shape[-1]).flip(2),
+                               padding='same', groups=self.num_comp*self.num_egf)
         else:
             gf = self.layers[0]
 
-        out = gf / torch.max(torch.abs(gf))
-        return out.reshape(out.shape[0], self.num_egf, self.num_channels, out.shape[-1])
+        a = torch.sum(gf * self.gf_ref) / torch.sum(self.gf_ref ** 2)     # amount of prior EGF in gf
+        out = gf / torch.clamp(a, min=1e-3)
+        return out.reshape(out.shape[0], self.num_egf, self.num_comp, out.shape[-1])
 
-    def forward(self, x):
+    def forward(self, x, with_amp=True):
         k = self.generategf()
-        out = F.conv1d(k.reshape(self.num_channels,1,k.shape[-1]),x, padding='same' )
-        out = torch.transpose(out, 0, 1)
-        out = out.reshape(x.shape[0], self.num_channels, out.shape[-1])
-        return out / torch.amax(torch.abs(out))
-        # return out
+        out = conv_same(k.reshape(k.shape[2], 1, -1), x).transpose(0, 1) 
+        return out * torch.exp(self.log_amp) if with_amp else out
 
-def trueForward(k, x, num_egf, num_channels):
-    out = F.conv1d(k.reshape(num_channels*num_egf,1, k.shape[-1]), x, padding='same', groups=1)
-    out = torch.transpose(out, 0, 1)
-    out = out.reshape(x.shape[0], num_egf, num_channels, out.shape[-1])
-    return out / torch.amax(torch.abs(out))
-    # return out
+def trueForward(k, x, num_egf, num_comp):
+    out = conv_same(k.reshape(num_comp * num_egf, 1, k.shape[-1]), x).transpose(0, 1)
+    return out.reshape(x.shape[0], num_egf, num_comp, out.shape[-1]) 
 
 
 def makeInit(init, num_layers, device, noise_amp=.1):
@@ -101,14 +116,13 @@ def GForward(z_sample, stf_generator, len_stf, logscale_factor, device=None, stf
 
     # apply scale factor
     logscale_factor_value = logscale_factor.forward()
-    scale_factor = torch.exp(logscale_factor_value)
-    stf = stf_samp # * scale_factor
-    det_scale = logscale_factor_value * len_stf
-    logdet += det_scale
+    stf = stf_samp * torch.exp(logscale_factor_value)
+    logdet = logdet + logscale_factor_value * len_stf
+    
     return stf, logdet
 
-def FForward(x, gf_network, sigma, device):
-    y = gf_network(x)
+def FForward(x, gf_network, sigma, device, with_amp=True):
+    y = gf_network(x, with_amp=with_amp)
     noise = torch.randn(y.shape)*sigma
     return y + noise.to(device)
 
@@ -116,33 +130,26 @@ def FForward(x, gf_network, sigma, device):
 def EStep(z_sample, ytrue, stf_generator, gf_network, prior_x, prior_stf,
           len_stf, logscale_factor, args):
     device_ids = args.device_ids if len(args.device_ids) > 1 else None
-    data_weight = 1 / args.data_sigma ** 2
+    stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor,
+                           device=args.device, device_ids=device_ids)
 
-    # generate STF
-    stf, logdet = GForward(z_sample, stf_generator, len_stf, logscale_factor, device=args.device, device_ids=device_ids)
-    y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(len(gf_network))]
+    # Noise-free predictions: the likelihood already accounts for the noise
+    y = [gf_network[i](stf) for i in range(len(gf_network))]
 
-    # log likelihood
-    logqtheta = - args.logdet_weight * torch.mean(logdet)
-    
-    # MSE Loss
-    meas_err = torch.stack([data_weight * args.egf_qual_weight[i] * nn.MSELoss()(y[i], ytrue)**2 for i in range(len(gf_network))])
-    # sum meas_err for multiple EGFs case
-    smoothmin_meas_err = - torch.logsumexp (-0.1 * meas_err, 0) / 0.1
+    # Gaussian NLL per sample and per EGF. egf_qual_weight w_i acts as sigma_i = sigma / sqrt(w_i)
+    nll = torch.stack([args.egf_qual_weight[i] * gauss_nll(y[i], ytrue, args.sigma)
+                       for i in range(len(gf_network))])                      # (E, B)
+    # Several EGFs: equal-weight mixture, -log sum_i p(d | x, EGF_i)  (refined in point b)
+    nll = -torch.logsumexp(-nll, dim=0) if len(gf_network) > 1 else nll[0]   # (B,)
+    data_term = torch.mean(nll)
 
-    # prior on STF, logp(x) w/ gaussian assumption sum||x-x_mu||/sigma**2
-    priorx = torch.sum(prior_x(stf)) * args.stf0_weight
+    logqtheta = -args.logdet_weight * torch.mean(logdet)
+    priorx = torch.mean(prior_x(stf))
+    w = args.stf_weight if isinstance(args.stf_weight, list) else [args.stf_weight] * len(prior_stf)
+    priorstf = torch.stack([p(stf, wi) for p, wi in zip(prior_stf, w)]).mean()
 
-    if isinstance(prior_stf, list):
-        priorstf = torch.mean(torch.tensor([
-            prior_stf[i](stf, args.stf_weight[i] if isinstance(args.stf_weight, list) else args.stf_weight)
-            for i in range(len(prior_stf))
-        ]))
-    else:
-        priorstf = torch.mean(prior_stf(stf, args.stf_weight))
-
-    loss = logqtheta + priorx + smoothmin_meas_err + priorstf
-    return loss, logqtheta, priorx+priorstf, smoothmin_meas_err
+    loss = data_term + logqtheta + priorx + priorstf
+    return loss, logqtheta, priorx + priorstf, data_term
 
 def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_network,
           logscale_factor, prior_phi, args):
@@ -153,36 +160,38 @@ def MStep(z_sample, x_sample, len_stf, ytrue, stf_generator, gf_network, fwd_net
     # trace output from sampled STF
     y = [FForward(stf, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
     # trace from random STF with current EGFs
-    y_x = [FForward(x_sample, gf_network[i], args.data_sigma, args.device) for i in range(args.num_egf)]
+    y_x = [FForward(x_sample, gf_network[i], args.data_sigma, args.device, with_amp=False) for i in range(args.num_egf)]
     # trace from random STF but prior EGFs
     fwd = FForward(x_sample, fwd_network, args.data_sigma, args.device)
-    
-    pphi = [args.phi_weight * F.mse_loss(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
 
-    gf = [gf_network[i].module.generategf().detach() for i in range(args.num_egf)] \
-        if len(args.device_ids) > 1 else [gf_network[i].generategf().detach() for i in range(args.num_egf)]
+    pphi = [F.mse_loss(y_x[i], fwd[:,i,:,:]) for i in range(args.num_egf)]
+
+    net = lambda i: gf_network[i].module if len(args.device_ids) > 1 else gf_network[i]
+    gf = [net(i).generategf() for i in range(args.num_egf)]          # no .detach()
 
     ## Priors on init GF
-    prior = [args.prior_phi_weight[0] * prior_phi[0](gf[i].squeeze(0)) + sum(
-        prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k], i) for k in range(1, len(prior_phi))) for i in range(args.num_egf)]
+    prior = [sum(prior_phi[k](gf[i].squeeze(0), args.prior_phi_weight[k], i) for k in range(len(prior_phi)))
+            for i in range(args.num_egf)]
 
-    # MSE loss
-    meas_err = [(1e-1/args.data_sigma)* args.egf_qual_weight[i] * F.mse_loss(y[i], ytrue) for i in range(args.num_egf)]
+    ## MSE loss
+    meas_err = [args.egf_qual_weight[i] * torch.mean(gauss_nll(y[i], ytrue, args.sigma))
+                for i in range(args.num_egf)]
 
-    # Multi M-steps for multiple EGFs
+    ## Multi M-steps for multiple EGFs
+    zero = torch.zeros((), device=args.device)
     if args.num_egf > 1:
-        idx_best = torch.argmin(torch.stack(meas_err))
-        α = [F.mse_loss(y[i], ytrue) / sum(F.mse_loss(y[k], ytrue) for k in range(args.num_egf))
-             for i in range(args.num_egf)]  # Goodness of fit for EGF i
-        sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=1)
-        multi_loss = args.egf_multi_weight * sum( torch.Tensor([ α[i]*( Loss_L2(gf[i].squeeze(0), gf[idx_best].squeeze(0)) + 0.35*torch.abs(sdtw(gf[i].squeeze(0), gf[idx_best].squeeze(0))[0]) ) for i in range(args.num_egf) ]) ) # Closeness to best EGF (idx_best)
+        mse_raw = torch.stack([F.mse_loss(y[i], ytrue) for i in range(args.num_egf)])
+        alpha = (mse_raw / mse_raw.sum()).detach()  # Goodness of fit for EGF i
+        idx_best = int(torch.argmin(torch.stack(meas_err)))
+        gf_best = gf[idx_best].squeeze(0).detach()                    
+        multi_loss = [zero if i == idx_best else
+                    args.egf_multi_weight * alpha[i] * (Loss_L2(gf[i].squeeze(0), gf_best)
+                        + 0.35 * Loss_DTW_Mstep(gf[i].squeeze(0), gf_best, gamma=1.0))
+                    for i in range(args.num_egf)] # Closeness to best EGF (idx_best)
     else:
-        multi_loss = torch.tensor(0.0, device=args.device)
+        multi_loss = [zero]
 
-    loss = {}
-    for i in range(args.num_egf):
-        loss[i] = torch.Tensor(meas_err[i] + prior[i] + pphi[i] + multi_loss)
-
+    loss = {i: meas_err[i] + prior[i] + pphi[i] + multi_loss[i] for i in range(args.num_egf)}
     return loss, meas_err, prior, multi_loss
 
 
@@ -217,9 +226,11 @@ class stf_generator(nn.Module):
     def reverse(self, input):
         stf, logdet = self.realnvp.reverse(input)
         if self.softplus:
-            out = torch.nn.Sigmoid()(stf)
-            det_sigmoid = torch.sum(-stf - 2 * torch.nn.Softplus()(-stf), -1)
-            logdet = logdet + det_sigmoid
+            out = F.softplus(stf)
+            logdet = logdet + torch.sum(F.logsigmoid(stf), -1)
+            # out = torch.nn.Sigmoid()(stf)
+            # det_sigmoid = torch.sum(-stf - 2 * torch.nn.Softplus()(-stf), -1)
+            # logdet = logdet + det_sigmoid
         else:
             out = stf
         return out, logdet
@@ -313,10 +324,11 @@ def Loss_DTW(z, z0):
     # not using fastDTW because does not allow different sizes for z and z0
     return dtw_classic(z, z0)
 
-def Loss_DTW_Mstep(z, z0):
+def Loss_DTW_Mstep(z, z0, gamma=0.1):
     # uses fast DTW, similar to L2 if aligned
-    sdtw = soft_dtw_cuda.SoftDTW(use_cuda= False, gamma=0.1)
-    return sdtw(z, z0)[0]
+    sdtw = soft_dtw_cuda.SoftDTW(use_cuda=False, gamma=gamma)
+    a, b = z.transpose(-1, -2), z0.transpose(-1, -2)   # (batch, time, comp)
+    return (sdtw(a, b) - 0.5 * (sdtw(a, a) + sdtw(b, b)))[0]
 
 def null(x, y):
     return [0.]
@@ -371,82 +383,122 @@ def plot_res(k, k_sub, inferred_stf, learned_gf, learned_trc, gf0_np, trc0, args
         gf0 = gf0_np[e]
         fig = plt.figure(figsize=(8, 5))
         ax1 = plt.subplot2grid((12,4), (0, 0), colspan=3, rowspan=2)
-        ax2 = plt.subplot2grid((12,4), (2, 0), colspan=3, rowspan=2)
-        ax3 = plt.subplot2grid((12,4), (4, 0), colspan=3, rowspan=2)
         ax4 = plt.subplot2grid((12,4), (3, 3), colspan=1, rowspan=4)
         ax5 = plt.subplot2grid((12,4), (6, 0), colspan=3, rowspan=2)
-        ax6 = plt.subplot2grid((12,4), (8, 0), colspan=3, rowspan=2)
-        ax7 = plt.subplot2grid((12,4), (10, 0), colspan=3, rowspan=2)
-        axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7]
-        name_channels = ['E', 'N', 'U']
+        if args.num_comp > 1:
+            ax2 = plt.subplot2grid((12,4), (2, 0), colspan=3, rowspan=2)
+            ax6 = plt.subplot2grid((12,4), (8, 0), colspan=3, rowspan=2)
+        if args.num_comp > 2:
+            ax3 = plt.subplot2grid((12,4), (4, 0), colspan=3, rowspan=2)        
+            ax7 = plt.subplot2grid((12,4), (10, 0), colspan=3, rowspan=2)
+        
         x = np.arange(0, gf0.shape[1])
 
         ax1.set_title('EGF')
         ax5.set_title('Traces')
         ax4.set_title('STF')
-        
-        # EGFs
-        for chan in range(args.num_channels):
+
+        if true_gf is not None:
+            true_gf = signal.resample(true_gf, gf0.shape[-1],axis=1)
+            ax1.plot(x, true_gf[0], lw=0.5, color=myred, label='Target')
+        ax1.plot(x, gf0[0], lw=0.5, color=myblue, label='Prior')
+        ax1.plot(x, inferred_gf[0], lw=0.5, color=myorange, zorder=2, label='Inferred')
+        ax1.text(0.03, 0.9, 'E',
+                 horizontalalignment='right',
+                 verticalalignment='top',
+                 transform=ax1.transAxes)
+
+        ax1.legend(loc=(1.05, 0), frameon=False)
+        if args.num_comp > 1:
             if true_gf is not None:
-                true_gf = signal.resample(true_gf, gf0.shape[-1],axis=1)
-                axes[chan].plot(x, true_gf[chan], lw=0.5, color=myred, label='Target')
-            axes[chan].plot(x, gf0[chan], lw=0.5, color=myblue, label='Prior')
-            axes[chan].plot(x, inferred_gf[chan], lw=0.5, color=myorange, zorder=2, label='Inferred')
-            axes[chan].text(0.03, 0.9, name_channels[chan],
+                ax2.plot(x, true_gf[1], lw=0.5, color=myred)
+            ax2.plot(x, gf0[1], lw=0.5, color=myblue)
+            ax2.plot(x, inferred_gf[1], lw=0.5, color=myorange, zorder=2)
+            ax2.text(0.03, 0.9, 'N',
                     horizontalalignment='right',
                     verticalalignment='top',
-                    transform=axes[chan].transAxes)
-
-            axes[chan].legend(loc=(1.05, 0), frameon=False)
-        ax1.get_xaxis().set_visible(False)
-        ax2.get_xaxis().set_visible(False)
+                    transform=ax2.transAxes)
+            ax1.get_xaxis().set_visible(False)
+        if args.num_comp > 2:
+            if true_gf is not None:
+                ax3.plot(x , true_gf[2], lw=0.5, color=myred)
+            ax3.plot(x, gf0[2], lw=0.5, color=myblue)
+            ax3.plot(x, inferred_gf[2], lw=0.5, color=myorange, zorder=2)
+            ax3.text(0.03, 0.9, 'Z',
+                    horizontalalignment='right',
+                    verticalalignment='top',
+                    transform=ax3.transAxes)
+            ax2.get_xaxis().set_visible(False)
+        
+        
 
         # Traces
         learned_trace = mean_trc[e]
-        
-        for chan in range(args.num_channels):
-            axes[4+chan].plot(trc0[chan], lw=0.5, color=myred)
-            axes[4+chan].plot(learned_trace[chan], lw=0.5, color=myorange, zorder=2)
-            axes[4+chan].text(0.03, 0.9, name_channels[chan],
+
+        ax5.plot(trc0[0], lw=0.5, color=myred)
+        ax5.plot(learned_trace[0], lw=0.5, color=myorange, zorder=2)
+        ax5.text(0.03, 0.9, 'E',
+                 horizontalalignment='right',
+                 verticalalignment='top',
+                 transform=ax5.transAxes)
+        if args.num_comp > 1:
+            ax6.plot(trc0[1], lw=0.5, color=myred)
+            ax6.plot(learned_trace[1], lw=0.5, color=myorange, zorder=2)
+            ax6.text(0.03, 0.9, 'N',
                     horizontalalignment='right',
                     verticalalignment='top',
-                    transform=axes[chan].transAxes)
-        ax5.get_xaxis().set_visible(False)
-        ax6.get_xaxis().set_visible(False)
-        
-
-        # STF
-        xinf = np.linspace(0, mean_stf.shape[1], mean_stf.shape[1])
+                    transform=ax6.transAxes)
+            ax5.get_xaxis().set_visible(False)
+        if args.num_comp > 2:
+            ax7.plot(trc0[2], lw=0.5, color=myred)
+            ax7.plot(learned_trace[2], lw=0.5, color=myorange, zorder=2)
+            ax7.text(0.03, 0.9, 'Z',
+                    horizontalalignment='right',
+                    verticalalignment='top',
+                    transform=ax7.transAxes)
+            ax6.get_xaxis().set_visible(False)
+            
+        # STF, in moment-ratio units (sum = M0 / M0_egf)
+        scale = getattr(args, "c_trc", 1.0) / getattr(args, "c_gf", [1.0])[0]
+        stf_mean, stf_std = mean_stf[0] * scale, stdev_stf[0] * scale
+        K = stf_mean.shape[0]
+        tinf = np.arange(K) / args.samp_rate if args.samp_rate else np.arange(K)
         if true_stf is not None:
-            if len(true_stf) < mean_stf[0].shape[0]:
-                true_stf_rs = np.zeros(mean_stf[0].shape)
-                true_stf_rs[:len(true_stf)] = true_stf
-                ax4.plot(xinf, true_stf_rs, lw=0.8, color=myred)
-            else:
-                ax4.plot(xinf, true_stf[:mean_stf[0].shape[0]], lw=0.8, color=myred)
-        ax4.plot(xinf, mean_stf[0], lw=1, color=myorange)
-        ax4.fill_between(xinf, mean_stf[0] - 2*stdev_stf[0], mean_stf[0] + 2*stdev_stf[0],
+            ts = np.asarray(true_stf, dtype=float).ravel()
+            if len(ts) != K:                                   # centre it as the forward model does
+                full = np.zeros(K)
+                o = (K - 1) // 2 - (len(ts) - 1) // 2
+                idx = np.arange(len(ts)) + o
+                ok = (idx >= 0) & (idx < K)
+                full[idx[ok]] = ts[ok]
+                ts = full
+            ax4.plot(tinf, ts, lw=0.8, color=myred, label=f'True (Σ={ts.sum():.3g})')
+        ax4.plot(tinf, stf_mean, lw=1, color=myorange, label=f'Mean (Σ={stf_mean.sum():.3g})')
+        ax4.fill_between(tinf, stf_mean - 2 * stf_std, stf_mean + 2 * stf_std,
                          facecolor=myorange, alpha=0.35, zorder=0, label='2σ')
+        ax4.legend(loc='upper right', fontsize=5, frameon=False)
+        ax4.set_xlabel('time (s)' if args.samp_rate else 'samples', fontsize=6)
 
         fig.savefig("{}/out_egf{}_{}_{}{}.png".format(args.PATH, str(e), str(k).zfill(5), step, str(k_sub).zfill(5)), dpi=300, bbox_inches="tight")
         plt.close()
 
 
 def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
-    mean_stf = np.mean(inferred_stf, axis=0)
-    stdev_stf = np.std(inferred_stf, axis=0)
-    mean_trc = np.mean(inferred_trace, axis=0)
-    stdev_trc = np.std(inferred_trace, axis=0)
+    mean_trc = np.mean(inferred_trace, axis=1)   
+    stdev_trc = np.std(inferred_trace, axis=1)
     gf0 = np.concatenate([st_gf[k].data[:, None] for k in range(len(st_gf))], axis=1).T
-    gf0 = gf0.reshape(args.num_egf, args.num_channels, gf0.shape[-1], order='F')
+    gf0 = gf0.reshape(gf0.shape[0] // args.num_comp, args.num_comp, gf0.shape[1], order='F')
     trc0 = np.concatenate([st_trc[k].data[:, None] for k in range(len(st_trc))], axis=1).T
 
-    # Norm stream
-    gf0 /= np.amax(np.abs(gf0))
+    gf0 /= np.amax(np.abs(gf0), axis=(1, 2), keepdims=True) 
     trc0 /= np.amax(np.abs(trc0))
 
+    scale = getattr(args, "c_trc", 1.0) / getattr(args, "c_gf", [1.0])[0]
+    mean_stf, stdev_stf = np.mean(inferred_stf, axis=0) * scale, np.std(inferred_stf, axis=0) * scale
+    A = inferred_stf.reshape(inferred_stf.shape[0], -1).sum(-1) * scale
+
     if args.num_egf == 1:
-        rap = [np.amax(st_trc[i].data) / np.amax(st_gf[i].data) for i in range(args.num_channels)]
+        rap = [np.amax(st_trc[i].data) / np.amax(st_gf[i].data) for i in range(args.num_comp)]
 
         fig = plt.figure(figsize=(6, 1.2))
         plt.subplots_adjust(wspace=0.15)
@@ -460,7 +512,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
             top=False,
             labelbottom=True)
         chan = ['E', 'N', 'Z']
-        for i in range(args.num_channels):
+        for i in range(args.num_comp):
             tmax = np.amax(st_trc[0].times())
             ax.fill_between(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] - stdev_trc[0,i] + (2 - i) * 0.6,
                             mean_trc[0,i] + stdev_trc[0,i] + (2 - i) * 0.6,
@@ -469,13 +521,14 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
                          clip_on=False)
             l2 = ax.plot(st_trc[0].times() - (2 - i) * tmax // 5, mean_trc[0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
                          clip_on=False)
-            ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) - 5, np.mean(trc0[i] + (2 - i) * 0.6), chan[i],
-                    horizontalalignment='right',
-                    verticalalignment='top', weight='bold')
+            if args.num_comp != 1:
+                ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5) - 5, np.mean(trc0[i] + (2 - i) * 0.6), chan[i],
+                        horizontalalignment='right',
+                        verticalalignment='top', weight='bold')
             ax.text(np.amin(st_trc[0].times() - (2 - i) * tmax // 5), (2 - i) * 0.6 + 0.25, 'x ' + str(int(rap[i])),
                     horizontalalignment='left', verticalalignment='top', fontsize='small')
         plt.xlim(np.amin(st_trc[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
-        plt.xlabel('Time (s)', labelpad=2, loc='left')
+        plt.xlabel('time (s)', labelpad=2, loc='left')
         ticklab = ax.xaxis.get_ticklabels()[0]
         trans = ticklab.get_transform()
         ax.xaxis.set_label_coords(-2 * tmax // 5, 0, transform=trans)
@@ -489,7 +542,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
             bottom=True,
             top=False,
             labelbottom=True)
-        for i in range(args.num_channels):
+        for i in range(args.num_comp):
             tmax = np.amax(st_gf[0].times())
             ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, gf0[0,i] + (2 - i) * 0.6, color='k', lw=0.7, clip_on=False)
             ax.plot(st_gf[0].times() - (2 - i) * tmax // 5, inferred_gf[0,0,i] + (2 - i) * 0.6, lw=0.6, color=myorange,
@@ -500,18 +553,33 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
                 transform=ax.transAxes)
 
         ax = plt.subplot(1, 3, 3)
+        sr = st_gf[0].stats.sampling_rate
+        if args.M0_egf is not None:
+            conv, unit = sr * args.M0_egf, 'N·m/s'
+            amp = rf"$M_0$ = {A.mean() * args.M0_egf:.2e} N·m"
+        else:
+            conv, unit = sr, r's$^{-1}$'
+            amp = rf"$M_0/M_0^{{EGF}}$ = {A.mean():.3g}"
+        t = np.arange(len(mean_stf[0])) / sr
+        lo, mid, hi = (mean_stf[0] - stdev_stf[0]) * conv, mean_stf[0] * conv, (mean_stf[0] + stdev_stf[0]) * conv
+        p10 = int(np.floor(np.log10(np.nanmax(hi)))) if np.nanmax(hi) > 0 else 0   # put the exponent in the label
+        lo, mid, hi = lo / 10 ** p10, mid / 10 ** p10, hi / 10 ** p10
+        ylab = (r'$\dot{M}$' if args.M0_egf is not None else r'$\dot{M}/M_0^{EGF}$') + rf' ($10^{{{p10}}}$ {unit})'
+
+        ax.fill_between(t, lo, hi, facecolor=myorange, alpha=0.25, lw=0, zorder=0)
+        ax.plot(t, mid, lw=1, color=myorange)
+        ax.set_xlim(t[0], t[-1])
+        ax.set_ylim(bottom=0)
         ax.spines['left'].set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        plt.tick_params(
-            axis='x',
-            which='both',
-            bottom=True,
-            top=False,
-            labelbottom=True)
-        ax.fill_between(np.arange(len(mean_stf[0])) / st_gf[0].stats.sampling_rate, mean_stf[0] - stdev_stf[0],
-                        mean_stf[0] + stdev_stf[0],
-                        facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation')
-        ax.plot(np.arange(len(mean_stf[0])) / st_gf[0].stats.sampling_rate, mean_stf[0], lw=0.8, color=myorange)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(True)
+        ax.yaxis.tick_right()
+        ax.yaxis.set_label_position('right')
+        ax.get_yaxis().set_visible(True)
+        ax.tick_params(axis='both', which='both', top=False)
+        ax.set_ylabel(ylab)
+        ax.text(0.04, 0.95, amp, ha='left', va='top', fontsize=6, transform=ax.transAxes,
+                bbox=dict(boxstyle='round,pad=0.35', fc='lightgray', ec='none', alpha=0.8))
 
     else:
         subfig = 1
@@ -523,14 +591,26 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
                 horizontalalignment='left', verticalalignment='top',
                 transform=ax.transAxes, weight='bold')
         subfig += 1
-        ax.spines['left'].set_visible(False)
-        ax.get_yaxis().set_visible(False)
-        plt.tick_params(bottom=True, top=False, labelbottom=True)
 
-        ax.fill_between(np.arange(len(mean_stf[0]))/st_gf[0].stats.sampling_rate, mean_stf[0] - stdev_stf[0], mean_stf[0] + stdev_stf[0],
-                         facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation')
-        ax.plot(np.arange(len(mean_stf[0]))/st_gf[0].stats.sampling_rate, mean_stf[0], lw=0.8, color=myorange)
-        plt.xlabel('Time (s)', labelpad=2, loc='left')
+        sr = st_gf[0].stats.sampling_rate
+        if args.M0_egf is not None: 
+            conv, ylab = sr * args.M0_egf, 'Moment rate (N·m/s)'
+            amp = f"M0 = {A.mean() * args.M0_egf:.2e} N·m"
+        else:                                                                       # relative to the EGF
+            conv, ylab = sr, r'$\dot{M}\,/\,M_0^{EGF}$ (s$^{-1}$)'
+            amp = f"M0/M0_egf = {A.mean():.3g}"
+        t = np.arange(len(mean_stf[0])) / sr
+        ax.spines['right'].set_visible(True)
+        ax.get_yaxis().set_visible(True)
+        plt.tick_params(axis='both', which='both', bottom=True, top=False, labelbottom=True, labelsize='small')
+        ax.fill_between(t, (mean_stf[0] - stdev_stf[0]) * conv, (mean_stf[0] + stdev_stf[0]) * conv,
+                        facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation')
+        ax.plot(t, mean_stf[0] * conv, lw=0.8, color=myorange)
+        ax.set_ylabel(ylab, fontsize='small')
+        ax.yaxis.get_offset_text().set_fontsize('x-small')
+        ax.text(1, 1.02, amp, ha='right', va='bottom', fontsize='x-small', transform=ax.transAxes)
+        
+        plt.xlabel('time (s)', labelpad=2, loc='left')
         ax.text(0, .4, 'Data', horizontalalignment='left', verticalalignment='top', color='k', transform=ax.transAxes)
         ax.text(0,0.2, 'Predictions', horizontalalignment='left', verticalalignment='top', color=myorange,
                 transform=ax.transAxes)
@@ -550,7 +630,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
         mean_egf = np.mean(inferred_gf, axis=0)[0]
         std_egf = np.std(inferred_gf, axis=0)[0]
         tmax = np.amax(st_gf[0].times())
-        for i in range(args.num_channels):
+        for i in range(args.num_comp):
             ax.fill_between(st_gf[0].times() - (2 - i) * tmax // 5, mean_egf[i] - std_egf[i] + (2 - i) * 0.6,
                             mean_egf[i] + std_egf[i] + (2 - i) * 0.6,
                             facecolor='#632f48', alpha=0.25, zorder=0, label='Standard deviation')
@@ -565,7 +645,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
         plt.xlim(np.amin(st_gf[0].times() - (2) * tmax // 5) + tmax // 5, tmax - tmax // 7)
 
         for k in range(args.num_egf):
-            rap = [np.amax(st_trc[i].data) / np.amax(st_gf[k+args.num_egf*i].data) for i in range(args.num_channels)]
+            rap = [np.amax(st_trc[i].data) / np.amax(st_gf[k+args.num_egf*i].data) for i in range(args.num_comp)]
             ax = plt.subplot(args.num_egf+1, 2, k*2+3)
             ax.text(-0.2, 0.9, '({})'.format(chr(ord('`') + subfig)),
                     horizontalalignment='left', verticalalignment='top',
@@ -576,7 +656,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
             plt.tick_params(bottom=True, top=False, labelbottom=False)
 
             tmax = np.amax(st_trc[0].times())
-            for i in range(args.num_channels):
+            for i in range(args.num_comp):
                 ax.fill_between(st_trc[0].times()-(2-i)*tmax//5, mean_trc[k,i] - stdev_trc[k,i]+(2-i)*0.6, mean_trc[k,i] + stdev_trc[k,i]+(2-i)*0.6,
                                 facecolor=myorange, alpha=0.25, zorder=0, label='Standard deviation',clip_on=False)
                 l1 = ax.plot(st_trc[0].times()-(2-i)*tmax//5, trc0[i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
@@ -602,7 +682,7 @@ def plot_st(st_trc, st_gf, inferred_trace, inferred_gf, inferred_stf, args):
             ax.spines['left'].set_visible(False)
             ax.get_yaxis().set_visible(False)
             plt.tick_params(bottom=True, top=False, labelbottom=False)
-            for i in range(args.num_channels):
+            for i in range(args.num_comp):
                 tmax = np.amax(st_gf[0].times())
                 ax.plot(st_gf[0].times()-(2-i)*tmax//5, gf0[k,i]+(2-i)*0.6, color='k', lw=0.7,clip_on=False)
                 ax.plot(st_gf[0].times()-(2-i)*tmax//5, inferred_gf[k,0,i]+(2-i)*0.6, lw=0.6, color=myorange,clip_on=False)
