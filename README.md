@@ -20,7 +20,7 @@ References:
 *Angela Gao, Jorge Castellanos, Yisong Yue, Zachary Ross, Katherine Bouman (2021). [DeepGEM: Generalized Expectation-Maximization for Blind Inversion](https://proceedings.neurips.cc/paper/2021/hash/606c90a06173d69682feb83037a68fec-Abstract.html). Part of [Advances in Neural Information Processing Systems 34 (NeurIPS 2021)](https://proceedings.neurips.cc/paper_files/paper/2021)* - also available on [Github](https://github.com/angelafgao/DeepGEM). 
 
 
-## Requirements and environment setup
+## Install
 General requirements for PyTorch release:
 * [pytorch](https://pytorch.org/)
 
@@ -88,24 +88,63 @@ conda install -c conda-forge matplotlib scipy obspy
 ```
 And then `exit` to quit the job.
 
-## Clone git repository
+### Clone git repository
 ```bash
 mkdir /home/your-path-to-deepgem/
 cd /home/your-path-to-deepgem/
 git clone https://github.com/thearagon/DeepGEM_EGF.git
 ```
 
-## Test run
+## Inputs and outputs
+
+### Inputs
+* **`--trc0`** (`.mseed` or `.npy`): main-event waveforms, one row per component (E, N, Z). Can be an `obspy`stream. Can have any number of components.
+* **`--egf0`** (`.mseed` or `.npy`): EGF(s), with the same components and length as `trc0`. With several EGFs, order the traces component by component: \[EGF0-E, EGF1-E, …, EGF0-N, EGF1-N, …].
+* **`--stf0`** (`.npy` or `.mseed`, optional): initial STF and prior mean. Default: a centred Gaussian.
+* **`--stf_true`** (`.npy`, with `--synthetics`): true STF in moment-ratio units (sum = M0/M0_egf). Used for plots only.
+* **`--gf_true`** (`.npy` or `.mseed`, with `--synthetics`): true Green's function. Used for plots only.
+
+### Outputs 
+
+with:
+* **B**: number of posterior samples, i.e. the batch size (`--btsize`)
+* **K**: STF length in samples (`--stf_size`, or `--stf_dur` × sampling rate)
+* **E**: number of EGFs (`--num_egf`)
+* **C**: number of components (`--num_comp`, often 3: E, N, Z)
+* **L**: trace and EGF length in samples
+
+
+**Final results, in `out/`:**
+
+* **`reconSTF.npy`** (B, 1, K): posterior STF samples in the inversion's normalized units (trace and EGF each scaled to a peak of 1).
+* **`MRF.npy`** (B, 1, K): moment-rate function in N·m/s. Written only if `--M0_egf` is given.
+* **`outTRC.npy`** (E, B, C, L): predicted traces for each EGF and each posterior sample, in normalized units.
+* **`outGF.npy`** (E, 1, C, L): learned EGF(s), normalized.
+* **`<trc0>_out_mean[_egfE].mseed`** and **`<trc0>_out_std[_egfE].mseed`**: mean and standard deviation of the predicted traces, in the input trace's units.
+* **`<egf0>_out.mseed`**: learned EGF(s), in the input EGF's units.
+
+**Written during training, in `--dir`:**
+* **`args.json`**: all run settings
+* **`SeparatedLoss_egf<E>.png`**: E-step and M-step loss curves.
+* **`out_res.pdf`**: summary figure of the traces, EGF and STF.
+
+**With `--output`:**
+* **`out_egf<E>_<epoch>_<E|M><sub>.png`**: snapshot of the STF, EGF and traces at that point.
+* **`stf_gen_<epoch>_E<sub>.pt`**: checkpoint of the STF generator (normalizing flow), its amplitude scale and its optimizer.
+* **`egf_network_egf<E>_<epoch>_M<sub>.pt`**: checkpoint of each EGF network and its optimizer.
+
+## Examples
+### Test run
 There are two examples. One is a simple toy model with a perfectly known forward model. The other runs with data from the Cahuilla swarm (see next section). For a test run, you can use the toy model example.
 
-### Run on CPU
+#### Run on CPU
 ```bash
 cd /home/your-path-to-deepgem/examples/toy_model/
 conda activate gem
 ./EGF_ex_cpu.sh /home/your-path-to-deepgem/
 ```
 
-### Run on GPU
+#### Run on GPU
 ```bash
 cd /home/your-path-to-deepgem/examples/toy_model/
 # set up environment
@@ -114,7 +153,7 @@ conda activate gem
 ./EGF_ex_gpu.sh /home/your-path-to-deepgem/  # this will run on GPU cuda:0
 ```
 
-## Cahuilla swarm example
+### Cahuilla swarm example
 To do a test run on real data at station BOR:
 ```bash
 cd /home/your-path-to-deepgem/examples/cahuilla_swarm/

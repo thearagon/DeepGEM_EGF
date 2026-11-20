@@ -222,10 +222,10 @@ def main_function(args):
                     torch.save({
                         'epoch': k,
                         'model_state_dict': stf_gen.state_dict(),
+                        'logscale_state_dict': logscale_factor.state_dict(),
                         'optimizer_state_dict': Eoptimizer.state_dict(),
                     }, f'{args.PATH}/stf_gen_{str(k).zfill(5)}_E{str(k_sub).zfill(5)}.pt')
-                    np.save(f"{args.PATH}/Data/stf.npy", stf.cpu().numpy())
-
+                                        
                     for k_egf in range(args.num_egf):
                         plot_seploss(args, Eloss_list, Eloss_mse_list, Eloss_prior_list, Eloss_q_list,
                             Mloss_list, Mloss_mse_list, Mloss_phiprior_list, Mloss_multi_list, k_egf)
@@ -284,8 +284,6 @@ def main_function(args):
                             'optimizer_state_dict': Moptimizer[k_egf].state_dict(),
                         }, f"{args.PATH}/egf_network_egf{k_egf}_{str(k).zfill(5)}_M{str(k_sub).zfill(5)}.pt")
 
-                        # Save EGF
-                        np.save(f"{args.PATH}/Data/learned_gf.npy", learned_gf_detached)
 
                         # Plots
                         plot_seploss(args,
@@ -316,15 +314,14 @@ def main_function(args):
 
     # check against M0
     stf_phys = stf_detached * args.c_trc / args.c_gf[0] # sum = M0 / M0_egf(ref), per posterior sample
-    np.save(f"{args.PATH}/Data/reconSTF_ratio.npy", stf_phys)
     if args.M0_egf is not None:
         mrf = stf_phys * args.M0_egf * args.samp_rate  # moment-rate function, N·m/s
         M0_post = stf_phys.sum(axis=-1) * args.M0_egf                     # posterior samples of M0
-        np.save(f"{args.PATH}/Data/MRF.npy", mrf)
+        np.save(f"{args.PATH}/out/MRF.npy", mrf)
 
-    np.save(f"{args.PATH}/Data/reconSTF.npy", stf_detached)
-    np.save(f"{args.PATH}/Data/outTRC.npy", inferred_trace)
-    np.save(f"{args.PATH}/Data/outGF.npy", learned_gf_detached)
+    np.save(f"{args.PATH}/out/reconSTF.npy", stf_detached)
+    np.save(f"{args.PATH}/out/outTRC.npy", inferred_trace)
+    np.save(f"{args.PATH}/out/outGF.npy", learned_gf_detached)
 
     if st_trc is not None:
         base = os.path.splitext(os.path.basename(args.trc0))[0]
@@ -334,16 +331,16 @@ def main_function(args):
                 st_mn[c].data = inferred_trace[e, :, c].mean(axis=0) * args.c_trc
                 st_sd[c].data = inferred_trace[e, :, c].std(axis=0) * args.c_trc
             tag = f"_egf{e}" if args.num_egf > 1 else ""
-            st_mn.write(f"{args.PATH}/{base}_out_mean{tag}.mseed")
-            st_sd.write(f"{args.PATH}/{base}_out_std{tag}.mseed")
+            st_mn.write(f"{args.PATH}/out/{base}_out_mean{tag}.mseed")
+            st_sd.write(f"{args.PATH}/out/{base}_out_std{tag}.mseed")
     
     if st_gf is not None:
         st_gf_out = st_gf.copy()
         lk = learned_gf_detached[:, 0].transpose(1, 0, 2).reshape(args.num_egf * args.num_comp, -1)
-        for i in range(len(lk)):
-            st_gf_out[i].data = lk[i] * args.c_gf[0]     
+        for r in range(len(lk)):
+            st_gf_out[r].data = lk[r] * args.c_gf[r % args.num_egf]   # trace r -> EGF r % E
         base_gf = os.path.splitext(os.path.basename(args.egf0))[0]
-        st_gf_out.write(f"{args.PATH}/{base_gf}_out.mseed")
+        st_gf_out.write(f"{args.PATH}/out/{base_gf}_out.mseed")
 
     # Plot
     if st_gf is not None and st_trc is not None:
@@ -507,9 +504,9 @@ if __name__ == "__main__":
         print("Directory ", args.PATH, " already exists")
 
     try:
-        os.mkdir(args.PATH + "/Data")
-        print("Directory ", args.PATH + "/Data", " Created ")
+        os.mkdir(args.PATH + "/out")
+        print("Directory ", args.PATH + "/out", " Created ")
     except FileExistsError:
-        print("Directory ", args.PATH + "/Data", " already exists")
+        print("Directory ", args.PATH + "/out", " already exists")
 
     main_function(args)
